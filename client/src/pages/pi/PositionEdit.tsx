@@ -94,7 +94,7 @@ export function PositionEdit() {
       <div className="min-h-screen">
         <Navbar />
         <div className="max-w-2xl mx-auto px-4 py-8">
-          <p className="text-slate-600">Position not found.</p>
+          <p className="text-inherit">Position not found.</p>
           <Link to="/pi/dashboard" className="text-teal-600 hover:underline mt-2 inline-block">
             Back to dashboard
           </Link>
@@ -110,13 +110,13 @@ export function PositionEdit() {
         <Link to="/pi/dashboard" className="text-teal-600 hover:underline mb-4 inline-block">
           ← Back to dashboard
         </Link>
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Edit Position</h1>
+        <h1 className="text-2xl font-bold text-inherit mb-6">Edit Position</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>
           )}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Title *</label>
+            <label className="block text-sm font-medium text-inherit mb-1">Title *</label>
             <input
               type="text"
               value={form.title}
@@ -126,7 +126,7 @@ export function PositionEdit() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+            <label className="block text-sm font-medium text-inherit mb-1">Description</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
@@ -135,7 +135,7 @@ export function PositionEdit() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Required Skills (comma-separated)</label>
+            <label className="block text-sm font-medium text-inherit mb-1">Required Skills (comma-separated)</label>
             <input
               type="text"
               value={form.requiredSkills}
@@ -145,7 +145,7 @@ export function PositionEdit() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Min GPA</label>
+              <label className="block text-sm font-medium text-inherit mb-1">Min GPA</label>
               <input
                 type="number"
                 step="0.01"
@@ -157,7 +157,7 @@ export function PositionEdit() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Deadline</label>
+              <label className="block text-sm font-medium text-inherit mb-1">Deadline</label>
               <input
                 type="date"
                 value={form.deadline}
@@ -174,7 +174,7 @@ export function PositionEdit() {
               onChange={(e) => setForm((f) => ({ ...f, isOpen: e.target.checked }))}
               className="rounded border-slate-300"
             />
-            <label htmlFor="isOpen" className="text-sm font-medium text-slate-700">
+            <label htmlFor="isOpen" className="text-sm font-medium text-inherit">
               Accepting applications
             </label>
           </div>
@@ -186,7 +186,7 @@ export function PositionEdit() {
               onChange={(e) => setForm((f) => ({ ...f, isFunded: e.target.checked }))}
               className="rounded border-slate-300"
             />
-            <label htmlFor="isFunded" className="text-sm font-medium text-slate-700">
+            <label htmlFor="isFunded" className="text-sm font-medium text-inherit">
               Funded position
             </label>
           </div>
@@ -222,7 +222,7 @@ export function PositionEdit() {
                 <button
                   type="button"
                   onClick={() => setConfirmClose(false)}
-                  className="px-4 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
+                  className="px-4 py-1.5 text-sm font-medium text-inherit hover:bg-slate-100 rounded-lg"
                 >
                   Cancel
                 </button>

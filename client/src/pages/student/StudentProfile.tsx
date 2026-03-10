@@ -77,13 +77,13 @@ export function StudentProfile() {
     <div className="min-h-screen">
       <Navbar />
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Edit Profile</h1>
+        <h1 className="text-2xl font-bold text-inherit mb-6">Edit Profile</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>
           )}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Major</label>
+            <label className="block text-sm font-medium text-inherit mb-1">Major</label>
             <input
               type="text"
               value={form.major}
@@ -93,7 +93,7 @@ export function StudentProfile() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">GPA</label>
+              <label className="block text-sm font-medium text-inherit mb-1">GPA</label>
               <input
                 type="number"
                 step="0.01"
@@ -105,7 +105,7 @@ export function StudentProfile() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Graduation Year</label>
+              <label className="block text-sm font-medium text-inherit mb-1">Graduation Year</label>
               <input
                 type="number"
                 value={form.graduationYear}
@@ -115,7 +115,7 @@ export function StudentProfile() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Year Level</label>
+            <label className="block text-sm font-medium text-inherit mb-1">Year Level</label>
             <select
               value={form.yearLevel}
               onChange={(e) => setForm((f) => ({ ...f, yearLevel: e.target.value as YearLevel }))}
@@ -130,7 +130,7 @@ export function StudentProfile() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Skills (comma-separated)</label>
+            <label className="block text-sm font-medium text-inherit mb-1">Skills (comma-separated)</label>
             <input
               type="text"
               value={form.skills}
@@ -140,7 +140,7 @@ export function StudentProfile() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Bio</label>
+            <label className="block text-sm font-medium text-inherit mb-1">Bio</label>
             <textarea
               value={form.bio}
               onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
@@ -149,7 +149,7 @@ export function StudentProfile() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Resume URL</label>
+            <label className="block text-sm font-medium text-inherit mb-1">Resume URL</label>
             <input
               type="url"
               value={form.resumeUrl}

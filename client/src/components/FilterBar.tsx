@@ -16,7 +16,7 @@ export function FilterBar({ filters, onReset }: FilterBarProps) {
       {onReset && (
         <button
           onClick={onReset}
-          className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800"
+          className="px-4 py-2 text-sm font-medium text-inherit hover:text-inherit"
         >
           Reset
         </button>

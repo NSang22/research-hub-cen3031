@@ -16,10 +16,10 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
         <div className="fixed inset-0 bg-slate-900/50" onClick={onClose} />
         <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+            <h3 className="text-lg font-semibold text-inherit">{title}</h3>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 text-2xl leading-none"
+              className="text-slate-400 hover:text-inherit text-2xl leading-none"
             >
               &times;
             </button>

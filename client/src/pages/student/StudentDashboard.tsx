@@ -34,12 +34,12 @@ export function StudentDashboard() {
     <div className="min-h-screen">
       <Navbar />
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-inherit mb-6">Dashboard</h1>
         <div className="grid gap-6 md:grid-cols-2 mb-8">
           <Card>
             <div className="p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-2">Profile</h2>
-              <p className="text-slate-600 mb-4">Complete your profile to stand out to PIs.</p>
+              <h2 className="text-lg font-semibold text-inherit mb-2">Profile</h2>
+              <p className="text-inherit mb-4">Complete your profile to stand out to PIs.</p>
               <Link
                 to="/student/profile"
                 className="text-teal-600 font-medium hover:underline"
@@ -50,8 +50,8 @@ export function StudentDashboard() {
           </Card>
           <Card>
             <div className="p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-2">Browse Positions</h2>
-              <p className="text-slate-600 mb-4">Find research opportunities that match your skills.</p>
+              <h2 className="text-lg font-semibold text-inherit mb-2">Browse Positions</h2>
+              <p className="text-inherit mb-4">Find research opportunities that match your skills.</p>
               <Link
                 to="/student/positions"
                 className="text-teal-600 font-medium hover:underline"
@@ -61,10 +61,10 @@ export function StudentDashboard() {
             </div>
           </Card>
         </div>
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Recent Applications</h2>
+        <h2 className="text-lg font-semibold text-inherit mb-4">Recent Applications</h2>
         {applications.length === 0 ? (
           <Card>
-            <div className="p-6 text-center text-slate-600">
+            <div className="p-6 text-center text-inherit">
               No applications yet. <Link to="/student/positions" className="text-teal-600 hover:underline">Browse positions</Link> to apply.
             </div>
           </Card>
@@ -74,10 +74,10 @@ export function StudentDashboard() {
               <Card key={app.id}>
                 <div className="p-4 flex justify-between items-center">
                   <div>
-                    <Link to={`/student/positions/${app.positionId}`} className="font-medium text-slate-900 hover:text-teal-600">
+                    <Link to={`/student/positions/${app.positionId}`} className="font-medium text-inherit hover:text-teal-600">
                       {app.positionTitle || 'Position'}
                     </Link>
-                    {app.labName && <p className="text-sm text-slate-500">{app.labName}</p>}
+                    {app.labName && <p className="text-sm text-inherit">{app.labName}</p>}
                   </div>
                   <div className="flex items-center gap-3">
                     <StatusBadge status={app.status as 'pending' | 'reviewed' | 'accepted' | 'rejected'} />

@@ -25,7 +25,7 @@ function CheckGroup({
 
   return (
     <div>
-      <p className="text-sm font-medium text-slate-700 mb-2">{label}</p>
+      <p className="text-sm font-medium text-inherit mb-2">{label}</p>
       <div className="flex flex-wrap gap-2">
         {options.map((opt) => (
           <button
@@ -35,7 +35,7 @@ function CheckGroup({
             className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
               selected.includes(opt)
                 ? 'bg-teal-600 text-white border-teal-600'
-                : 'bg-white text-slate-600 border-slate-300 hover:border-teal-400'
+                : 'bg-white text-inherit border-slate-300 hover:border-teal-400'
             }`}
           >
             {opt}
@@ -132,8 +132,8 @@ export function ParticipantProfile() {
     <div className="min-h-screen">
       <Navbar />
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-slate-900 mb-1">Participant Profile</h1>
-        <p className="text-sm text-slate-500 mb-6">
+        <h1 className="text-2xl font-bold text-inherit mb-1">Participant Profile</h1>
+        <p className="text-sm text-inherit mb-6">
           Help researchers find you for studies that match your availability and preferences.
         </p>
 
@@ -143,7 +143,7 @@ export function ParticipantProfile() {
 
           {/* Availability */}
           <section>
-            <h2 className="text-base font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-200">
+            <h2 className="text-base font-semibold text-inherit mb-4 pb-2 border-b border-slate-200">
               Availability
             </h2>
             <div className="space-y-4">
@@ -160,7 +160,7 @@ export function ParticipantProfile() {
                 onChange={(v) => setForm((f) => ({ ...f, availableTimes: v }))}
               />
               <div className="w-40">
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-medium text-inherit mb-1">
                   Hours available per week
                 </label>
                 <input
@@ -178,13 +178,13 @@ export function ParticipantProfile() {
 
           {/* Demographics */}
           <section>
-            <h2 className="text-base font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-200">
+            <h2 className="text-base font-semibold text-inherit mb-4 pb-2 border-b border-slate-200">
               Demographics
               <span className="ml-2 text-xs font-normal text-slate-400">(optional — used for study eligibility)</span>
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Age range</label>
+                <label className="block text-sm font-medium text-inherit mb-2">Age range</label>
                 <div className="flex flex-wrap gap-2">
                   {AGE_RANGES.map((r) => (
                     <button
@@ -194,7 +194,7 @@ export function ParticipantProfile() {
                       className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                         form.ageRange === r
                           ? 'bg-teal-600 text-white border-teal-600'
-                          : 'bg-white text-slate-600 border-slate-300 hover:border-teal-400'
+                          : 'bg-white text-inherit border-slate-300 hover:border-teal-400'
                       }`}
                     >
                       {r}
@@ -204,7 +204,7 @@ export function ParticipantProfile() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Gender identity</label>
+                  <label className="block text-sm font-medium text-inherit mb-1">Gender identity</label>
                   <input
                     type="text"
                     value={form.gender}
@@ -214,7 +214,7 @@ export function ParticipantProfile() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Ethnicity</label>
+                  <label className="block text-sm font-medium text-inherit mb-1">Ethnicity</label>
                   <input
                     type="text"
                     value={form.ethnicity}
@@ -229,7 +229,7 @@ export function ParticipantProfile() {
 
           {/* Participation Preferences */}
           <section>
-            <h2 className="text-base font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-200">
+            <h2 className="text-base font-semibold text-inherit mb-4 pb-2 border-b border-slate-200">
               Participation Preferences
             </h2>
             <div className="space-y-4">
@@ -246,7 +246,7 @@ export function ParticipantProfile() {
                 onChange={(v) => setForm((f) => ({ ...f, compensationPref: v }))}
               />
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Location preference</label>
+                <label className="block text-sm font-medium text-inherit mb-2">Location preference</label>
                 <div className="flex flex-wrap gap-2">
                   {LOCATION_PREFS.map((l) => (
                     <button
@@ -256,7 +256,7 @@ export function ParticipantProfile() {
                       className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                         form.locationPref === l
                           ? 'bg-teal-600 text-white border-teal-600'
-                          : 'bg-white text-slate-600 border-slate-300 hover:border-teal-400'
+                          : 'bg-white text-inherit border-slate-300 hover:border-teal-400'
                       }`}
                     >
                       {l}
@@ -265,7 +265,7 @@ export function ParticipantProfile() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-medium text-inherit mb-1">
                   Additional notes
                 </label>
                 <textarea

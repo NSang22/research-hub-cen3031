@@ -27,12 +27,12 @@ export function TubelightNavBar({ items, className, forceBottom }: NavBarProps) 
   return (
     <div
       className={cn(
-        "fixed left-1/2 -translate-x-1/2 z-[120]",
+        "fixed left-1/2 -translate-x-1/2 z-[120] pointer-events-none",
         forceBottom ? "bottom-0 mb-6" : "bottom-0 sm:top-0 mb-6 sm:pt-6",
         className,
       )}
     >
-      <div className="flex items-center gap-3 bg-background/5 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-lg">
+      <div className="flex items-center gap-3 bg-background/5 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-lg pointer-events-auto">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.name;

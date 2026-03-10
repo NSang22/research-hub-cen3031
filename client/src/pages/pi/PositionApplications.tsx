@@ -59,10 +59,10 @@ export function PositionApplications() {
         <Link to="/pi/dashboard" className="text-teal-600 hover:underline mb-4 inline-block">
           ← Back to dashboard
         </Link>
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">
+        <h1 className="text-2xl font-bold text-inherit mb-2">
           Applications: {positionTitle || 'Position'}
         </h1>
-        <p className="text-slate-600 mb-6">{applications.length} applicant(s)</p>
+        <p className="text-inherit mb-6">{applications.length} applicant(s)</p>
         {loading ? (
           <div className="animate-pulse space-y-4">
             {[1, 2, 3].map((i) => (
@@ -70,7 +70,7 @@ export function PositionApplications() {
             ))}
           </div>
         ) : applications.length === 0 ? (
-          <div className="bg-white rounded-lg border border-slate-200 p-8 text-center text-slate-600">
+          <div className="bg-white rounded-lg border border-slate-200 p-8 text-center text-inherit">
             No applications yet.
           </div>
         ) : (
@@ -83,13 +83,13 @@ export function PositionApplications() {
                 <div>
                   <button
                     onClick={() => setSelectedApp(app)}
-                    className="font-medium text-slate-900 hover:text-teal-600 text-left"
+                    className="font-medium text-inherit hover:text-teal-600 text-left"
                   >
                     {app.firstName} {app.lastName}
                   </button>
-                  <p className="text-sm text-slate-500">{app.email}</p>
+                  <p className="text-sm text-inherit">{app.email}</p>
                   {app.major && (
-                    <p className="text-sm text-slate-600">
+                    <p className="text-sm text-inherit">
                       {app.major}
                       {app.gpa != null && ` · GPA: ${app.gpa}`}
                     </p>
@@ -139,7 +139,7 @@ export function PositionApplications() {
             {selectedApp.coverLetter && (
               <div>
                 <strong>Cover letter:</strong>
-                <p className="mt-1 text-slate-600 whitespace-pre-wrap">{selectedApp.coverLetter}</p>
+                <p className="mt-1 text-inherit whitespace-pre-wrap">{selectedApp.coverLetter}</p>
               </div>
             )}
             <Link

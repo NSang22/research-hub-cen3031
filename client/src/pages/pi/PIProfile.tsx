@@ -61,13 +61,13 @@ export function PIProfile() {
     <div className="min-h-screen">
       <Navbar />
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Lab Profile</h1>
+        <h1 className="text-2xl font-bold text-inherit mb-6">Lab Profile</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>
           )}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+            <label className="block text-sm font-medium text-inherit mb-1">Department</label>
             <input
               type="text"
               value={form.department}
@@ -76,7 +76,7 @@ export function PIProfile() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Lab Name</label>
+            <label className="block text-sm font-medium text-inherit mb-1">Lab Name</label>
             <input
               type="text"
               value={form.labName}
@@ -85,7 +85,7 @@ export function PIProfile() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Research Area</label>
+            <label className="block text-sm font-medium text-inherit mb-1">Research Area</label>
             <textarea
               value={form.researchArea}
               onChange={(e) => setForm((f) => ({ ...f, researchArea: e.target.value }))}
@@ -94,7 +94,7 @@ export function PIProfile() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Lab Website</label>
+            <label className="block text-sm font-medium text-inherit mb-1">Lab Website</label>
             <input
               type="url"
               value={form.labWebsite}

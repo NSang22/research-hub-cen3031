@@ -35,12 +35,12 @@ export function StudentList() {
     <div className="min-h-screen">
       <Navbar />
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Browse Students</h1>
+        <h1 className="text-2xl font-bold text-inherit mb-6">Browse Students</h1>
         <FilterBar
           filters={{
             major: (
               <>
-                <label className="text-xs font-medium text-slate-500">Major</label>
+                <label className="text-xs font-medium text-inherit">Major</label>
                 <input
                   type="text"
                   value={filters.major}
@@ -52,7 +52,7 @@ export function StudentList() {
             ),
             minGpa: (
               <>
-                <label className="text-xs font-medium text-slate-500">Min GPA</label>
+                <label className="text-xs font-medium text-inherit">Min GPA</label>
                 <input
                   type="number"
                   step="0.01"
@@ -65,7 +65,7 @@ export function StudentList() {
             ),
             skills: (
               <>
-                <label className="text-xs font-medium text-slate-500">Skills</label>
+                <label className="text-xs font-medium text-inherit">Skills</label>
                 <input
                   type="text"
                   value={filters.skills}
@@ -77,7 +77,7 @@ export function StudentList() {
             ),
             yearLevel: (
               <>
-                <label className="text-xs font-medium text-slate-500">Year</label>
+                <label className="text-xs font-medium text-inherit">Year</label>
                 <select
                   value={filters.yearLevel}
                   onChange={(e) => setFilters((f) => ({ ...f, yearLevel: e.target.value }))}
@@ -102,7 +102,7 @@ export function StudentList() {
             ))}
           </div>
         ) : students.length === 0 ? (
-          <div className="mt-6 p-8 text-center text-slate-600 bg-white rounded-lg border">
+          <div className="mt-6 p-8 text-center text-inherit bg-white rounded-lg border">
             No students found. Try adjusting your filters.
           </div>
         ) : (
@@ -111,21 +111,21 @@ export function StudentList() {
               <Link key={s.id} to={`/pi/students/${s.id}`}>
                 <Card>
                   <div className="p-6">
-                    <h3 className="font-semibold text-slate-900">
+                    <h3 className="font-semibold text-inherit">
                       {s.firstName} {s.lastName}
                     </h3>
-                    <p className="text-sm text-slate-500">{s.email}</p>
+                    <p className="text-sm text-inherit">{s.email}</p>
                     {s.major && (
                       <p className="text-sm text-teal-600 mt-1">{s.major}</p>
                     )}
                     {s.bio && (
-                      <p className="text-slate-600 mt-2 line-clamp-2">{s.bio}</p>
+                      <p className="text-inherit mt-2 line-clamp-2">{s.bio}</p>
                     )}
                     <div className="mt-3 flex flex-wrap gap-2">
                       {s.skills?.map((sk) => (
                         <span
                           key={sk}
-                          className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs"
+                          className="px-2 py-0.5 bg-slate-100 text-inherit rounded text-xs"
                         >
                           {sk}
                         </span>

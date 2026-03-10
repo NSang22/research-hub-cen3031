@@ -34,12 +34,12 @@ export function PositionList() {
     <div className="min-h-screen">
       <Navbar />
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Browse Positions</h1>
+        <h1 className="text-2xl font-bold text-inherit mb-6">Browse Positions</h1>
         <FilterBar
           filters={{
             search: (
               <>
-                <label className="text-xs font-medium text-slate-500">Search</label>
+                <label className="text-xs font-medium text-inherit">Search</label>
                 <input
                   type="text"
                   value={filters.search}
@@ -51,7 +51,7 @@ export function PositionList() {
             ),
             skills: (
               <>
-                <label className="text-xs font-medium text-slate-500">Skills</label>
+                <label className="text-xs font-medium text-inherit">Skills</label>
                 <input
                   type="text"
                   value={filters.skills}
@@ -63,7 +63,7 @@ export function PositionList() {
             ),
             funded: (
               <>
-                <label className="text-xs font-medium text-slate-500">Funded</label>
+                <label className="text-xs font-medium text-inherit">Funded</label>
                 <select
                   value={filters.isFunded}
                   onChange={(e) => setFilters((f) => ({ ...f, isFunded: e.target.value }))}
@@ -76,7 +76,7 @@ export function PositionList() {
             ),
             department: (
               <>
-                <label className="text-xs font-medium text-slate-500">Department</label>
+                <label className="text-xs font-medium text-inherit">Department</label>
                 <input
                   type="text"
                   value={filters.department}
@@ -96,7 +96,7 @@ export function PositionList() {
             ))}
           </div>
         ) : positions.length === 0 ? (
-          <div className="mt-6 p-8 text-center text-slate-600 bg-white rounded-lg border">
+          <div className="mt-6 p-8 text-center text-inherit bg-white rounded-lg border">
             No positions found. Try adjusting your filters.
           </div>
         ) : (
@@ -105,21 +105,21 @@ export function PositionList() {
               <Link key={pos.id} to={`/student/positions/${pos.id}`}>
                 <Card>
                   <div className="p-6">
-                    <h3 className="font-semibold text-slate-900">{pos.title}</h3>
+                    <h3 className="font-semibold text-inherit">{pos.title}</h3>
                     {pos.labName && (
                       <p className="text-sm text-teal-600 mt-1">{pos.labName}</p>
                     )}
                     {pos.department && (
-                      <p className="text-sm text-slate-500">{pos.department}</p>
+                      <p className="text-sm text-inherit">{pos.department}</p>
                     )}
                     {pos.description && (
-                      <p className="text-slate-600 mt-2 line-clamp-2">{pos.description}</p>
+                      <p className="text-inherit mt-2 line-clamp-2">{pos.description}</p>
                     )}
                     <div className="mt-3 flex flex-wrap gap-2">
                       {pos.requiredSkills?.map((s) => (
                         <span
                           key={s}
-                          className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs"
+                          className="px-2 py-0.5 bg-slate-100 text-inherit rounded text-xs"
                         >
                           {s}
                         </span>

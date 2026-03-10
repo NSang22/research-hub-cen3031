@@ -51,13 +51,13 @@ export function PositionNew() {
         <Link to="/pi/dashboard" className="text-teal-600 hover:underline mb-4 inline-block">
           ← Back to dashboard
         </Link>
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Create Position</h1>
+        <h1 className="text-2xl font-bold text-inherit mb-6">Create Position</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>
           )}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Title *</label>
+            <label className="block text-sm font-medium text-inherit mb-1">Title *</label>
             <input
               type="text"
               value={form.title}
@@ -67,7 +67,7 @@ export function PositionNew() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+            <label className="block text-sm font-medium text-inherit mb-1">Description</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
@@ -76,7 +76,7 @@ export function PositionNew() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Required Skills (comma-separated)</label>
+            <label className="block text-sm font-medium text-inherit mb-1">Required Skills (comma-separated)</label>
             <input
               type="text"
               value={form.requiredSkills}
@@ -87,7 +87,7 @@ export function PositionNew() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Min GPA</label>
+              <label className="block text-sm font-medium text-inherit mb-1">Min GPA</label>
               <input
                 type="number"
                 step="0.01"
@@ -99,7 +99,7 @@ export function PositionNew() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Deadline</label>
+              <label className="block text-sm font-medium text-inherit mb-1">Deadline</label>
               <input
                 type="date"
                 value={form.deadline}
@@ -116,7 +116,7 @@ export function PositionNew() {
               onChange={(e) => setForm((f) => ({ ...f, isFunded: e.target.checked }))}
               className="rounded border-slate-300"
             />
-            <label htmlFor="isFunded" className="text-sm font-medium text-slate-700">
+            <label htmlFor="isFunded" className="text-sm font-medium text-inherit">
               Funded position
             </label>
           </div>

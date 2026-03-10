@@ -57,7 +57,7 @@ export function PositionDetail() {
       <div className="min-h-screen">
         <Navbar />
         <div className="max-w-2xl mx-auto px-4 py-8">
-          <p className="text-slate-600">Position not found.</p>
+          <p className="text-inherit">Position not found.</p>
           <Link to="/student/positions" className="text-teal-600 hover:underline mt-2 inline-block">
             Back to positions
           </Link>
@@ -74,27 +74,27 @@ export function PositionDetail() {
           ← Back to positions
         </Link>
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-          <h1 className="text-2xl font-bold text-slate-900">{position.title}</h1>
+          <h1 className="text-2xl font-bold text-inherit">{position.title}</h1>
           {position.labName && (
             <p className="text-teal-600 font-medium mt-1">{position.labName}</p>
           )}
           {position.department && (
-            <p className="text-slate-500 text-sm">{position.department}</p>
+            <p className="text-inherit text-sm">{position.department}</p>
           )}
           {position.description && (
-            <div className="mt-4 text-slate-600 whitespace-pre-wrap">{position.description}</div>
+            <div className="mt-4 text-inherit whitespace-pre-wrap">{position.description}</div>
           )}
           <div className="mt-4 flex flex-wrap gap-2">
             {position.requiredSkills?.map((s) => (
               <span
                 key={s}
-                className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-sm"
+                className="px-2 py-1 bg-slate-100 text-inherit rounded text-sm"
               >
                 {s}
               </span>
             ))}
             {position.minGpa && (
-              <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-sm">
+              <span className="px-2 py-1 bg-slate-100 text-inherit rounded text-sm">
                 Min GPA: {position.minGpa}
               </span>
             )}
@@ -105,7 +105,7 @@ export function PositionDetail() {
             )}
           </div>
           {position.deadline && (
-            <p className="mt-4 text-sm text-slate-500">Deadline: {position.deadline}</p>
+            <p className="mt-4 text-sm text-inherit">Deadline: {position.deadline}</p>
           )}
           {!position.isOpen ? (
             <p className="mt-4 text-amber-600 font-medium">This position is no longer accepting applications.</p>
@@ -114,7 +114,7 @@ export function PositionDetail() {
               {error && (
                 <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>
               )}
-              <label className="block text-sm font-medium text-slate-700 mb-1">Cover letter (optional)</label>
+              <label className="block text-sm font-medium text-inherit mb-1">Cover letter (optional)</label>
               <textarea
                 value={coverLetter}
                 onChange={(e) => setCoverLetter(e.target.value)}
