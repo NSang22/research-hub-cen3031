@@ -11,6 +11,54 @@ import {
 } from '../types/studyListing';
 
 // ---------------------------------------------------------------------------
+// GET /api/studies
+// ---------------------------------------------------------------------------
+
+export async function listStudies(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { pi_id, status } = req.query;
+
+    // Validate status query param if provided
+    const statusFilter = (status as string) ?? 'recruiting';
+    if (!STUDY_STATUSES.includes(statusFilter as StudyStatus)) {
+      const response: ApiResponse<never> = {
+        success: false,
+        error: `status must be one of: ${STUDY_STATUSES.join(', ')}`,
+      };
+      res.status(400).json(response);
+      return;
+    }
+
+    let query = supabaseAdmin
+      .from('study_listings')
+      .select('*')
+      .eq('status', statusFilter)
+      .order('created_at', { ascending: false });
+
+    if (pi_id && typeof pi_id === 'string') {
+      query = query.eq('pi_id', pi_id);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      const err: AppError = new Error(error.message);
+      err.statusCode = 500;
+      return next(err);
+    }
+
+    const response: ApiResponse<StudyListing[]> = { success: true, data: data ?? [] };
+    res.json(response);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // POST /api/studies
 // ---------------------------------------------------------------------------
 
