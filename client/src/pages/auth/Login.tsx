@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { Navbar } from '../../components/Navbar';
 import { useAuth } from '../../context/AuthContext';
 
@@ -8,7 +9,7 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
@@ -66,6 +67,36 @@ export function Login() {
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
+        <div className="mt-4">
+          <div className="relative flex items-center gap-3 my-4">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={async (response) => {
+                if (!response.credential) return;
+                setError('');
+                setLoading(true);
+                try {
+                  const user = await loginWithGoogle(response.credential);
+                  const dest = user.role === 'student' ? '/student/dashboard' : '/pi/dashboard';
+                  navigate(from || dest, { replace: true });
+                } catch (err: unknown) {
+                  setError((err as { message?: string })?.message || 'Google sign-in failed');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              onError={() => setError('Google sign-in failed')}
+              text="signin_with"
+              shape="rectangular"
+              width="368"
+            />
+          </div>
+          <p className="mt-2 text-center text-xs text-muted-foreground">@ufl.edu accounts only</p>
+        </div>
         <p className="mt-4 text-center text-muted-foreground">
           Don't have an account?{' '}
           <Link to="/register" className="text-teal-600 hover:underline">

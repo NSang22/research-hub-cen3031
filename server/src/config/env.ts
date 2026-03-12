@@ -11,4 +11,10 @@ export const config = {
   supabaseUrl: process.env.SUPABASE_URL ?? '',
   supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? '',
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
+  googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
+  smtpHost: process.env.SMTP_HOST ?? '',
+  smtpPort: parseInt(process.env.SMTP_PORT ?? '587', 10),
+  smtpUser: process.env.SMTP_USER ?? '',
+  smtpPass: process.env.SMTP_PASS ?? '',
+  fromEmail: process.env.FROM_EMAIL ?? 'noreply@researchhub.ufl.edu',
 } as const;

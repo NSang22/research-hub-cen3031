@@ -50,6 +50,8 @@ export const api = {
     me: () => request<User>('/auth/me'),
     demo: (role: 'student' | 'pi') =>
       request<{ token: string; user: User }>('/auth/demo', { method: 'POST', body: JSON.stringify({ role }) }),
+    google: (body: { credential: string; role?: 'student' | 'pi' }) =>
+      request<{ token: string; user: User }>('/auth/google', { method: 'POST', body: JSON.stringify(body) }),
   },
   students: {
     getProfile: () => request<StudentProfile>('/students/profile'),

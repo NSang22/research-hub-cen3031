@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { Navbar } from '../../components/Navbar';
 import { useAuth } from '../../context/AuthContext';
 import type { UserRole } from '../../types';
@@ -12,7 +13,7 @@ export function Register() {
   const [role, setRole] = useState<UserRole>('student');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,6 +103,36 @@ export function Register() {
             {loading ? 'Creating account...' : 'Register'}
           </button>
         </form>
+        <div className="mt-4">
+          <div className="relative flex items-center gap-3 my-4">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted-foreground">or sign up with Google</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={async (response) => {
+                if (!response.credential) return;
+                setError('');
+                setLoading(true);
+                try {
+                  const user = await loginWithGoogle(response.credential, role);
+                  const dest = user.role === 'student' ? '/student/dashboard' : '/pi/dashboard';
+                  navigate(dest, { replace: true });
+                } catch (err: unknown) {
+                  setError((err as { message?: string })?.message || 'Google sign-up failed');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              onError={() => setError('Google sign-up failed')}
+              text="signup_with"
+              shape="rectangular"
+              width="368"
+            />
+          </div>
+          <p className="mt-2 text-center text-xs text-muted-foreground">@ufl.edu accounts only · uses the role selected above</p>
+        </div>
         <p className="mt-4 text-center text-muted-foreground">
           Already have an account?{' '}
           <Link to="/login" className="text-teal-600 hover:underline">
