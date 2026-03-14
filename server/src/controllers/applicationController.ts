@@ -39,14 +39,17 @@ export async function getMyApplications(
       return;
     }
 
-    // Join research_positions to surface title and department alongside each application
+    // Nested join: applications → research_positions → pi_profiles
+    // research_positions has no department column; lab_name comes from pi_profiles
     const { data, error } = await supabaseAdmin
       .from('applications')
       .select(`
         *,
         research_positions!position_id (
           title,
-          department
+          pi_profiles!pi_id (
+            lab_name
+          )
         )
       `)
       .eq('student_id', student_id)
@@ -58,15 +61,18 @@ export async function getMyApplications(
       return next(err);
     }
 
-    // Flatten nested research_positions into top-level fields
+    // Flatten nested join result into top-level fields
     const enriched: ApplicationWithPosition[] = (data ?? []).map((row) => {
       const { research_positions: pos, ...rest } = row as Application & {
-        research_positions: { title: string; department: string } | null;
+        research_positions: {
+          title: string;
+          pi_profiles: { lab_name: string | null } | null;
+        } | null;
       };
       return {
         ...rest,
         position_title: pos?.title ?? '',
-        position_department: pos?.department ?? '',
+        lab_name: pos?.pi_profiles?.lab_name ?? null,
       };
     });
 

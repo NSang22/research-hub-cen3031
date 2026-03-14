@@ -23,10 +23,11 @@ export interface Application {
 }
 
 /**
- * Application row enriched with position metadata for the student-facing
+ * Application row enriched with position and lab metadata for the student-facing
  * "my applications" list view.
+ * Populated via nested join: applications → research_positions → pi_profiles.
  */
 export interface ApplicationWithPosition extends Application {
   position_title: string;
-  position_department: string;
+  lab_name: string | null;
 }
