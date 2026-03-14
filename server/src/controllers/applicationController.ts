@@ -121,6 +121,76 @@ export async function getApplicationById(
 }
 
 // ---------------------------------------------------------------------------
+// PUT /api/applications/:id/withdraw
+// ---------------------------------------------------------------------------
+
+export async function withdrawApplication(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { id } = req.params;
+
+    // Fetch the current application to check status before mutating
+    const { data: existing, error: fetchError } = await supabaseAdmin
+      .from('applications')
+      .select('id, status')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (fetchError) {
+      const err: AppError = new Error(fetchError.message);
+      err.statusCode = 500;
+      return next(err);
+    }
+
+    if (!existing) {
+      const response: ApiResponse<never> = {
+        success: false,
+        error: 'Application not found',
+      };
+      res.status(404).json(response);
+      return;
+    }
+
+    const currentStatus = (existing as { status: string }).status;
+
+    // Only pending or reviewing applications may be withdrawn
+    if (!WITHDRAWABLE_STATUSES.includes(currentStatus as Application['status'])) {
+      const response: ApiResponse<never> = {
+        success: false,
+        error: `Cannot withdraw an application with status '${currentStatus}'. Only pending or reviewing applications can be withdrawn`,
+      };
+      res.status(409).json(response);
+      return;
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('applications')
+      .update({ status: 'withdrawn' })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      const err: AppError = new Error(error.message);
+      err.statusCode = 500;
+      return next(err);
+    }
+
+    const response: ApiResponse<Application> = {
+      success: true,
+      data,
+      message: 'Application withdrawn successfully',
+    };
+    res.json(response);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // POST /api/applications
 // ---------------------------------------------------------------------------
 
