@@ -38,6 +38,7 @@ function App() {
           >
             <Route path="dashboard" element={<StudentDashboard />} />
             <Route path="profile" element={<StudentProfile />} />
+            <Route path="settings" element={<StudentProfile />} />
             <Route path="positions" element={<PositionList />} />
             <Route path="positions/:id" element={<PositionDetail />} />
             <Route path="applications" element={<StudentApplications />} />

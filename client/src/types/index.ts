@@ -68,6 +68,9 @@ export interface Position {
   labName?: string;
   researchArea?: string;
   labWebsite?: string;
+  /** Present on position detail (from PI user record) */
+  piFirstName?: string;
+  piLastName?: string;
 }
 
 export interface ParticipantProfile {

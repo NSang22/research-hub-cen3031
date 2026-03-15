@@ -26,12 +26,12 @@ interface Pulse {
   speed: number;
 }
 
-// ── COLOR PALETTE (contrasts against UF blue→orange gradient) ───
+// ── COLOR PALETTE — CMYK blue 100 60 0 20 → RGB(0,82,204) + variants ───
 const COLORS = {
-  student: { r: 255, g: 165, b: 0 }, // white
-  lab: { r: 255, g: 165, b: 0 }, // warm cream/gold
-  neutral: { r: 255, g: 165, b: 0 }, // light periwinkle
-  pulse: { r: 255, g: 165, b: 0 }, // white
+  student: { r: 0, g: 82, b: 204 },
+  lab: { r: 40, g: 110, b: 220 },
+  neutral: { r: 120, g: 160, b: 230 },
+  pulse: { r: 0, g: 100, b: 220 },
 };
 
 // ── NETWORK CANVAS ──────────────────────────────────────────────

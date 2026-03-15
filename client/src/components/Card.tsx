@@ -9,8 +9,9 @@ interface CardProps {
 export function Card({ children, className = '', onClick }: CardProps) {
   return (
     <div
+      data-card-blue
       onClick={onClick}
-      className={`bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-shadow ${
+      className={`rounded-lg border border-white/25 text-white [&_a]:font-medium [&_a]:text-white [&_a]:hover:underline [&_a]:hover:opacity-95 ${
         onClick ? 'cursor-pointer' : ''
       } ${className}`}
     >

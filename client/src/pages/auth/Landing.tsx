@@ -9,24 +9,25 @@ export function Landing() {
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col relative overflow-hidden" style={{ background: '#001A3E', color: 'rgb(255,165,0)' }}>
+    <div className="page-landing min-h-screen flex flex-col relative overflow-x-hidden bg-white text-[#0052CC]">
       {/* Network Background - nodes, connections, pulses */}
       <NetworkBackground />
 
-      {/* Content - z-[100] ensures buttons are above background; pb-24 on mobile for TubelightNavBar */}
-      <div className="relative z-[150] flex-1 flex flex-col items-center justify-center text-center px-4 pb-24 sm:pb-0">
-        <h1 className="text-5xl md:text-8xl mb-8 max-w-5xl font-bold" style={{ color: 'rgb(255,165,0)' }}>
+      {/* Content — full width + centered stack (avoids drift from body sidebar padding) */}
+      <div className="relative z-[150] flex w-full flex-1 flex-col items-center justify-center px-4 pb-24 text-center sm:pb-0">
+        <div className="flex w-full max-w-5xl flex-col items-center justify-center">
+        <h1 className="mb-8 w-full max-w-5xl text-5xl font-bold text-[#0052CC] md:text-8xl">
           The Smarter Way to Find Research
         </h1>
-        <p className="text-lg md:text-xl mb-12 max-w-xl mx-auto leading-relaxed" style={{ color: 'rgb(255,165,0)' }}>
-          Browse positions, apply to labs, and grow your research career. For Students and PIs.
+        <p className="mb-12 max-w-xl w-full text-lg leading-relaxed text-[#0052CC] md:text-xl">
+          Browse positions, apply to labs, and grow your research career. For UF, by UF.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 relative z-[130]">
+        <div className="relative z-[130] flex flex-col items-center justify-center gap-4 sm:flex-row">
           <div className="relative w-48 min-h-[3.5rem]">
             <Link
               to="/register"
               className="absolute inset-0 flex items-center justify-center rounded-2xl text-lg font-semibold transition-all hover:cursor-pointer duration-300 hover:scale-105 shadow-lg hover:shadow-xl no-underline"
-              style={{ background: 'rgb(255,165,0)', color: '#00529B' }}
+              style={{ background: '#0052CC', color: '#ffffff' }}
             >
               Register
             </Link>
@@ -35,36 +36,37 @@ export function Landing() {
             <Link
               to="/login"
               className="absolute inset-0 flex items-center justify-center backdrop-blur-lg rounded-2xl text-lg font-semibold transition-all duration-300 hover:cursor-pointer hover:scale-105 shadow-lg hover:shadow-xl no-underline"
-              style={{ border: '2px solid rgb(255,165,0)', color: 'rgb(255,165,0)' }}
+              style={{ border: '2px solid #0052CC', color: '#0052CC' }}
             >
               Login
             </Link>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 mt-6 relative z-[130]">
-          <p className="text-sm w-full sm:w-auto self-center opacity-70" style={{ color: 'rgb(255,165,0)' }}>
+        <div className="relative z-[130] mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <p className="w-full text-center text-sm text-[#0052CC]/70 sm:w-auto">
             Try a demo:
           </p>
           <button
             onClick={() => handleDemo('student')}
             className="px-5 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105"
-            style={{ background: 'rgba(255,165,0,0.15)', border: '1px solid rgba(255,165,0,0.4)', color: 'rgb(255,165,0)' }}
+            style={{ background: 'rgba(0,82,204,0.08)', border: '1px solid rgba(0,82,204,0.35)', color: '#0052CC' }}
           >
             Demo Student
           </button>
           <button
             onClick={() => handleDemo('pi')}
             className="px-5 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105"
-            style={{ background: 'rgba(255,165,0,0.15)', border: '1px solid rgba(255,165,0,0.4)', color: 'rgb(255,165,0)' }}
+            style={{ background: 'rgba(0,82,204,0.08)', border: '1px solid rgba(0,82,204,0.35)', color: '#0052CC' }}
           >
             Demo PI
           </button>
+        </div>
         </div>
       </div>
 
       {/* Footer */}
       <footer className="relative z-[100] py-6">
-        <div className="text-center text-sm" style={{ color: 'rgb(255,165,0)' }}>
+        <div className="text-center text-sm text-[#0052CC]">
           © {new Date().getFullYear()} ResearchHub. All rights reserved.
         </div>
       </footer>

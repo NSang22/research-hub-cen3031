@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home,
   LogIn,
@@ -8,97 +8,168 @@ import {
   FileText,
   User,
   Users,
-  FlaskConical,
+  Settings,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { TubelightNavBar } from './ui/tubelight-navbar';
-import type { NavItem } from './ui/tubelight-navbar';
 
-interface NavbarProps {
-  variant?: 'default' | 'landing';
+interface NavItem {
+  name: string;
+  url: string;
+  icon: LucideIcon;
 }
 
-export function Navbar({ variant = 'default' }: NavbarProps) {
+function studentNavActive(pathname: string, url: string): boolean {
+  if (url === '/student/dashboard') return pathname === '/student/dashboard';
+  if (url === '/student/positions') return pathname.startsWith('/student/positions');
+  if (url === '/student/applications') return pathname === '/student/applications';
+  if (url === '/student/profile') return pathname === '/student/profile';
+  if (url === '/student/settings') return pathname === '/student/settings';
+  return false;
+}
+
+function piNavActive(pathname: string, url: string): boolean {
+  if (url === '/pi/dashboard') return pathname === '/pi/dashboard';
+  if (url === '/pi/positions/new') return pathname.startsWith('/pi/positions');
+  if (url === '/pi/students') return pathname.startsWith('/pi/students');
+  if (url === '/pi/profile') return pathname === '/pi/profile';
+  return false;
+}
+
+const publicItems: NavItem[] = [
+  { name: 'Home', url: '/', icon: Home },
+  { name: 'Login', url: '/login', icon: LogIn },
+  { name: 'Register', url: '/register', icon: UserPlus },
+];
+
+const studentMainItems: NavItem[] = [
+  { name: 'Dashboard', url: '/student/dashboard', icon: LayoutDashboard },
+  { name: 'Browse Positions', url: '/student/positions', icon: Briefcase },
+  { name: 'My Applications', url: '/student/applications', icon: FileText },
+];
+
+const studentAccountItems: NavItem[] = [
+  { name: 'Profile', url: '/student/profile', icon: User },
+  { name: 'Settings', url: '/student/settings', icon: Settings },
+];
+
+const piMainItems: NavItem[] = [
+  { name: 'Dashboard', url: '/pi/dashboard', icon: LayoutDashboard },
+  { name: 'Positions', url: '/pi/positions/new', icon: Briefcase },
+  { name: 'Students', url: '/pi/students', icon: Users },
+];
+
+const piAccountItems: NavItem[] = [{ name: 'Profile', url: '/pi/profile', icon: User }];
+
+const sectionLabelClass = 'px-6 pt-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider';
+const sectionLabelStyle = { color: '#8b90ad' } as const;
+
+export function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const pathname = location.pathname;
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
-  const publicItems: NavItem[] = [
-    { name: 'Home', url: '/', icon: Home },
-    { name: 'Login', url: '/login', icon: LogIn },
-    { name: 'Register', url: '/register', icon: UserPlus },
-  ];
-
-  const studentItems: NavItem[] = [
-    { name: 'Dashboard', url: '/student/dashboard', icon: LayoutDashboard },
-    { name: 'Positions', url: '/student/positions', icon: Briefcase },
-    { name: 'Applications', url: '/student/applications', icon: FileText },
-    { name: 'Participant', url: '/student/participant', icon: FlaskConical },
-    { name: 'Profile', url: '/student/profile', icon: User },
-  ];
-
-  const piItems: NavItem[] = [
-    { name: 'Dashboard', url: '/pi/dashboard', icon: LayoutDashboard },
-    { name: 'Positions', url: '/pi/positions/new', icon: Briefcase },
-    { name: 'Students', url: '/pi/students', icon: Users },
-    { name: 'Profile', url: '/pi/profile', icon: User },
-  ];
-
-  const items = user
-    ? user.role === 'student'
-      ? studentItems
-      : piItems
-    : publicItems;
-
-  const isLanding = variant === 'landing';
+  const renderLink = (item: NavItem, active: boolean) => {
+    const Icon = item.icon;
+    return (
+      <Link
+        key={item.name}
+        to={item.url}
+        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border-l-[3px]"
+        style={{
+          borderLeftColor: active ? '#0052CC' : 'transparent',
+          color: active ? '#0052CC' : 'rgba(0,82,204,0.55)',
+          background: active ? 'rgba(0,82,204,0.08)' : 'transparent',
+        }}
+      >
+        <Icon size={18} strokeWidth={2} />
+        {item.name}
+      </Link>
+    );
+  };
 
   return (
-    <>
-      <nav
-        className={`fixed top-0 left-0 right-0 z-[110] flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 ${
-          isLanding ? 'border-b border-white/10' : ''
-        }`}
-        style={isLanding ? { color: 'rgb(255,165,0)', background: '#001A3E' } : undefined}
-      >
-        <Link
-          to="/"
-          className={`text-xl font-bold ${
-            isLanding
-              ? 'hover:opacity-80'
-              : 'text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300'
-          }`}
-        >
+    <aside
+      className="fixed left-0 top-0 h-screen w-56 flex flex-col z-[110]"
+      style={{ background: '#ffffff', borderRight: '1px solid rgba(0,82,204,0.2)' }}
+    >
+      <div className="px-6 py-5" style={{ borderBottom: '1px solid rgba(0,82,204,0.2)' }}>
+        <Link to={user?.role === 'student' ? '/student/dashboard' : user?.role === 'pi' ? '/pi/dashboard' : '/'} style={{ color: '#0052CC', fontWeight: 700, fontSize: '1.1rem' }}>
           ResearchHub
         </Link>
-        <div className="flex items-center gap-2">
-          {user ? (
-            <>
-              <span
-                className={`hidden sm:inline text-sm ${
-                  isLanding ? '' : 'text-inherit dark:text-slate-400'
-                }`}
-              >
-                {user.firstName} {user.lastName}
-              </span>
-              <button
-                onClick={handleLogout}
-                className={`px-4 py-2 text-sm font-medium rounded-full ${
-                  isLanding
-                    ? 'bg-white/10 hover:bg-white/20 border border-orange-400/40'
-                    : 'text-inherit dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                Logout
-              </button>
-            </>
-          ) : null}
-        </div>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto py-2">
+        {!user && (
+          <div className="px-3 space-y-1">
+            {publicItems.map((item) => {
+              const isActive =
+                item.url === '/' ? pathname === '/' : pathname.startsWith(item.url);
+              return renderLink(item, isActive);
+            })}
+          </div>
+        )}
+
+        {user?.role === 'student' && (
+          <>
+            <div className={sectionLabelClass} style={sectionLabelStyle}>
+              Menu
+            </div>
+            <div className="px-3 space-y-0.5">
+              {studentMainItems.map((item) => renderLink(item, studentNavActive(pathname, item.url)))}
+            </div>
+            <div className={sectionLabelClass} style={sectionLabelStyle}>
+              Account
+            </div>
+            <div className="px-3 space-y-0.5 pb-2">
+              {studentAccountItems.map((item) => renderLink(item, studentNavActive(pathname, item.url)))}
+            </div>
+          </>
+        )}
+
+        {user?.role === 'pi' && (
+          <>
+            <div className={sectionLabelClass} style={sectionLabelStyle}>
+              Workspace
+            </div>
+            <div className="px-3 space-y-0.5">
+              {piMainItems.map((item) => renderLink(item, piNavActive(pathname, item.url)))}
+            </div>
+            <div className={sectionLabelClass} style={sectionLabelStyle}>
+              Account
+            </div>
+            <div className="px-3 space-y-0.5 pb-2">
+              {piAccountItems.map((item) => renderLink(item, piNavActive(pathname, item.url)))}
+            </div>
+          </>
+        )}
       </nav>
-      <TubelightNavBar items={items} forceBottom={false} />
-    </>
+
+      {user && (
+        <div className="px-4 py-4" style={{ borderTop: '1px solid rgba(0,82,204,0.2)' }}>
+          <p className="text-xs mb-3 truncate" style={{ color: 'rgba(0,82,204,0.55)' }}>
+            {user.firstName} {user.lastName}
+          </p>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full px-3 py-2 text-sm rounded-lg font-medium"
+            style={{
+              background: 'rgba(0,82,204,0.06)',
+              color: '#0052CC',
+              border: '1px solid rgba(0,82,204,0.25)',
+            }}
+          >
+            Logout
+          </button>
+        </div>
+      )}
+    </aside>
   );
 }

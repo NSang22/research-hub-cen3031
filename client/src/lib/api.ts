@@ -87,7 +87,8 @@ export const api = {
   applications: {
     create: (body: { positionId: string; coverLetter?: string }) =>
       request<Application>('/applications', { method: 'POST', body: JSON.stringify(body) }),
-    mine: () => request<(Application & { positionTitle?: string; labName?: string })[]>('/applications/mine'),
+    mine: () =>
+      request<(Application & { positionTitle?: string; labName?: string; department?: string | null })[]>('/applications/mine'),
     byPosition: (positionId: string) =>
       request<(Application & { firstName?: string; lastName?: string; email?: string; major?: string; gpa?: number; skills?: string[]; bio?: string; resumeUrl?: string; yearLevel?: string })[]>(
         `/applications/position/${positionId}`

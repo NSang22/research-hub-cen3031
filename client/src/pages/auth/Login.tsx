@@ -31,7 +31,7 @@ export function Login() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <div className="flex-1 flex items-center justify-center px-4 pt-24 pb-24">
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="max-w-md w-full">
         <h1 className="text-2xl font-bold text-foreground mb-6">Sign in to ResearchHub</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
