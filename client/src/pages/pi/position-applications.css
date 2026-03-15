@@ -1,0 +1,232 @@
+/* PI position applications list — IBM Plex Sans from global */
+.pa-page {
+  min-height: 100vh;
+  background: #f6f7fb;
+  font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  color: #1a1d2e;
+}
+
+.pa-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+}
+
+.pa-back {
+  display: inline-block;
+  margin-bottom: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7194;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.pa-back:hover {
+  color: #3b5bdb;
+}
+
+.pa-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1d2e;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+  line-height: 1.25;
+}
+
+.pa-subtitle {
+  font-size: 14px;
+  color: #8b90ad;
+  margin: 0 0 20px;
+}
+
+.pa-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pa-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid #d5d8e8;
+  border-radius: 10px;
+  padding: 18px 24px;
+}
+
+.pa-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: #dbe4ff;
+  color: #3b5bdb;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pa-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pa-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1d2e;
+  margin: 0 0 4px;
+}
+
+.pa-details {
+  font-size: 13px;
+  color: #6b7194;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.pa-cover-row {
+  margin: 6px 0 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pa-cover-text {
+  font-size: 12px;
+  color: #8b90ad;
+  font-style: italic;
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pa-read-more {
+  flex-shrink: 0;
+  font-style: normal;
+  font-weight: 500;
+  color: #3b5bdb;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.pa-read-more:hover {
+  text-decoration: underline;
+}
+
+.pa-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.pa-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.pa-pill-pending {
+  background: #fff8e1;
+  color: #b35c00;
+}
+
+.pa-pill-reviewing {
+  background: #dbe4ff;
+  color: #3451b2;
+}
+
+.pa-pill-accepted {
+  background: #d3f9d8;
+  color: #2b8a3e;
+}
+
+.pa-pill-rejected {
+  background: #ffe0e0;
+  color: #c62828;
+}
+
+.pa-pill-withdrawn {
+  background: #eceef5;
+  color: #6b7194;
+}
+
+.pa-select {
+  background: #f6f7fb;
+  border: 1px solid #d5d8e8;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  color: #1a1d2e;
+  cursor: pointer;
+  outline: none;
+  min-width: 120px;
+}
+
+.pa-select:focus {
+  border-color: #5c7cfa;
+  box-shadow: 0 0 0 2px rgba(66, 99, 235, 0.15);
+}
+
+.pa-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pa-profile-link {
+  font-size: 12px;
+  font-weight: 500;
+  color: #3b5bdb;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.pa-profile-link:hover {
+  text-decoration: underline;
+}
+
+.pa-empty {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.pa-empty-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  color: #b0b4cc;
+}
+
+.pa-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #3d4260;
+  margin: 0 0 8px;
+}
+
+.pa-empty-sub {
+  font-size: 14px;
+  color: #8b90ad;
+  margin: 0;
+}

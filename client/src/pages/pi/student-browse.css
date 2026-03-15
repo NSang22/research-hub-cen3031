@@ -1,0 +1,350 @@
+/* PI Browse Students — aligns with student/position-browse (IBM Plex from global) */
+.bs-page,
+.bs-page *,
+.bs-page *::before,
+.bs-page *::after {
+  box-sizing: border-box;
+}
+
+.bs-page {
+  min-height: 100vh;
+  background: #f6f7fb;
+  font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  padding: 40px 24px 80px;
+  color: #1a1d2e;
+}
+
+.bs-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.bs-header {
+  margin-bottom: 28px;
+}
+
+.bs-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #3b5bdb;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.bs-subtitle {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #6b7194;
+  font-weight: 400;
+}
+
+.bs-filters {
+  background: #fff;
+  border: 1px solid #d5d8e8;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(30, 42, 120, 0.04);
+}
+
+.bs-filter-row {
+  display: grid;
+  grid-template-columns: 1fr 0.85fr 1.2fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.bs-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  position: relative;
+}
+
+.bs-filter-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8b90ad;
+}
+
+.bs-input,
+.bs-select {
+  background: #f6f7fb;
+  border: 1px solid #d5d8e8;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: #1a1d2e;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+.bs-select {
+  appearance: none;
+  background: #f6f7fb
+    url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236b7194' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat right 12px center;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+.bs-input:focus,
+.bs-select:focus {
+  border-color: #5c7cfa;
+  box-shadow: 0 0 0 3px rgba(66, 99, 235, 0.08);
+}
+
+.bs-input::placeholder {
+  color: #b0b4cc;
+}
+
+.bs-reset {
+  background: none;
+  border: none;
+  color: #8b90ad;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 9px 4px;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+
+.bs-reset:hover {
+  color: #3b5bdb;
+}
+
+.bs-skill-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #d5d8e8;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(30, 42, 120, 0.1);
+  overflow: hidden;
+}
+
+.bs-skill-option {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #3d4260;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.bs-skill-option:hover {
+  background: #edf2ff;
+  color: #3b5bdb;
+}
+
+.bs-active-filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 14px 0 0;
+}
+
+.bs-skill-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  background: #edf2ff;
+  border: 1px solid #bac8ff;
+  border-radius: 999px;
+  font-size: 12px;
+  color: #3b5bdb;
+  font-weight: 500;
+}
+
+.bs-skill-pill-x {
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.bs-skill-pill-x:hover {
+  opacity: 1;
+}
+
+.bs-results-meta {
+  padding: 14px 0 10px;
+  font-size: 13px;
+  color: #8b90ad;
+  font-weight: 400;
+}
+
+.bs-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bs-card {
+  display: block;
+  background: #fff;
+  border: 1px solid #d5d8e8;
+  border-left: 3px solid transparent;
+  border-radius: 10px;
+  padding: 22px 26px;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.bs-card:hover {
+  border-left-color: #4263eb;
+  box-shadow: 0 4px 16px rgba(30, 42, 120, 0.07);
+  transform: translateY(-1px);
+}
+
+.bs-card:focus-visible {
+  outline: 2px solid #4263eb;
+  outline-offset: 2px;
+}
+
+.bs-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.bs-card-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1d2e;
+  line-height: 1.3;
+  transition: color 0.15s;
+}
+
+.bs-card:hover .bs-card-name {
+  color: #3b5bdb;
+}
+
+.bs-card-gpa-wrap {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.bs-card-gpa-label {
+  display: block;
+  font-size: 10px;
+  color: #8b90ad;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.bs-card-gpa-val {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1d2e;
+  line-height: 1;
+}
+
+.bs-card-gpa-empty {
+  font-size: 18px;
+  font-weight: 600;
+  color: #b0b4cc;
+}
+
+.bs-meta-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #6b7194;
+  margin-bottom: 10px;
+}
+
+.bs-meta-line svg {
+  flex-shrink: 0;
+  color: #91a7ff;
+}
+
+.bs-bio {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #6b7194;
+  margin: 0 0 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.bs-incomplete {
+  font-size: 13px;
+  color: #b0b4cc;
+  margin: 0 0 14px;
+}
+
+.bs-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bs-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.bs-chip {
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #edf2ff;
+  color: #3451b2;
+  border: 1px solid #dbe4ff;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.bs-chip.matched {
+  background: #3b5bdb;
+  color: #fff;
+  border-color: #3b5bdb;
+}
+
+.bs-email {
+  font-size: 12px;
+  color: #8b90ad;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.bs-email:hover {
+  color: #3b5bdb;
+}
+
+.bs-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: #8b90ad;
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  .bs-filter-row {
+    grid-template-columns: 1fr;
+  }
+}

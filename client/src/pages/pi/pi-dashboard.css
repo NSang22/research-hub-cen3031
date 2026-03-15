@@ -1,0 +1,389 @@
+/* PI dashboard main area — global Navbar handles sidebar; IBM Plex from index */
+.pi-dash-page {
+  min-height: 100vh;
+  background: #f6f7fb;
+  font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  color: #1a1d2e;
+}
+
+.pi-dash-main {
+  flex: 1;
+  padding: 32px 40px;
+  overflow-y: auto;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.pi-dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pi-dash-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1d2e;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.pi-dash-subtitle {
+  font-size: 13px;
+  color: #8b90ad;
+  margin-top: 2px;
+}
+
+.pi-dash-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  background: #3b5bdb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.pi-dash-btn-primary:hover {
+  background: #4263eb;
+}
+
+.pi-dash-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.pi-dash-stat {
+  background: #fff;
+  border: 1px solid #d5d8e8;
+  border-radius: 10px;
+  padding: 18px 20px;
+  transition: box-shadow 0.2s;
+}
+
+.pi-dash-stat:hover {
+  box-shadow: 0 2px 8px rgba(30, 42, 120, 0.06);
+}
+
+.pi-dash-stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8b90ad;
+  margin-bottom: 8px;
+}
+
+.pi-dash-stat-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pi-dash-stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1d2e;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.pi-dash-stat-delta {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2b8a3e;
+}
+
+.pi-dash-stat-sub {
+  font-size: 12px;
+  color: #8b90ad;
+  margin-top: 4px;
+}
+
+.pi-dash-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.pi-dash-card {
+  background: #fff;
+  border: 1px solid #d5d8e8;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.pi-dash-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #eceef5;
+}
+
+.pi-dash-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1d2e;
+}
+
+.pi-dash-card-link {
+  font-size: 12px;
+  font-weight: 500;
+  color: #3b5bdb;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.pi-dash-card-link:hover {
+  color: #5c7cfa;
+}
+
+.pi-dash-pos-row {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #eceef5;
+  gap: 14px;
+  transition: background 0.12s;
+  text-decoration: none;
+  color: inherit;
+}
+
+.pi-dash-pos-row:last-child {
+  border-bottom: none;
+}
+
+.pi-dash-pos-row:hover {
+  background: #edf2ff;
+}
+
+.pi-dash-pos-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pi-dash-pos-indicator.open {
+  background: #2b8a3e;
+}
+
+.pi-dash-pos-indicator.closed {
+  background: #b0b4cc;
+}
+
+.pi-dash-pos-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pi-dash-pos-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1d2e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pi-dash-pos-meta {
+  font-size: 11px;
+  color: #8b90ad;
+  margin-top: 2px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pi-dash-pos-applicants {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.pi-dash-pos-count {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1d2e;
+  line-height: 1;
+}
+
+.pi-dash-pos-count-label {
+  font-size: 10px;
+  color: #8b90ad;
+  margin-top: 2px;
+}
+
+.pi-dash-pos-new {
+  display: inline-block;
+  margin-left: 6px;
+  background: #3b5bdb;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+.pi-dash-pos-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pi-dash-pos-close {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b35c00;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 4px 6px;
+}
+
+.pi-dash-pos-close:hover {
+  text-decoration: underline;
+}
+
+.pi-dash-confirm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pi-dash-confirm button {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pi-dash-app-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #eceef5;
+  gap: 12px;
+  transition: background 0.12s;
+  text-decoration: none;
+  color: inherit;
+}
+
+.pi-dash-app-row:last-child {
+  border-bottom: none;
+}
+
+.pi-dash-app-row:hover {
+  background: #edf2ff;
+}
+
+.pi-dash-app-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #dbe4ff;
+  color: #3451b2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pi-dash-app-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pi-dash-app-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1d2e;
+}
+
+.pi-dash-app-detail {
+  font-size: 11px;
+  color: #8b90ad;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pi-dash-app-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.pi-dash-app-status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.pi-dash-app-time {
+  font-size: 10px;
+  color: #b0b4cc;
+  margin-top: 3px;
+}
+
+.pi-dash-empty {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.pi-dash-empty-icon {
+  width: 40px;
+  height: 40px;
+  color: #b0b4cc;
+  margin: 0 auto 12px;
+}
+
+.pi-dash-empty-text {
+  font-size: 13px;
+  color: #8b90ad;
+}
+
+.pi-dash-empty-cta {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3b5bdb;
+  margin-top: 8px;
+  display: inline-block;
+}
+
+@media (max-width: 900px) {
+  .pi-dash-main {
+    padding: 24px 16px;
+  }
+
+  .pi-dash-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .pi-dash-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,186 @@
+/* PI student profile detail — IBM Plex Sans from global */
+.sd-page {
+  min-height: 100vh;
+  background: #f6f7fb;
+  font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  color: #1a1d2e;
+}
+
+.sd-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+}
+
+.sd-back {
+  display: inline-block;
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7194;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.sd-back:hover {
+  color: #3b5bdb;
+}
+
+.sd-card {
+  background: #fff;
+  border: 1px solid #d5d8e8;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.sd-header {
+  padding: 28px 32px;
+  border-bottom: 1px solid #eceef5;
+}
+
+.sd-header-row1 {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.sd-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background: #dbe4ff;
+  color: #3b5bdb;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sd-name {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1d2e;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.sd-email {
+  display: inline-block;
+  font-size: 13px;
+  color: #8b90ad;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.sd-email:hover {
+  color: #3b5bdb;
+}
+
+.sd-grid-section {
+  padding: 28px 32px;
+  border-bottom: 1px solid #eceef5;
+}
+
+.sd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.sd-cell-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8b90ad;
+  margin: 0 0 4px;
+}
+
+.sd-cell-value {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1d2e;
+}
+
+.sd-skills-section {
+  padding: 24px 32px;
+  border-bottom: 1px solid #eceef5;
+}
+
+.sd-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8b90ad;
+  margin: 0 0 12px;
+}
+
+.sd-skills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sd-skill-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #edf2ff;
+  color: #3451b2;
+  border: 1px solid #dbe4ff;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.sd-about-section {
+  padding: 24px 32px 28px;
+}
+
+.sd-about-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #3d4260;
+  white-space: pre-wrap;
+}
+
+.sd-about-placeholder {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #b0b4cc;
+  font-style: italic;
+}
+
+.sd-resume-wrap {
+  margin-top: 20px;
+}
+
+.sd-resume-link {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #d5d8e8;
+  border-radius: 8px;
+  padding: 9px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3b5bdb;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.sd-resume-link:hover {
+  background: #edf2ff;
+}
+
+@media (max-width: 520px) {
+  .sd-grid {
+    grid-template-columns: 1fr;
+  }
+}

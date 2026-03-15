@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Navbar } from '../../components/Navbar';
-import { StatusBadge } from '../../components/StatusBadge';
 import { Modal } from '../../components/Modal';
 import { api } from '../../lib/api';
+import type { AcademicLevel } from '../../types';
+import './position-applications.css';
 
 interface AppWithStudent {
   id: string;
@@ -20,6 +21,55 @@ interface AppWithStudent {
   bio?: string;
   resumeUrl?: string;
   yearLevel?: string;
+}
+
+function initials(first?: string, last?: string): string {
+  const a = (first?.[0] || '').toUpperCase();
+  const b = (last?.[0] || '').toUpperCase();
+  return (a + b) || '?';
+}
+
+function formatYearLabel(yl: string | undefined): string {
+  if (!yl) return '';
+  const map: Record<string, string> = {
+    freshman: 'Freshman',
+    sophomore: 'Sophomore',
+    junior: 'Junior',
+    senior: 'Senior',
+    grad: 'Grad',
+    masters: 'Masters',
+    phd: 'PhD',
+    postdoc: 'Postdoc',
+  };
+  return map[yl] || yl;
+}
+
+function pillClass(status: string): string {
+  switch (status) {
+    case 'pending':
+      return 'pa-pill pa-pill-pending';
+    case 'reviewing':
+      return 'pa-pill pa-pill-reviewing';
+    case 'accepted':
+      return 'pa-pill pa-pill-accepted';
+    case 'rejected':
+      return 'pa-pill pa-pill-rejected';
+    case 'withdrawn':
+      return 'pa-pill pa-pill-withdrawn';
+    default:
+      return 'pa-pill pa-pill-pending';
+  }
+}
+
+function pillLabel(status: string): string {
+  const labels: Record<string, string> = {
+    pending: 'Pending',
+    reviewing: 'Reviewing',
+    accepted: 'Accepted',
+    rejected: 'Rejected',
+    withdrawn: 'Withdrawn',
+  };
+  return labels[status] ?? status;
 }
 
 export function PositionApplications() {
@@ -43,9 +93,7 @@ export function PositionApplications() {
     setUpdating(true);
     try {
       await api.applications.updateStatus(appId, status);
-      setApplications((apps) =>
-        apps.map((a) => (a.id === appId ? { ...a, status } : a))
-      );
+      setApplications((apps) => apps.map((a) => (a.id === appId ? { ...a, status } : a)));
       setSelectedApp((a) => (a?.id === appId ? { ...a, status } : a));
     } finally {
       setUpdating(false);
@@ -55,96 +103,137 @@ export function PositionApplications() {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <Link to="/pi/dashboard" className="text-teal-600 hover:underline mb-4 inline-block">
-          ← Back to dashboard
-        </Link>
-        <h1 className="text-2xl font-bold text-inherit mb-2">
-          Applications: {positionTitle || 'Position'}
-        </h1>
-        <p className="text-inherit mb-6">{applications.length} applicant(s)</p>
-        {loading ? (
-          <div className="animate-pulse space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-slate-200 rounded-lg" />
-            ))}
+      {loading ? (
+        <div className="pa-page">
+          <div className="pa-inner">
+            <div className="animate-pulse space-y-3">
+              <div className="h-5 bg-slate-200 rounded w-40" />
+              <div className="h-8 bg-slate-200 rounded w-3/4 max-w-md" />
+              <div className="h-4 bg-slate-200 rounded w-24" />
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-20 bg-slate-200 rounded-[10px]" />
+              ))}
+            </div>
           </div>
-        ) : applications.length === 0 ? (
-          <div className="bg-white rounded-lg border border-slate-200 p-8 text-center text-inherit">
-            No applications yet.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {applications.map((app) => (
-              <div
-                key={app.id}
-                className="bg-white rounded-lg border border-slate-200 p-4 flex justify-between items-center"
-              >
-                <div>
-                  <button
-                    onClick={() => setSelectedApp(app)}
-                    className="font-medium text-inherit hover:text-teal-600 text-left"
-                  >
-                    {app.firstName} {app.lastName}
-                  </button>
-                  <p className="text-sm text-inherit">{app.email}</p>
-                  {app.major && (
-                    <p className="text-sm text-inherit">
-                      {app.major}
-                      {app.gpa != null && ` · GPA: ${app.gpa}`}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  <StatusBadge status={app.status as 'pending' | 'reviewing' | 'accepted' | 'rejected'} />
-                  <select
-                    value={app.status}
-                    onChange={(e) => updateStatus(app.id, e.target.value)}
-                    disabled={updating}
-                    className="text-sm border border-slate-300 rounded px-2 py-1"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="reviewing">Reviewing</option>
-                    <option value="accepted">Accepted</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
-                  <Link
-                    to={`/pi/students/${app.studentId}`}
-                    className="text-sm text-teal-600 hover:underline"
-                  >
-                    View profile
-                  </Link>
-                </div>
+        </div>
+      ) : (
+        <div className="pa-page">
+          <div className="pa-inner">
+            <Link to="/pi/dashboard" className="pa-back">
+              ← Back to dashboard
+            </Link>
+            <h1 className="pa-title">{positionTitle || 'Position'}</h1>
+            <p className="pa-subtitle">
+              {applications.length} applicant{applications.length !== 1 ? 's' : ''}
+            </p>
+
+            {applications.length === 0 ? (
+              <div className="pa-empty">
+                <svg className="pa-empty-icon mx-auto block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                  <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+                  <path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z" />
+                </svg>
+                <p className="pa-empty-title">No applications yet</p>
+                <p className="pa-empty-sub">Applications will appear here when students apply</p>
               </div>
-            ))}
+            ) : (
+              <div className="pa-list">
+                {applications.map((app) => {
+                  const name = [app.firstName, app.lastName].filter(Boolean).join(' ') || 'Applicant';
+                  const detailParts: string[] = [];
+                  if (app.major) detailParts.push(app.major);
+                  if (app.gpa != null) detailParts.push(`${Number(app.gpa).toFixed(1)} GPA`);
+                  const yl = app.yearLevel as AcademicLevel | undefined;
+                  if (yl) detailParts.push(formatYearLabel(yl));
+                  const detailsLine = detailParts.join(' · ');
+                  const letter = app.coverLetter?.trim();
+
+                  return (
+                    <div key={app.id} className="pa-card">
+                      <div className="pa-avatar">{initials(app.firstName, app.lastName)}</div>
+                      <div className="pa-info">
+                        <p className="pa-name">{name}</p>
+                        {detailsLine ? <p className="pa-details">{detailsLine}</p> : null}
+                        {letter ? (
+                          <div className="pa-cover-row">
+                            <span className="pa-cover-text">{letter}</span>
+                            <button
+                              type="button"
+                              className="pa-read-more"
+                              onClick={() => setSelectedApp(app)}
+                            >
+                              Read more
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="pa-actions">
+                        <span className={pillClass(app.status)}>{pillLabel(app.status)}</span>
+                        <select
+                          className="pa-select"
+                          value={app.status}
+                          onChange={(e) => updateStatus(app.id, e.target.value)}
+                          disabled={updating}
+                          aria-label={`Status for ${name}`}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="reviewing">Reviewing</option>
+                          <option value="accepted">Accepted</option>
+                          <option value="rejected">Rejected</option>
+                          <option value="withdrawn">Withdrawn</option>
+                        </select>
+                        <Link to={`/pi/students/${app.studentId}`} className="pa-profile-link">
+                          View Profile
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
       <Modal
         isOpen={!!selectedApp}
         onClose={() => setSelectedApp(null)}
-        title={selectedApp ? `${selectedApp.firstName} ${selectedApp.lastName}` : ''}
+        title={selectedApp ? `${selectedApp.firstName || ''} ${selectedApp.lastName || ''}`.trim() : ''}
       >
         {selectedApp && (
-          <div className="space-y-3 text-sm">
-            <p><strong>Email:</strong> {selectedApp.email}</p>
-            {selectedApp.major && <p><strong>Major:</strong> {selectedApp.major}</p>}
-            {selectedApp.gpa != null && <p><strong>GPA:</strong> {selectedApp.gpa}</p>}
+          <div className="space-y-3 text-sm text-slate-200">
+            <p>
+              <strong className="text-slate-100">Email:</strong> {selectedApp.email}
+            </p>
+            {selectedApp.major && (
+              <p>
+                <strong className="text-slate-100">Major:</strong> {selectedApp.major}
+              </p>
+            )}
+            {selectedApp.gpa != null && (
+              <p>
+                <strong className="text-slate-100">GPA:</strong> {selectedApp.gpa}
+              </p>
+            )}
             {selectedApp.yearLevel && (
-              <p><strong>Year:</strong> {selectedApp.yearLevel}</p>
+              <p>
+                <strong className="text-slate-100">Year:</strong> {formatYearLabel(selectedApp.yearLevel)}
+              </p>
             )}
             {selectedApp.skills && selectedApp.skills.length > 0 && (
-              <p><strong>Skills:</strong> {selectedApp.skills.join(', ')}</p>
+              <p>
+                <strong className="text-slate-100">Skills:</strong> {selectedApp.skills.join(', ')}
+              </p>
             )}
             {selectedApp.coverLetter && (
               <div>
-                <strong>Cover letter:</strong>
-                <p className="mt-1 text-inherit whitespace-pre-wrap">{selectedApp.coverLetter}</p>
+                <strong className="text-slate-100">Cover letter:</strong>
+                <p className="mt-1 whitespace-pre-wrap text-slate-300">{selectedApp.coverLetter}</p>
               </div>
             )}
             <Link
               to={`/pi/students/${selectedApp.studentId}`}
-              className="inline-block mt-2 text-teal-600 hover:underline"
+              className="inline-block mt-2 text-blue-400 hover:underline"
             >
               View full profile →
             </Link>
