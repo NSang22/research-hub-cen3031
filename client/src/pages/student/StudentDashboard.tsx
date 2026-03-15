@@ -75,6 +75,20 @@ function badgeLabel(status: string): string {
   return labels[status] ?? status;
 }
 
+/** API may return string[] or a single string; iterating a string would split into characters. */
+function normalizeRequiredSkills(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw.map((s) => String(s).trim()).filter(Boolean);
+  }
+  if (typeof raw === 'string' && raw.trim()) {
+    return raw
+      .split(/[,;]/)
+      .map((s: string) => s.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
 export function StudentDashboard() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<StudentProfile | null>(null);
@@ -190,7 +204,7 @@ export function StudentDashboard() {
                   </Link>
                 </div>
                 {recommended.map((pos) => {
-                  const skills = pos.requiredSkills || [];
+                  const skills = normalizeRequiredSkills(pos.requiredSkills);
                   const show = skills.slice(0, 4);
                   const rest = skills.length - show.length;
                   return (
@@ -206,8 +220,8 @@ export function StudentDashboard() {
                         ) : null}
                         {show.length > 0 ? (
                           <div className="sd-rec-skills">
-                            {show.map((skill) => (
-                              <span key={skill} className="sd-rec-skill">
+                            {show.map((skill, i) => (
+                              <span key={`${pos.id}-${i}-${skill}`} className="sd-rec-skill">
                                 {skill}
                               </span>
                             ))}
