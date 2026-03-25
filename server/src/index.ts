@@ -7,6 +7,7 @@ import piRoutes from './routes/pis.js';
 import positionRoutes from './routes/positions.js';
 import applicationRoutes from './routes/applications.js';
 import participantRoutes from './routes/participants.js';
+import studiesRoutes from './routes/studies.js';
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use('/api/pis', piRoutes);
 app.use('/api/positions', positionRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/participants', participantRoutes);
+app.use('/api/studies', studiesRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, timestamp: new Date().toISOString() });
