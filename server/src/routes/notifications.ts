@@ -114,9 +114,9 @@ router.get(
 // Dev-only endpoints (blocked in production)
 // ---------------------------------------------------------------------------
 
-function devOnly(req: Request, res: Response, next: () => void) {
+function devOnly(req: Request, _res: Response, next: () => void): void {
   if (config.nodeEnv === 'production') {
-    res.status(404).json({ error: 'Not found' });
+    _res.status(404).json({ error: 'Not found' });
     return;
   }
   next();
