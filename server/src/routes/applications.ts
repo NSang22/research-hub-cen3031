@@ -10,15 +10,20 @@ import {
 
 const router = Router();
 
+/** Looks up a student's profile id by user id. Returns null if not found. */
+async function getStudentId(userId: string): Promise<string | null> {
+  const result = await pool.query('SELECT id FROM student_profiles WHERE user_id = $1', [userId]);
+  return result.rows[0]?.id ?? null;
+}
+
 // POST /api/applications - apply (student only)
 router.post('/', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
   const { positionId, coverLetter, personalStatement, questionAnswers } = req.body;
   if (!positionId) {
     return res.status(400).json({ error: 'positionId is required' });
   }
-  const studentResult = await pool.query('SELECT id FROM student_profiles WHERE user_id = $1', [req.userId]);
-  const student = studentResult.rows[0];
-  if (!student) {
+  const studentId = await getStudentId(req.userId);
+  if (!studentId) {
     return res.status(404).json({ error: 'Student profile not found' });
   }
 
@@ -51,7 +56,7 @@ router.post('/', authMiddleware, requireRole('student'), asyncHandler(async (req
       `INSERT INTO applications (position_id, student_id, personal_statement, question_answers)
        VALUES ($1, $2, $3, $4::jsonb)
        RETURNING *`,
-      [positionId, student.id, statement, answersJson]
+      [positionId, studentId, statement, answersJson]
     );
     const row = result.rows[0];
     return res.status(201).json({
@@ -75,9 +80,8 @@ router.post('/', authMiddleware, requireRole('student'), asyncHandler(async (req
 
 // GET /api/applications/mine - student's apps
 router.get('/mine', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
-  const studentResult = await pool.query('SELECT id FROM student_profiles WHERE user_id = $1', [req.userId]);
-  const student = studentResult.rows[0];
-  if (!student) {
+  const studentId = await getStudentId(req.userId);
+  if (!studentId) {
     return res.json([]);
   }
   const result = await pool.query(
@@ -87,7 +91,7 @@ router.get('/mine', authMiddleware, requireRole('student'), asyncHandler(async (
      JOIN pi_profiles pp ON pp.id = rp.pi_id
      WHERE a.student_id = $1
      ORDER BY a.created_at DESC`,
-    [student.id]
+    [studentId]
   );
   return res.json(
     result.rows.map((row) => ({
