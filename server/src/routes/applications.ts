@@ -10,6 +10,12 @@ import {
 
 const router = Router();
 
+/** Looks up a PI's profile id by user id. Returns null if not found. */
+async function getPIId(userId: string): Promise<string | null> {
+  const result = await pool.query('SELECT id FROM pi_profiles WHERE user_id = $1', [userId]);
+  return result.rows[0]?.id ?? null;
+}
+
 /** Looks up a student's profile id by user id. Returns null if not found. */
 async function getStudentId(userId: string): Promise<string | null> {
   const result = await pool.query('SELECT id FROM student_profiles WHERE user_id = $1', [userId]);
@@ -113,9 +119,8 @@ router.get('/mine', authMiddleware, requireRole('student'), asyncHandler(async (
 // GET /api/applications/position/:id - apps for position (owner PI only)
 router.get('/position/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const { id: positionId } = req.params;
-  const piResult = await pool.query('SELECT id FROM pi_profiles WHERE user_id = $1', [req.userId]);
-  const pi = piResult.rows[0];
-  if (!pi) {
+  const piId = await getPIId(req.userId);
+  if (!piId) {
     return res.status(404).json({ error: 'PI profile not found' });
   }
   const result = await pool.query(
@@ -127,7 +132,7 @@ router.get('/position/:id', authMiddleware, requireRole('pi'), asyncHandler(asyn
      JOIN users u ON u.id = sp.user_id
      WHERE a.position_id = $1 AND rp.pi_id = $2
      ORDER BY a.created_at DESC`,
-    [positionId, pi.id]
+    [positionId, piId]
   );
   return res.json(
     result.rows.map((row) => ({
@@ -161,9 +166,8 @@ router.patch('/:id/notes', authMiddleware, requireRole('pi'), asyncHandler(async
   if (typeof notes !== 'string') {
     return res.status(400).json({ error: 'notes must be a string' });
   }
-  const piResult = await pool.query('SELECT id FROM pi_profiles WHERE user_id = $1', [req.userId]);
-  const pi = piResult.rows[0];
-  if (!pi) {
+  const piId = await getPIId(req.userId);
+  if (!piId) {
     return res.status(404).json({ error: 'PI profile not found' });
   }
   const result = await pool.query(
@@ -172,7 +176,7 @@ router.patch('/:id/notes', authMiddleware, requireRole('pi'), asyncHandler(async
      FROM research_positions rp
      WHERE a.position_id = rp.id AND rp.pi_id = $2 AND a.id = $3
      RETURNING a.id, a.pi_notes`,
-    [notes, pi.id, id]
+    [notes, piId, id]
   );
   if (result.rows.length === 0) {
     return res.status(404).json({ error: 'Application not found or access denied' });
@@ -184,13 +188,12 @@ router.patch('/:id/notes', authMiddleware, requireRole('pi'), asyncHandler(async
 router.patch('/:id/status', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const { status } = req.body;
-  const validStatuses = ['pending', 'reviewing', 'accepted', 'rejected', 'withdrawn'];
-  if (!status || !validStatuses.includes(status)) {
-    return res.status(400).json({ error: `Valid status required: ${validStatuses.join(', ')}` });
+  const VALID_APPLICATION_STATUSES = ['pending', 'reviewing', 'accepted', 'rejected', 'withdrawn'];
+  if (!status || !VALID_APPLICATION_STATUSES.includes(status)) {
+    return res.status(400).json({ error: `Valid status required: ${VALID_APPLICATION_STATUSES.join(', ')}` });
   }
-  const piResult = await pool.query('SELECT id FROM pi_profiles WHERE user_id = $1', [req.userId]);
-  const pi = piResult.rows[0];
-  if (!pi) {
+  const piId = await getPIId(req.userId);
+  if (!piId) {
     return res.status(404).json({ error: 'PI profile not found' });
   }
   const result = await pool.query(
@@ -199,7 +202,7 @@ router.patch('/:id/status', authMiddleware, requireRole('pi'), asyncHandler(asyn
      FROM research_positions rp
      WHERE a.position_id = rp.id AND rp.pi_id = $2 AND a.id = $3
      RETURNING a.*`,
-    [status, pi.id, id]
+    [status, piId, id]
   );
   const row = result.rows[0];
   if (!row) {
