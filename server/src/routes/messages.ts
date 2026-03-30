@@ -3,6 +3,49 @@ import pool from '../db/pool.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
 import { queueMessageNotification, processNotificationQueue } from '../lib/notificationQueue.js';
+// ---------------------------------------------------------------------------
+// Shared conversation helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Acquires an advisory lock and returns an existing 1-to-1 conversation ID
+ * between two users, or creates a new one. Returns { conversationId, isNew }.
+ * Callers are responsible for committing or rolling back the transaction.
+ */
+async function findOrCreateConversationTx(
+  client: import('pg').PoolClient,
+  userId1: string,
+  userId2: string
+): Promise<{ conversationId: string; isNew: boolean }> {
+  const lockKey = [userId1, userId2].sort().join(':');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [lockKey]);
+
+  const existing = await client.query(
+    `SELECT c.id FROM conversations c
+     WHERE EXISTS (
+       SELECT 1 FROM conversation_participants WHERE conversation_id = c.id AND user_id = $1
+     ) AND EXISTS (
+       SELECT 1 FROM conversation_participants WHERE conversation_id = c.id AND user_id = $2
+     )
+     LIMIT 1`,
+    [userId1, userId2]
+  );
+
+  if (existing.rows.length > 0) {
+    return { conversationId: existing.rows[0].id as string, isNew: false };
+  }
+
+  const newConv = await client.query('INSERT INTO conversations DEFAULT VALUES RETURNING id');
+  const conversationId = newConv.rows[0].id as string;
+  await client.query(
+    'INSERT INTO conversation_participants (conversation_id, user_id) VALUES ($1, $2), ($1, $3)',
+    [conversationId, userId1, userId2]
+  );
+  return { conversationId, isNew: true };
+}
+
+
 
 const router = Router();
 
@@ -23,39 +66,7 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
   try {
     await client.query('BEGIN');
 
-    // Advisory lock: deterministic key derived from sorted user IDs prevents
-    // two concurrent requests from creating a duplicate conversation.
-    const lockKey = [req.userId, recipientId].sort().join(':');
-    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [lockKey]);
-
-    // Find existing 1-to-1 conversation between these two users using EXISTS
-    // (the previous HAVING COUNT(*) = 2 was wrong — the double-join produces
-    // exactly 1 row per matching conversation, so that clause never fired)
-    const existingConv = await client.query(
-      `SELECT c.id FROM conversations c
-       WHERE EXISTS (
-         SELECT 1 FROM conversation_participants WHERE conversation_id = c.id AND user_id = $1
-       ) AND EXISTS (
-         SELECT 1 FROM conversation_participants WHERE conversation_id = c.id AND user_id = $2
-       )
-       LIMIT 1`,
-      [req.userId, recipientId]
-    );
-
-    let conversationId;
-    if (existingConv.rows.length > 0) {
-      conversationId = existingConv.rows[0].id;
-    } else {
-      const newConv = await client.query(
-        'INSERT INTO conversations DEFAULT VALUES RETURNING id'
-      );
-      conversationId = newConv.rows[0].id;
-
-      await client.query(
-        'INSERT INTO conversation_participants (conversation_id, user_id) VALUES ($1, $2), ($1, $3)',
-        [conversationId, req.userId, recipientId]
-      );
-    }
+    const { conversationId } = await findOrCreateConversationTx(client, req.userId, recipientId as string);
 
     // Unhide the conversation for all participants so it reappears in everyone's inbox
     await client.query(
