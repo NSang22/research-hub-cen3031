@@ -30,3 +30,34 @@ type ConversationPreview = {
   messagePreview: string;
   sentAt: Date;
 };
+
+// ---------------------------------------------------------------------------
+// DB helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetches users who:
+ *   - have notify_new_messages = true
+ *   - have notification_frequency = 'daily'
+ *   - have at least one unread message received in the past 24 hours
+ */
+async function fetchDigestRecipients(): Promise<DailyDigestUser[]> {
+  const result = await pool.query(
+    `SELECT DISTINCT u.id AS user_id, u.email, u.first_name
+     FROM message_notification_queue mnq
+     JOIN user_notification_settings uns ON uns.user_id = mnq.user_id
+     JOIN users u ON u.id = mnq.user_id
+     JOIN messages m ON m.id = mnq.message_id
+     WHERE mnq.sent_at IS NULL
+       AND m.read_at IS NULL
+       AND m.created_at >= NOW() - INTERVAL '24 hours'
+       AND uns.notify_new_messages = true
+       AND uns.notification_frequency = 'daily'`
+  );
+  return result.rows.map((r) => ({
+    userId: r.user_id as string,
+    email: r.email as string,
+    firstName: r.first_name as string,
+  }));
+}
+
