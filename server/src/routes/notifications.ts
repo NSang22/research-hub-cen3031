@@ -16,7 +16,12 @@ import {
 
 const router = Router();
 
-// GET /api/notifications/preferences — fetch notification prefs (student only)
+/**
+ * GET /api/notifications/preferences
+ *
+ * Returns the current student's notification preference settings.
+ * Requires student role.
+ */
 router.get(
   '/preferences',
   authMiddleware,
@@ -30,7 +35,12 @@ router.get(
   })
 );
 
-// PUT /api/notifications/preferences — update notification prefs (student only)
+/**
+ * PUT /api/notifications/preferences
+ *
+ * Updates the current student's notification preference settings.
+ * Requires student role.
+ */
 router.put(
   '/preferences',
   authMiddleware,
@@ -46,11 +56,12 @@ router.put(
   })
 );
 
-// GET /api/notifications/unsubscribe?userId=xxx (new) or ?studentId=xxx (legacy)
-// One-click unsubscribe from ALL digest emails (positions + messages).
-router.get(
-  '/unsubscribe',
-  asyncHandler(async (req: Request, res: Response) => {
+/**
+ * GET /api/notifications/unsubscribe?userId=xxx (new) or ?studentId=xxx (legacy)
+ *
+ * One-click unsubscribe from ALL digest emails (positions + messages).
+ * Renders an HTML success page and redirects on completion.
+ */
     const { userId, studentId } = req.query;
     let targetUserId: string | null = null;
     if (typeof userId === 'string' && userId) {
