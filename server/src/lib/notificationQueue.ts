@@ -206,6 +206,23 @@ export async function queueNotificationsForPosition(positionId: string): Promise
 // ---------------------------------------------------------------------------
 
 /**
+ * Low-level helper: inserts a single entry into the message_notification_queue
+ * table. Idempotent via ON CONFLICT DO NOTHING.
+ */
+async function queueMessageQueueEntry(
+  userId: string,
+  conversationId: string,
+  messageId: string
+): Promise<void> {
+  await pool.query(
+    `INSERT INTO message_notification_queue (user_id, conversation_id, message_id)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (user_id, message_id) DO NOTHING`,
+    [userId, conversationId, messageId]
+  );
+}
+
+/**
  * Queue a newly-sent message for digest delivery to its recipient. Respects
  * the recipient's `notify_new_messages` flag. Silently no-ops if the recipient
  * has the feature disabled.
@@ -221,12 +238,7 @@ export async function queueMessageNotification(
   );
   if (prefs.rows.length === 0 || prefs.rows[0].notify_new_messages !== true) return;
 
-  await pool.query(
-    `INSERT INTO message_notification_queue (user_id, conversation_id, message_id)
-     VALUES ($1, $2, $3)
-     ON CONFLICT (user_id, message_id) DO NOTHING`,
-    [recipientUserId, conversationId, messageId]
-  );
+  await queueMessageQueueEntry(recipientUserId, conversationId, messageId);
 }
 
 // ---------------------------------------------------------------------------
