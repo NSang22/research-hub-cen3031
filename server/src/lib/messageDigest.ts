@@ -35,12 +35,6 @@ type ConversationPreview = {
 // DB helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Fetches users who:
- *   - have notify_new_messages = true
- *   - have notification_frequency = 'daily'
- *   - have at least one unread message received in the past 24 hours
- */
 async function fetchDigestRecipients(): Promise<DailyDigestUser[]> {
   const result = await pool.query(
     `SELECT DISTINCT u.id AS user_id, u.email, u.first_name
@@ -61,10 +55,6 @@ async function fetchDigestRecipients(): Promise<DailyDigestUser[]> {
   }));
 }
 
-/**
- * Fetches unread message previews for a given user from the past 24 hours.
- * Groups by conversation and returns the latest message preview per thread.
- */
 async function fetchUnreadPreviews(userId: string): Promise<ConversationPreview[]> {
   const result = await pool.query(
     `SELECT
@@ -88,7 +78,6 @@ async function fetchUnreadPreviews(userId: string): Promise<ConversationPreview[
     [userId]
   );
 
-  // Group by conversation - keep only the most recent message preview per thread
   const byConversation = new Map<string, ConversationPreview>();
   for (const row of result.rows) {
     const cid = row.conversation_id as string;
@@ -107,3 +96,20 @@ async function fetchUnreadPreviews(userId: string): Promise<ConversationPreview[
 
   return Array.from(byConversation.values());
 }
+
+async function markMessagesSent(userId: string): Promise<void> {
+  await pool.query(
+    `UPDATE message_notification_queue
+     SET sent_at = NOW()
+     WHERE user_id = $1
+       AND sent_at IS NULL
+       AND message_id IN (
+         SELECT m.id FROM messages m
+         WHERE m.sender_id != $1
+           AND m.created_at >= NOW() - INTERVAL '24 hours'
+       )`,
+    [userId]
+  );
+}
+
+export type { ConversationPreview };
