@@ -22,6 +22,62 @@ async function getStudentId(userId: string): Promise<string | null> {
   return result.rows[0]?.id ?? null;
 }
 
+/** Maps a DB row from GET /mine to the response shape. */
+function mapApplicationSummaryRow(row: Record<string, unknown>) {
+  return {
+    id: row.id,
+    positionId: row.position_id,
+    studentId: row.student_id,
+    status: row.status,
+    coverLetter: row.personal_statement,
+    personalStatement: row.personal_statement,
+    appliedAt: row.created_at,
+    positionTitle: row.position_title,
+    labName: row.lab_name,
+    department: row.department,
+    questionAnswers: (row.question_answers as Record<string, unknown>) || {},
+  };
+}
+
+/** Maps a DB row from GET /position/:id to the response shape. */
+function mapApplicationDetailRow(row: Record<string, unknown>) {
+  return {
+    id: row.id,
+    positionId: row.position_id,
+    studentId: row.student_id,
+    studentUserId: row.student_user_id,
+    status: row.status,
+    coverLetter: row.personal_statement,
+    personalStatement: row.personal_statement,
+    appliedAt: row.created_at,
+    major: row.major,
+    gpa: row.gpa != null ? parseFloat(row.gpa as string) : null,
+    skills: (row.skills as string[]) || [],
+    bio: row.bio,
+    resumeUrl: row.resume_url,
+    yearLevel: row.academic_level,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    email: row.email,
+    questionAnswers: (row.question_answers as Record<string, unknown>) || {},
+    piNotes: (row.pi_notes as string | null) ?? null,
+  };
+}
+
+/** Maps a DB row from PATCH /:id/status to the response shape. */
+function mapApplicationStatusRow(row: Record<string, unknown>) {
+  return {
+    id: row.id,
+    positionId: row.position_id,
+    studentId: row.student_id,
+    status: row.status,
+    coverLetter: row.personal_statement,
+    personalStatement: row.personal_statement,
+    appliedAt: row.created_at,
+    questionAnswers: (row.question_answers as Record<string, unknown>) || {},
+  };
+}
+
 // POST /api/applications - apply (student only)
 router.post('/', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
   const { positionId, coverLetter, personalStatement, questionAnswers } = req.body;
@@ -100,19 +156,7 @@ router.get('/mine', authMiddleware, requireRole('student'), asyncHandler(async (
     [studentId]
   );
   return res.json(
-    result.rows.map((row) => ({
-      id: row.id,
-      positionId: row.position_id,
-      studentId: row.student_id,
-      status: row.status,
-      coverLetter: row.personal_statement,
-      personalStatement: row.personal_statement,
-      appliedAt: row.created_at,
-      positionTitle: row.position_title,
-      labName: row.lab_name,
-      department: row.department,
-      questionAnswers: row.question_answers || {},
-    }))
+    result.rows.map(mapApplicationSummaryRow)
   );
 }));
 
@@ -135,27 +179,7 @@ router.get('/position/:id', authMiddleware, requireRole('pi'), asyncHandler(asyn
     [positionId, piId]
   );
   return res.json(
-    result.rows.map((row) => ({
-      id: row.id,
-      positionId: row.position_id,
-      studentId: row.student_id,
-      studentUserId: row.student_user_id,
-      status: row.status,
-      coverLetter: row.personal_statement,
-      personalStatement: row.personal_statement,
-      appliedAt: row.created_at,
-      major: row.major,
-      gpa: row.gpa ? parseFloat(row.gpa) : null,
-      skills: row.skills || [],
-      bio: row.bio,
-      resumeUrl: row.resume_url,
-      yearLevel: row.academic_level,
-      firstName: row.first_name,
-      lastName: row.last_name,
-      email: row.email,
-      questionAnswers: row.question_answers || {},
-      piNotes: row.pi_notes ?? null,
-    }))
+    result.rows.map(mapApplicationDetailRow)
   );
 }));
 
@@ -208,16 +232,7 @@ router.patch('/:id/status', authMiddleware, requireRole('pi'), asyncHandler(asyn
   if (!row) {
     return res.status(404).json({ error: 'Application not found or access denied' });
   }
-  return res.json({
-    id: row.id,
-    positionId: row.position_id,
-    studentId: row.student_id,
-    status: row.status,
-    coverLetter: row.personal_statement,
-    personalStatement: row.personal_statement,
-    appliedAt: row.created_at,
-    questionAnswers: row.question_answers || {},
-  });
+  return res.json(mapApplicationStatusRow(row));
 }));
 
 export default router;
