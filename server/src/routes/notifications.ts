@@ -8,6 +8,7 @@ import {
   queueNotificationsForPosition,
   processNotificationQueue,
 } from '../lib/notificationQueue.js';
+import { devOnly } from '../middleware/devOnly.js';
 import {
   fetchNotificationPreferencesForUser,
   updateNotificationPreferencesForUser,
@@ -113,14 +114,6 @@ router.get(
 // ---------------------------------------------------------------------------
 // Dev-only endpoints (blocked in production)
 // ---------------------------------------------------------------------------
-
-function devOnly(req: Request, _res: Response, next: () => void): void {
-  if (config.nodeEnv === 'production') {
-    _res.status(404).json({ error: 'Not found' });
-    return;
-  }
-  next();
-}
 
 /**
  * GET /api/notifications/dev/dry-run/:positionId
