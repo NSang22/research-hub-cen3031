@@ -56,6 +56,19 @@ async function revealConversation(client: import('pg').PoolClient, conversationI
   );
 }
 
+/**
+ * Returns the count of unread messages in a conversation for a given user.
+ * Unread means sender is not the current user AND read_at IS NULL.
+ */
+async function getUnreadCount(conversationId: string, userId: string): Promise<number> {
+  const r = await pool.query(
+    `SELECT COUNT(*) FROM messages
+     WHERE conversation_id = $1 AND sender_id != $2 AND read_at IS NULL`,
+    [conversationId, userId]
+  );
+  return parseInt(r.rows[0].count, 10);
+}
+
 
 const router = Router();
 
