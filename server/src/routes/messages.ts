@@ -45,6 +45,16 @@ async function findOrCreateConversationTx(
   return { conversationId, isNew: true };
 }
 
+/**
+ * Unhides a conversation for all participants by setting hidden = false.
+ * Use after sending a message so the conversation reappears in everyone's inbox.
+ */
+async function revealConversation(client: import('pg').PoolClient, conversationId: string): Promise<void> {
+  await client.query(
+    'UPDATE conversation_participants SET hidden = false WHERE conversation_id = $1',
+    [conversationId]
+  );
+}
 
 
 const router = Router();
@@ -69,10 +79,7 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
     const { conversationId } = await findOrCreateConversationTx(client, req.userId, recipientId as string);
 
     // Unhide the conversation for all participants so it reappears in everyone's inbox
-    await client.query(
-      'UPDATE conversation_participants SET hidden = false WHERE conversation_id = $1',
-      [conversationId]
-    );
+    await revealConversation(client, conversationId);
 
     const messageResult = await client.query(
       `INSERT INTO messages (conversation_id, sender_id, body)
