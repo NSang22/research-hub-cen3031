@@ -22,6 +22,10 @@ function signToken(userId: string, role: UserRole): string {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Registration & login
+// ---------------------------------------------------------------------------
+
 router.post('/register', asyncHandler(async (req: Request, res: Response) => {
   const { email, password, role, firstName, lastName } = req.body;
   if (!email || !password || !role || !firstName || !lastName) {
@@ -71,6 +75,10 @@ router.post('/register', asyncHandler(async (req: Request, res: Response) => {
     throw err;
   }
 }));
+
+// ---------------------------------------------------------------------------
+// Google OAuth
+// ---------------------------------------------------------------------------
 
 // POST /api/auth/google - sign in or register via Google OAuth (@ufl.edu only)
 router.post('/google', asyncHandler(async (req: Request, res: Response) => {
@@ -147,6 +155,10 @@ router.post('/google', asyncHandler(async (req: Request, res: Response) => {
   });
 }));
 
+// ---------------------------------------------------------------------------
+// Password login
+// ---------------------------------------------------------------------------
+
 router.post('/login', asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -176,6 +188,10 @@ router.post('/login', asyncHandler(async (req: Request, res: Response) => {
     },
   });
 }));
+
+// ---------------------------------------------------------------------------
+// Demo login
+// ---------------------------------------------------------------------------
 
 // POST /api/auth/demo - instant demo login, upserts demo accounts
 router.post('/demo', asyncHandler(async (req: Request, res: Response) => {
@@ -211,6 +227,10 @@ router.post('/demo', asyncHandler(async (req: Request, res: Response) => {
     user: { id: user.id, email: user.email, role: user.role, firstName: user.first_name, lastName: user.last_name },
   });
 }));
+
+// ---------------------------------------------------------------------------
+// Current user
+// ---------------------------------------------------------------------------
 
 router.get('/me', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const result = await pool.query(
