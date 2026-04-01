@@ -24,7 +24,7 @@ type DailyDigestUser = {
   firstName: string;
 };
 
-type ConversationPreview = {
+export type ConversationPreview = {
   conversationId: string;
   senderName: string;
   messagePreview: string;
@@ -112,4 +112,44 @@ async function markMessagesSent(userId: string): Promise<void> {
   );
 }
 
-export type { ConversationPreview };
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+export async function processDailyMessageDigest(): Promise<DailyDigestResult> {
+  const recipients = await fetchDigestRecipients();
+
+  if (recipients.length === 0) {
+    console.log('[message-digest] No daily digest recipients with unread messages');
+    return { sent: 0, skipped: 0, errors: 0 };
+  }
+
+  let sent = 0;
+  let skipped = 0;
+  let errors = 0;
+
+  for (const recipient of recipients) {
+    try {
+      const previews = await fetchUnreadPreviews(recipient.userId);
+
+      if (previews.length === 0) {
+        skipped++;
+        continue;
+      }
+
+      // Email sending will be wired in next commit
+      await markMessagesSent(recipient.userId);
+      sent++;
+
+      console.log(
+        `[message-digest] Queued digest for ${recipient.email} (${previews.length} thread(s))`
+      );
+    } catch (err) {
+      errors++;
+      console.error(`[message-digest] Failed to process digest for ${recipient.email}:`, err);
+    }
+  }
+
+  console.log(`[message-digest] Completed - sent: ${sent}, skipped: ${skipped}, errors: ${errors}`);
+  return { sent, skipped, errors };
+}
