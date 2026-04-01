@@ -136,6 +136,80 @@ export async function sendNotificationDigestEmail(args: {
   });
 }
 
+export async function sendMessageDigestEmail(args: {
+  toEmail: string;
+  firstName: string;
+  conversations: Array<{
+    conversationId: string;
+    senderName: string;
+    messagePreview: string;
+    sentAt: Date;
+  }>;
+  userId: string;
+}) {
+  const { toEmail, firstName, conversations, userId } = args;
+  const transport = createTransport();
+  const clientUrl = config.clientUrl.replace(/\/$/, '');
+  const unsubscribeUrl = `${clientUrl}/api/notifications/unsubscribe?userId=${userId}`;
+
+  if (!transport) {
+    console.log(`[email] SMTP not configured - skipping message digest to ${toEmail}`);
+    return;
+  }
+
+  const subject =
+    conversations.length === 1
+      ? `New message from ${conversations[0].senderName}`
+      : `${conversations.length} new message threads on ResearchHub`;
+
+  const threadHtml = conversations
+    .map((c) => {
+      const preview = c.messagePreview
+        ? `<p style="margin:6px 0 0;color:#444;font-style:italic;font-size:13px;">"${escapeHtml(c.messagePreview)}${c.messagePreview.length >= 100 ? '...' : ''}"</p>`
+        : '';
+      return `
+        <div style="border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:10px;">
+          <h3 style="margin:0 0 2px;color:#001A3E;font-size:15px;">${escapeHtml(c.senderName)}</h3>
+          ${preview}
+          <a href="${clientUrl}/messages"
+             style="display:inline-block;margin-top:10px;padding:6px 14px;background:#0d9488;color:#fff;border-radius:5px;text-decoration:none;font-size:13px;">
+            Open conversation
+          </a>
+        </div>`;
+    })
+    .join('');
+
+  const threadText = conversations
+    .map((c) => `${c.senderName}:\n"${c.messagePreview}"\n${clientUrl}/messages`)
+    .join('\n\n');
+
+  const text = [
+    `Hi ${firstName},`,
+    `You have ${conversations.length} new message thread${conversations.length === 1 ? '' : 's'} on ResearchHub:\n`,
+    threadText,
+    `\nTo unsubscribe: ${unsubscribeUrl}`,
+    `\nBest,\nThe ResearchHub Team`,
+  ].join('\n');
+
+  await transport.sendMail({
+    from: `"ResearchHub" <${config.fromEmail}>`,
+    to: toEmail,
+    subject,
+    text,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;">
+        <h2 style="color:#001A3E;">You have unread messages</h2>
+        <p>Hi ${escapeHtml(firstName)}, here are your new message threads:</p>
+        ${threadHtml}
+        <p style="margin-top:24px;font-size:13px;color:#888;">
+          You're receiving this because you opted into daily digest emails.<br/>
+          <a href="${unsubscribeUrl}" style="color:#888;">Unsubscribe from digest emails</a>
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function sendWelcomeEmail(toEmail: string, firstName: string) {
   const transport = createTransport();
   if (!transport) {
