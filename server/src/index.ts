@@ -1,6 +1,7 @@
 import { config } from './config/env.js';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import cron from 'node-cron';
 import authRoutes from './routes/auth.js';
 import studentRoutes from './routes/students.js';
 import piRoutes from './routes/pis.js';
@@ -11,6 +12,7 @@ import messageRoutes from './routes/messages.js';
 import notificationRoutes from './routes/notifications.js';
 import adminRoutes from './routes/admin.js';
 import { processNotificationQueue } from './lib/notificationQueue.js';
+import { processDailyMessageDigest } from './lib/messageDigest.js';
 
 const app = express();
 
@@ -51,3 +53,12 @@ setInterval(() => {
     console.error('[notifications] Scheduled sweep error:', err)
   );
 }, QUEUE_SWEEP_INTERVAL_MS);
+
+// Daily message digest - runs at 8:00 AM Eastern Time
+// Set TZ=America/New_York environment variable in production for correct EST/EDT handling
+cron.schedule('0 8 * * *', () => {
+  console.log('[message-digest] Starting daily digest job');
+  processDailyMessageDigest().catch((err: unknown) =>
+    console.error('[message-digest] Daily digest job error:', err)
+  );
+});
