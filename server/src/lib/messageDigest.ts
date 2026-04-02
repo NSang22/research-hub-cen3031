@@ -87,10 +87,11 @@ async function fetchUnreadPreviews(userId: string): Promise<ConversationPreview[
       const senderName =
         `${(row.sender_first_name as string) ?? ''} ${(row.sender_last_name as string) ?? ''}`.trim() ||
         'A ResearchHub user';
+      const rawBody = ((row.body as string) ?? '').slice(0, 100);
       byConversation.set(cid, {
         conversationId: cid,
         senderName,
-        messagePreview: ((row.body as string) ?? '').slice(0, 100),
+        messagePreview: rawBody,
         sentAt: new Date(row.created_at as string),
       });
     }
