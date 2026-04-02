@@ -7,6 +7,8 @@ import { sendPositionClosedEmail } from '../lib/email.js';
 
 const router = Router();
 
+const VALID_POSITION_STATUSES = ['open', 'paused', 'closed'];
+
 function rowToPosition(row: Record<string, unknown>) {
   const aq = row.application_questions;
   return {
