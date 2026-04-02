@@ -7,6 +7,7 @@
  */
 
 import pool from '../db/pool.js';
+import { sendMessageDigestEmail } from './email.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -136,6 +137,13 @@ export async function processDailyMessageDigest(): Promise<DailyDigestResult> {
         skipped++;
         continue;
       }
+
+      await sendMessageDigestEmail({
+        toEmail: recipient.email,
+        firstName: recipient.firstName,
+        conversations: previews,
+        userId: recipient.userId,
+      });
 
       // Email sending will be wired in next commit
       await markMessagesSent(recipient.userId);

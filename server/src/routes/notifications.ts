@@ -8,6 +8,7 @@ import {
   queueNotificationsForPosition,
   processNotificationQueue,
 } from '../lib/notificationQueue.js';
+import { processDailyMessageDigest } from '../lib/messageDigest.js';
 import {
   fetchNotificationPreferencesForUser,
   updateNotificationPreferencesForUser,
@@ -216,6 +217,24 @@ router.post(
       position,
       matchCount: matches.length,
       message: `Triggered for ${matches.length} student(s). Check server console for email output.`,
+    });
+  })
+);
+
+/**
+ * POST /api/notifications/dev/trigger-message-digest
+ *
+ * Triggers the daily message digest job manually (dev/test only).
+ * Useful for verifying digest emails without waiting for the 8 AM cron.
+ */
+router.post(
+  '/dev/trigger-message-digest',
+  (req, res, next) => devOnly(req, res, next),
+  asyncHandler(async (_req: Request, res: Response) => {
+    const result = await processDailyMessageDigest();
+    return res.json({
+      message: 'Daily message digest job completed',
+      ...result,
     });
   })
 );
