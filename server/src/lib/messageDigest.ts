@@ -28,6 +28,7 @@ type DailyDigestUser = {
 export type ConversationPreview = {
   conversationId: string;
   senderName: string;
+  /** Capped at 100 characters as per acceptance criteria */
   messagePreview: string;
   sentAt: Date;
 };
