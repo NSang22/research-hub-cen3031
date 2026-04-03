@@ -62,6 +62,9 @@ router.put(
  * One-click unsubscribe from ALL digest emails (positions + messages).
  * Renders an HTML success page and redirects on completion.
  */
+router.get(
+  '/unsubscribe',
+  asyncHandler(async (req: Request, res: Response) => {
     const { userId, studentId } = req.query;
     let targetUserId: string | null = null;
     if (typeof userId === 'string' && userId) {
