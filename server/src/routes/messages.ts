@@ -3,6 +3,7 @@ import pool from '../db/pool.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
 import { queueMessageNotification, processNotificationQueue } from '../lib/notificationQueue.js';
+
 // ---------------------------------------------------------------------------
 // Shared conversation helpers
 // ---------------------------------------------------------------------------
@@ -82,6 +83,9 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
     return res.status(400).json({ error: 'Message body cannot be empty' });
   }
 
+  // ---------------------------------------------------------------------------
+  // Message sending
+  // ---------------------------------------------------------------------------
   // Use a transaction + advisory lock to prevent duplicate conversations from
   // race conditions when the button is clicked multiple times simultaneously.
   const client = await pool.connect();
@@ -136,6 +140,10 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
   });
 }));
 
+// ---------------------------------------------------------------------------
+// Conversation management (no message sent)
+// ---------------------------------------------------------------------------
+
 // POST /api/messages/conversations - find or create an empty conversation (no message sent)
 router.post('/conversations', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const { recipientId } = req.body;
@@ -186,6 +194,10 @@ router.post('/conversations', authMiddleware, asyncHandler(async (req: Request, 
 
   return res.status(200).json({ conversationId });
 }));
+
+// ---------------------------------------------------------------------------
+// Conversation listing & messages
+// ---------------------------------------------------------------------------
 
 // GET /api/messages/conversations - list all conversations for current user
 router.get('/conversations', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
@@ -287,6 +299,10 @@ router.delete('/conversations/:id', authMiddleware, asyncHandler(async (req: Req
 
   return res.status(204).send();
 }));
+
+// ---------------------------------------------------------------------------
+// Mark-read
+// ---------------------------------------------------------------------------
 
 // PATCH /api/messages/:id/read - mark a message as read
 router.patch('/:id/read', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
