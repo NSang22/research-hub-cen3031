@@ -9,6 +9,7 @@ import {
   User,
   Users,
   Settings,
+  ClipboardList,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -32,6 +33,7 @@ function piNavActive(pathname: string, url: string): boolean {
   if (url === '/pi/dashboard') return pathname === '/pi/dashboard';
   if (url === '/pi/positions/new') return pathname.startsWith('/pi/positions');
   if (url === '/pi/students') return pathname.startsWith('/pi/students');
+  if (url === '/pi/roster') return pathname === '/pi/roster';
   if (url === '/pi/profile') return pathname === '/pi/profile';
   return false;
 }
@@ -57,6 +59,7 @@ const piMainItems: NavItem[] = [
   { name: 'Dashboard', url: '/pi/dashboard', icon: LayoutDashboard },
   { name: 'Positions', url: '/pi/positions/new', icon: Briefcase },
   { name: 'Students', url: '/pi/students', icon: Users },
+  { name: 'Lab Roster', url: '/pi/roster', icon: ClipboardList },
 ];
 
 const piAccountItems: NavItem[] = [{ name: 'Profile', url: '/pi/profile', icon: User }];
