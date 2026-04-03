@@ -120,6 +120,7 @@ async function markMessagesSent(userId: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function processDailyMessageDigest(): Promise<DailyDigestResult> {
+  console.log('[message-digest] Starting daily digest job');
   const recipients = await fetchDigestRecipients();
 
   // No opted-in users with unread messages — nothing to do
