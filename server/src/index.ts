@@ -55,7 +55,8 @@ setInterval(() => {
 }, QUEUE_SWEEP_INTERVAL_MS);
 
 // Daily message digest - runs at 8:00 AM Eastern Time
-// Set TZ=America/New_York environment variable in production for correct EST/EDT handling
+// IMPORTANT: set TZ=America/New_York in production deployment so cron fires at the
+// correct local time regardless of server timezone configuration
 cron.schedule('0 8 * * *', () => {
   console.log('[message-digest] Starting daily digest job');
   processDailyMessageDigest().catch((err: unknown) =>
