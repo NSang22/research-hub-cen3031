@@ -70,6 +70,28 @@ async function getUnreadCount(conversationId: string, userId: string): Promise<n
   return parseInt(r.rows[0].count, 10);
 }
 
+/**
+ * Fires a message notification to the recipient via the notification queue.
+ * Runs fire-and-forget (catches and logs errors without blocking the response).
+ */
+function sendMessageNotification(
+  recipientId: string,
+  conversationId: string,
+  messageId: string
+): void {
+  queueMessageNotification(recipientId, conversationId, messageId)
+    .then(async () => {
+      const prefs = await pool.query(
+        `SELECT notification_frequency FROM user_notification_settings WHERE user_id = $1`,
+        [recipientId]
+      );
+      if (prefs.rows[0]?.notification_frequency === 'immediately') {
+        await processNotificationQueue();
+      }
+    })
+    .catch((err: unknown) => console.error('[notifications] Error queuing message notification:', err));
+}
+
 
 const router = Router();
 
@@ -118,17 +140,7 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
   // block the response. If their frequency is 'immediately' we also kick off
   // the processor right after so the email goes out now instead of waiting
   // for the next hourly sweep.
-  queueMessageNotification(recipientId as string, row.conversation_id as string, row.id as string)
-    .then(async () => {
-      const prefs = await pool.query(
-        `SELECT notification_frequency FROM user_notification_settings WHERE user_id = $1`,
-        [recipientId]
-      );
-      if (prefs.rows[0]?.notification_frequency === 'immediately') {
-        await processNotificationQueue();
-      }
-    })
-    .catch((err: unknown) => console.error('[notifications] Error queuing message notification:', err));
+  sendMessageNotification(recipientId as string, row.conversation_id as string, row.id as string);
 
   return res.status(201).json({
     id: row.id,
