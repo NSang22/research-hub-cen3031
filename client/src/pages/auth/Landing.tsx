@@ -1,11 +1,18 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { NetworkBackground } from '../../components/ui/network-background';
+import { useAuth } from '../../context/AuthContext';
 
 export function Landing() {
   const navigate = useNavigate();
+  const { loginDemo } = useAuth();
 
-  const handleDemo = (role: 'student' | 'pi') => {
-    navigate(role === 'student' ? '/student/dashboard' : '/pi/dashboard');
+  const handleDemo = async (role: 'student' | 'pi') => {
+    try {
+      await loginDemo(role);
+      navigate(role === 'student' ? '/student/dashboard' : '/pi/dashboard');
+    } catch (err) {
+      console.error('Demo login failed:', err);
+    }
   };
 
   return (
