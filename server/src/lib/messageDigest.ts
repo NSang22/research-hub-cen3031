@@ -149,8 +149,14 @@ export async function processDailyMessageDigest(): Promise<DailyDigestResult> {
         userId: recipient.userId,
       });
 
-      // Email sending will be wired in next commit
       await markMessagesSent(recipient.userId);
+
+      // Update last_sent_at so daily digest respects cooldown going forward
+      await pool.query(
+        `UPDATE user_notification_settings SET notification_last_sent_at = NOW() WHERE user_id = $1`,
+        [recipient.userId]
+      );
+
       sent++;
 
       console.log(
