@@ -73,20 +73,6 @@ export interface Position {
   piLastName?: string;
 }
 
-export interface ParticipantProfile {
-  id?: string;
-  availableDays: string[];
-  availableTimes: string[];
-  hoursPerWeek: number | null;
-  ageRange: string | null;
-  gender: string | null;
-  ethnicity: string | null;
-  studyTypes: string[];
-  compensationPref: string[];
-  locationPref: string | null;
-  notes: string | null;
-}
-
 export interface Application {
   id: string;
   positionId: string;
