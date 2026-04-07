@@ -1,7 +1,12 @@
+/** User role: student, PI (principal investigator), or lab administrator */
 export type UserRole = 'student' | 'pi' | 'admin';
+/** Academic year level of a student */
 export type YearLevel = 'freshman' | 'sophomore' | 'junior' | 'senior' | 'grad';
+/** Possible states of a research application */
 export type ApplicationStatus = 'pending' | 'reviewed' | 'accepted' | 'rejected';
 
+/** Authenticated user account */
+/** Authenticated user account */
 export interface User {
   id: string;
   email: string;
@@ -11,6 +16,7 @@ export interface User {
   created_at: string;
 }
 
+/** Student profile with academic and contact information */
 export interface StudentProfile {
   id: string;
   user_id: string;
@@ -23,6 +29,7 @@ export interface StudentProfile {
   year_level: YearLevel | null;
 }
 
+/** PI (Principal Investigator) profile with lab affiliation details */
 export interface PIProfile {
   id: string;
   user_id: string;
