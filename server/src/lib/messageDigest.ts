@@ -37,6 +37,9 @@ export type ConversationPreview = {
 // DB helpers
 // ---------------------------------------------------------------------------
 
+// TODO: Filter out deactivated/deleted accounts once soft-delete is added to users table.
+//       A 'deleted_at' column would allow: AND u.deleted_at IS NULL
+
 async function fetchDigestRecipients(): Promise<DailyDigestUser[]> {
   const result = await pool.query(
     `SELECT DISTINCT u.id AS user_id, u.email, u.first_name
