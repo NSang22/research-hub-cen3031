@@ -78,6 +78,10 @@ function mapApplicationStatusRow(row: Record<string, unknown>) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Application submission
+// ---------------------------------------------------------------------------
+
 // POST /api/applications - apply (student only)
 router.post('/', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
   const { positionId, coverLetter, personalStatement, questionAnswers } = req.body;
@@ -139,6 +143,10 @@ router.post('/', authMiddleware, requireRole('student'), asyncHandler(async (req
     throw err;
   }
 }));
+
+// ---------------------------------------------------------------------------
+// Application listing
+// ---------------------------------------------------------------------------
 
 // GET /api/applications/mine - student's apps
 router.get('/mine', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
@@ -207,6 +215,10 @@ router.patch('/:id/notes', authMiddleware, requireRole('pi'), asyncHandler(async
   }
   return res.json({ id: result.rows[0].id, piNotes: result.rows[0].pi_notes });
 }));
+
+// ---------------------------------------------------------------------------
+// PI notes and status management
+// ---------------------------------------------------------------------------
 
 // PATCH /api/applications/:id/status - update status (PI only)
 router.patch('/:id/status', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
