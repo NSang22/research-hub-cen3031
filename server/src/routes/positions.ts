@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import pool from '../db/pool.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
+import { queueNotificationsForPosition, processNotificationQueue } from '../lib/notificationQueue.js';
 
 const router = Router();
 
@@ -62,7 +63,14 @@ router.post('/', authMiddleware, requireRole('pi'), asyncHandler(async (req: Req
       aqJson,
     ]
   );
-  return res.status(201).json(rowToPosition(result.rows[0]));
+  const newPosition = result.rows[0];
+
+  // Trigger notifications asynchronously — do not block the response
+  queueNotificationsForPosition(newPosition.id as string)
+    .then(() => processNotificationQueue())
+    .catch((err: unknown) => console.error('[notifications] Error processing queue:', err));
+
+  return res.status(201).json(rowToPosition(newPosition));
 }));
 
 // GET /api/positions - list with filters (public)
