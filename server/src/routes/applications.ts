@@ -84,7 +84,7 @@ router.get('/position/:id', authMiddleware, requireRole('pi'), asyncHandler(asyn
   }
   const result = await pool.query(
     `SELECT a.*, sp.major, sp.gpa, sp.skills, sp.bio, sp.resume_url, sp.academic_level,
-            u.first_name, u.last_name, u.email
+            u.id as student_user_id, u.first_name, u.last_name, u.email
      FROM applications a
      JOIN research_positions rp ON rp.id = a.position_id
      JOIN student_profiles sp ON sp.id = a.student_id
@@ -98,6 +98,7 @@ router.get('/position/:id', authMiddleware, requireRole('pi'), asyncHandler(asyn
       id: row.id,
       positionId: row.position_id,
       studentId: row.student_id,
+      studentUserId: row.student_user_id,
       status: row.status,
       coverLetter: row.personal_statement,
       personalStatement: row.personal_statement,
