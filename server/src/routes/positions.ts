@@ -23,7 +23,7 @@ function rowToPosition(row: Record<string, unknown>) {
     deadline: row.deadline,
     department: row.department,
     labName: row.lab_name,
-    researchArea: (row.research_areas as string[] | undefined)?.join(', ') || null,
+    researchArea: row.research_area ? String(row.research_area) : null,
     labWebsite: row.lab_website,
   };
 }
@@ -42,9 +42,9 @@ router.post('/', authMiddleware, requireRole('pi'), asyncHandler(async (req: Req
   const compType = compensationType ?? (isFunded ? 'paid' : 'unpaid');
 
   const result = await pool.query(
-    `INSERT INTO research_positions
-       (pi_id, title, description, required_skills, min_gpa, compensation_type, deadline, time_commitment, qualifications)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `INSERT INTO positions
+       (pi_id, title, description, required_skills, min_gpa, is_funded, deadline)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING *`,
     [
       pi.id,
@@ -52,10 +52,8 @@ router.post('/', authMiddleware, requireRole('pi'), asyncHandler(async (req: Req
       description ?? null,
       requiredSkills ?? [],
       minGpa ?? null,
-      compType,
+      isFunded ?? false,
       deadline ?? null,
-      timeCommitment ?? null,
-      qualifications ?? null,
     ]
   );
   return res.status(201).json(rowToPosition(result.rows[0]));
@@ -65,10 +63,10 @@ router.post('/', authMiddleware, requireRole('pi'), asyncHandler(async (req: Req
 router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const { search, skills, isFunded, department } = req.query;
   let query = `
-    SELECT rp.*, pp.department, pp.lab_name, pp.research_areas, pp.lab_website
-    FROM research_positions rp
+    SELECT rp.*, pp.department, pp.lab_name, pp.lab_website
+    FROM positions rp
     JOIN pi_profiles pp ON pp.id = rp.pi_id
-    WHERE rp.status = 'open'
+    WHERE rp.is_open = true
   `;
   const params: unknown[] = [];
   let paramIndex = 1;
@@ -111,7 +109,7 @@ router.get('/mine', authMiddleware, requireRole('pi'), asyncHandler(async (req: 
   const result = await pool.query(
     `SELECT rp.*,
        (SELECT COUNT(*) FROM applications a WHERE a.position_id = rp.id) as app_count
-     FROM research_positions rp
+     FROM positions rp
      WHERE rp.pi_id = $1
      ORDER BY rp.created_at DESC`,
     [pi.id]
@@ -139,10 +137,10 @@ router.get('/recommended', authMiddleware, requireRole('student'), asyncHandler(
   const studentGpa: number | null = student.gpa != null ? parseFloat(student.gpa as string) : null;
 
   const result = await pool.query(
-    `SELECT rp.*, pp.department, pp.lab_name, pp.research_areas, pp.lab_website
-     FROM research_positions rp
+    `SELECT rp.*, pp.department, pp.lab_name, pp.lab_website
+     FROM positions rp
      JOIN pi_profiles pp ON pp.id = rp.pi_id
-     WHERE rp.status = 'open'
+     WHERE rp.is_open = true
        AND rp.id NOT IN (
          SELECT position_id FROM applications WHERE student_id = $1
        )`,
@@ -183,8 +181,8 @@ router.get('/recommended', authMiddleware, requireRole('student'), asyncHandler(
 router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await pool.query(
-    `SELECT rp.*, pp.department, pp.lab_name, pp.research_areas, pp.lab_website
-     FROM research_positions rp
+    `SELECT rp.*, pp.department, pp.lab_name, pp.lab_website
+     FROM positions rp
      JOIN pi_profiles pp ON pp.id = rp.pi_id
      WHERE rp.id = $1`,
     [id]
@@ -221,7 +219,7 @@ router.put('/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req: R
   }
 
   const result = await pool.query(
-    `UPDATE research_positions SET
+    `UPDATE positions SET
        title             = COALESCE($1, title),
        description       = COALESCE($2, description),
        required_skills   = COALESCE($3, required_skills),
@@ -266,7 +264,7 @@ router.delete('/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req
   try {
     await client.query('BEGIN');
     const result = await client.query(
-      `UPDATE research_positions SET status = 'closed' WHERE id = $1 AND pi_id = $2 RETURNING id`,
+      `UPDATE positions SET status = 'closed' WHERE id = $1 AND pi_id = $2 RETURNING id`,
       [id, pi.id]
     );
     if (result.rows.length === 0) {
