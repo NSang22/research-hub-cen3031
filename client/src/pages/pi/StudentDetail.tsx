@@ -27,7 +27,7 @@ function formatYearLabel(yl: string | null | undefined): string {
 }
 
 function displayValue(v: string | number | null | undefined): string {
-  if (v === null || v === undefined || v === '') return '—';
+  if (v === null || v === undefined || v === '') return 'N/A';
   return String(v);
 }
 
@@ -87,10 +87,10 @@ export function StudentDetail() {
   const email = student.email ?? '';
   const yearVal = formatYearLabel(student.yearLevel as AcademicLevel | null | undefined);
   const gradVal =
-    student.graduationYear != null ? String(student.graduationYear) : '—';
+    student.graduationYear != null ? String(student.graduationYear) : 'N/A';
   const majorVal = displayValue(student.major);
-  const gpaVal = student.gpa != null ? Number(student.gpa).toFixed(1) : '—';
-  const yearDisplay = yearVal || '—';
+  const gpaVal = student.gpa != null ? Number(student.gpa).toFixed(1) : 'N/A';
+  const yearDisplay = yearVal || 'N/A';
 
   return (
     <div className="min-h-screen">

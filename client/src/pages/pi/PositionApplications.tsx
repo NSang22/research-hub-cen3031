@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Navbar } from '../../components/Navbar';
 import { Modal } from '../../components/Modal';
 import { api } from '../../lib/api';
-import type { AcademicLevel } from '../../types';
+import type { AcademicLevel, Position } from '../../types';
 import './position-applications.css';
 
 interface AppWithStudent {
@@ -21,6 +21,7 @@ interface AppWithStudent {
   bio?: string;
   resumeUrl?: string;
   yearLevel?: string;
+  questionAnswers?: Record<string, string | number>;
 }
 
 function initials(first?: string, last?: string): string {
@@ -75,14 +76,14 @@ function pillLabel(status: string): string {
 export function PositionApplications() {
   const { id } = useParams<{ id: string }>();
   const [applications, setApplications] = useState<AppWithStudent[]>([]);
-  const [positionTitle, setPositionTitle] = useState('');
+  const [position, setPosition] = useState<Position | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedApp, setSelectedApp] = useState<AppWithStudent | null>(null);
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-    api.positions.getById(id).then((p) => setPositionTitle(p.title));
+    api.positions.getById(id).then(setPosition).catch(() => setPosition(null));
     api.applications
       .byPosition(id)
       .then(setApplications)
@@ -122,7 +123,7 @@ export function PositionApplications() {
             <Link to="/pi/dashboard" className="pa-back">
               ← Back to dashboard
             </Link>
-            <h1 className="pa-title">{positionTitle || 'Position'}</h1>
+            <h1 className="pa-title">{position?.title || 'Position'}</h1>
             <p className="pa-subtitle">
               {applications.length} applicant{applications.length !== 1 ? 's' : ''}
             </p>
@@ -231,6 +232,32 @@ export function PositionApplications() {
                 <p className="mt-1 whitespace-pre-wrap text-slate-300">{selectedApp.coverLetter}</p>
               </div>
             )}
+            {selectedApp.questionAnswers &&
+              Object.keys(selectedApp.questionAnswers).length > 0 &&
+              (position?.applicationQuestions?.length ? (
+                <div>
+                  <strong className="text-slate-100">Application questions:</strong>
+                  <ul className="mt-2 space-y-2 list-none pl-0">
+                    {position.applicationQuestions.map((q) => {
+                      const v = selectedApp.questionAnswers?.[q.id];
+                      if (v === undefined || v === null) return null;
+                      return (
+                        <li key={q.id}>
+                          <span className="text-slate-200 font-medium">{q.label}: </span>
+                          <span className="text-slate-300 whitespace-pre-wrap">{String(v)}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ) : (
+                <div>
+                  <strong className="text-slate-100">Extra answers:</strong>
+                  <pre className="mt-1 text-slate-300 text-xs whitespace-pre-wrap">
+                    {JSON.stringify(selectedApp.questionAnswers, null, 2)}
+                  </pre>
+                </div>
+              ))}
             <Link
               to={`/pi/students/${selectedApp.studentId}`}
               className="inline-block mt-2 text-blue-400 hover:underline"

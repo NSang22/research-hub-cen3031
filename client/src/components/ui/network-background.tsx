@@ -26,7 +26,7 @@ interface Pulse {
   speed: number;
 }
 
-// ── COLOR PALETTE — CMYK blue 100 60 0 20 → RGB(0,82,204) + variants ───
+// Color palette: CMYK blue 100 60 0 20 to RGB(0,82,204) and variants
 const COLORS = {
   student: { r: 0, g: 82, b: 204 },
   lab: { r: 40, g: 110, b: 220 },

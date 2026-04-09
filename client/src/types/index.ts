@@ -1,3 +1,7 @@
+import type { ApplicationQuestion, QuestionAnswersMap } from './applicationQuestions';
+
+export type { ApplicationQuestion, QuestionAnswersMap } from './applicationQuestions';
+
 export type UserRole = 'student' | 'pi';
 export type AcademicLevel = 'freshman' | 'sophomore' | 'junior' | 'senior' | 'grad' | 'masters' | 'phd' | 'postdoc';
 /** @deprecated Use AcademicLevel */
@@ -34,7 +38,7 @@ export interface StudentProfile {
 /** PI lab roster: students with an accepted application to one of this PI's positions */
 export interface LabRosterMember extends StudentProfile {
   acceptedPositionTitles: string[];
-  /** ISO timestamp — earliest acceptance update for this PI's positions */
+  /** ISO timestamp: earliest acceptance update for this PI's positions */
   inLabSince: string;
 }
 
@@ -78,6 +82,8 @@ export interface Position {
   /** Present on position detail (from PI user record) */
   piFirstName?: string;
   piLastName?: string;
+  /** Custom questions applicants answer (set by PI) */
+  applicationQuestions?: ApplicationQuestion[];
 }
 
 export interface Application {
@@ -91,4 +97,6 @@ export interface Application {
   appliedAt: string;
   positionTitle?: string;
   labName?: string;
+  department?: string | null;
+  questionAnswers?: QuestionAnswersMap;
 }

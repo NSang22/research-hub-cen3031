@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Navbar } from '../../components/Navbar';
+import { ApplicationQuestionsEditor } from '../../components/ApplicationQuestionsEditor';
 import { api } from '../../lib/api';
 import type { Position } from '../../types';
+import type { ApplicationQuestion } from '../../types/applicationQuestions';
 
 export function PositionEdit() {
   const { id } = useParams<{ id: string }>();
@@ -12,6 +14,7 @@ export function PositionEdit() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [confirmClose, setConfirmClose] = useState(false);
+  const [applicationQuestions, setApplicationQuestions] = useState<ApplicationQuestion[]>([]);
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -28,6 +31,9 @@ export function PositionEdit() {
       .getById(id)
       .then((p) => {
         setPosition(p);
+        setApplicationQuestions(
+          Array.isArray(p.applicationQuestions) ? (p.applicationQuestions as ApplicationQuestion[]) : []
+        );
         setForm({
           title: p.title,
           description: p.description || '',
@@ -59,6 +65,7 @@ export function PositionEdit() {
         isOpen: form.isOpen,
         isFunded: form.isFunded,
         deadline: form.deadline || undefined,
+        applicationQuestions: applicationQuestions.filter((q) => q.label.trim()),
       });
       navigate('/pi/dashboard');
     } catch (err: unknown) {
@@ -190,6 +197,7 @@ export function PositionEdit() {
               Funded position
             </label>
           </div>
+          <ApplicationQuestionsEditor value={applicationQuestions} onChange={setApplicationQuestions} />
           <div className="flex gap-3">
             <button
               type="submit"

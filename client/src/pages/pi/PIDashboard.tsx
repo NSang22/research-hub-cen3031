@@ -33,9 +33,9 @@ const statusStyles: Record<
 };
 
 function daysUntil(dateStr: string | null): string {
-  if (!dateStr) return '—';
+  if (!dateStr) return 'N/A';
   const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return '—';
+  if (Number.isNaN(d.getTime())) return 'N/A';
   const now = new Date();
   const end = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -191,7 +191,7 @@ export function PIDashboard() {
                 <div className="pi-dash-stat-label">Acceptance Rate</div>
                 <div className="pi-dash-stat-row">
                   <div className="pi-dash-stat-value">
-                    {acceptanceRate != null ? `${acceptanceRate}%` : '—'}
+                    {acceptanceRate != null ? `${acceptanceRate}%` : 'N/A'}
                   </div>
                 </div>
                 <div className="pi-dash-stat-sub">
@@ -203,7 +203,7 @@ export function PIDashboard() {
               <div className="pi-dash-stat">
                 <div className="pi-dash-stat-label">Avg. Time to Fill</div>
                 <div className="pi-dash-stat-row">
-                  <div className="pi-dash-stat-value">—</div>
+                  <div className="pi-dash-stat-value">N/A</div>
                 </div>
                 <div className="pi-dash-stat-sub">From post to accept</div>
               </div>
@@ -307,7 +307,7 @@ export function PIDashboard() {
                     const st = statusStyles[a.status] || statusStyles.pending;
                     const name = [a.firstName, a.lastName].filter(Boolean).join(' ') || 'Student';
                     const gpaStr = a.gpa != null ? `${Number(a.gpa).toFixed(1)} GPA` : '';
-                    const majorStr = a.major || '—';
+                    const majorStr = a.major || 'N/A';
                     return (
                       <Link key={a.id} to={`/pi/students/${a.studentId}`} className="pi-dash-app-row">
                         <div className="pi-dash-app-avatar">{initials(a.firstName, a.lastName)}</div>

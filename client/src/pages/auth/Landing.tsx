@@ -13,7 +13,7 @@ export function Landing() {
       {/* Network Background - nodes, connections, pulses */}
       <NetworkBackground />
 
-      {/* Content — full width + centered stack (avoids drift from body sidebar padding) */}
+      {/* Content: full width + centered stack (avoids drift from body sidebar padding) */}
       <div className="relative z-[150] flex w-full flex-1 flex-col items-center justify-center px-4 pb-24 text-center sm:pb-0">
         <div className="flex w-full max-w-5xl flex-col items-center justify-center">
         <h1 className="mb-8 w-full max-w-5xl text-5xl font-bold text-[#0052CC] md:text-8xl">

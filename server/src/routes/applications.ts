@@ -2,12 +2,17 @@ import { Router, Request, Response } from 'express';
 import pool from '../db/pool.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
+import {
+  normalizeAnswersForStore,
+  parseApplicationQuestions,
+  validateQuestionAnswers,
+} from '../lib/applicationQuestions.js';
 
 const router = Router();
 
 // POST /api/applications - apply (student only)
 router.post('/', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
-  const { positionId, coverLetter, personalStatement } = req.body;
+  const { positionId, coverLetter, personalStatement, questionAnswers } = req.body;
   if (!positionId) {
     return res.status(400).json({ error: 'positionId is required' });
   }
@@ -16,13 +21,37 @@ router.post('/', authMiddleware, requireRole('student'), asyncHandler(async (req
   if (!student) {
     return res.status(404).json({ error: 'Student profile not found' });
   }
+
+  const posResult = await pool.query(
+    `SELECT id, status, application_questions FROM research_positions WHERE id = $1`,
+    [positionId]
+  );
+  const posRow = posResult.rows[0];
+  if (!posRow) {
+    return res.status(404).json({ error: 'Position not found' });
+  }
+  if (posRow.status !== 'open') {
+    return res.status(400).json({ error: 'This position is not accepting applications' });
+  }
+
+  const questions = parseApplicationQuestions(posRow.application_questions);
+  const answersIn =
+    questionAnswers && typeof questionAnswers === 'object' && !Array.isArray(questionAnswers)
+      ? (questionAnswers as Record<string, unknown>)
+      : {};
+  const errMsg = validateQuestionAnswers(questions, answersIn);
+  if (errMsg) {
+    return res.status(400).json({ error: errMsg });
+  }
+  const answersJson = JSON.stringify(normalizeAnswersForStore(questions, answersIn));
+
   const statement = personalStatement ?? coverLetter ?? null;
   try {
     const result = await pool.query(
-      `INSERT INTO applications (position_id, student_id, personal_statement)
-       VALUES ($1, $2, $3)
+      `INSERT INTO applications (position_id, student_id, personal_statement, question_answers)
+       VALUES ($1, $2, $3, $4::jsonb)
        RETURNING *`,
-      [positionId, student.id, statement]
+      [positionId, student.id, statement, answersJson]
     );
     const row = result.rows[0];
     return res.status(201).json({
@@ -33,6 +62,7 @@ router.post('/', authMiddleware, requireRole('student'), asyncHandler(async (req
       coverLetter: row.personal_statement,
       personalStatement: row.personal_statement,
       appliedAt: row.created_at,
+      questionAnswers: row.question_answers || {},
     });
   } catch (err: unknown) {
     const e = err as { code?: string };
@@ -51,7 +81,7 @@ router.get('/mine', authMiddleware, requireRole('student'), asyncHandler(async (
     return res.json([]);
   }
   const result = await pool.query(
-    `SELECT a.*, rp.title as position_title, pp.lab_name
+    `SELECT a.*, rp.title as position_title, pp.lab_name, pp.department
      FROM applications a
      JOIN research_positions rp ON rp.id = a.position_id
      JOIN pi_profiles pp ON pp.id = rp.pi_id
@@ -70,6 +100,8 @@ router.get('/mine', authMiddleware, requireRole('student'), asyncHandler(async (
       appliedAt: row.created_at,
       positionTitle: row.position_title,
       labName: row.lab_name,
+      department: row.department,
+      questionAnswers: row.question_answers || {},
     }))
   );
 }));
@@ -111,6 +143,7 @@ router.get('/position/:id', authMiddleware, requireRole('pi'), asyncHandler(asyn
       firstName: row.first_name,
       lastName: row.last_name,
       email: row.email,
+      questionAnswers: row.question_answers || {},
     }))
   );
 }));
@@ -148,6 +181,7 @@ router.patch('/:id/status', authMiddleware, requireRole('pi'), asyncHandler(asyn
     coverLetter: row.personal_statement,
     personalStatement: row.personal_statement,
     appliedAt: row.created_at,
+    questionAnswers: row.question_answers || {},
   });
 }));
 

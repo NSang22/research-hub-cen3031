@@ -30,7 +30,7 @@ function relativeAppliedLabel(iso: string): string {
   const diffDays = Math.round(
     (startToday.getTime() - startD.getTime()) / (24 * 60 * 60 * 1000)
   );
-  if (diffDays < 0) return '—';
+  if (diffDays < 0) return '';
   if (diffDays === 0) return 'Today';
   if (diffDays === 1) return '1d ago';
   if (diffDays < 7) return `${diffDays}d ago`;

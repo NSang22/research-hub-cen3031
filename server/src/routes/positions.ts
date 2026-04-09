@@ -6,6 +6,7 @@ import { asyncHandler } from '../lib/asyncHandler.js';
 const router = Router();
 
 function rowToPosition(row: Record<string, unknown>) {
+  const aq = row.application_questions;
   return {
     id: row.id,
     piId: row.pi_id,
@@ -25,12 +26,13 @@ function rowToPosition(row: Record<string, unknown>) {
     labName: row.lab_name,
     researchArea: (row.research_areas as string[] | undefined)?.join(', ') || null,
     labWebsite: row.lab_website,
+    applicationQuestions: Array.isArray(aq) ? aq : [],
   };
 }
 
 // POST /api/positions - create (PI only)
 router.post('/', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
-  const { title, description, requiredSkills, minGpa, isFunded, compensationType, deadline, timeCommitment, qualifications } = req.body;
+  const { title, description, requiredSkills, minGpa, isFunded, compensationType, deadline, timeCommitment, qualifications, applicationQuestions } = req.body;
   if (!title) {
     return res.status(400).json({ error: 'Title is required' });
   }
@@ -40,11 +42,12 @@ router.post('/', authMiddleware, requireRole('pi'), asyncHandler(async (req: Req
     return res.status(404).json({ error: 'PI profile not found' });
   }
   const compType = compensationType ?? (isFunded ? 'paid' : 'unpaid');
+  const aqJson = JSON.stringify(Array.isArray(applicationQuestions) ? applicationQuestions : []);
 
   const result = await pool.query(
     `INSERT INTO research_positions
-       (pi_id, title, description, required_skills, min_gpa, compensation_type, deadline, time_commitment, qualifications)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       (pi_id, title, description, required_skills, min_gpa, compensation_type, deadline, time_commitment, qualifications, application_questions)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb)
      RETURNING *`,
     [
       pi.id,
@@ -56,6 +59,7 @@ router.post('/', authMiddleware, requireRole('pi'), asyncHandler(async (req: Req
       deadline ?? null,
       timeCommitment ?? null,
       qualifications ?? null,
+      aqJson,
     ]
   );
   return res.status(201).json(rowToPosition(result.rows[0]));
@@ -199,7 +203,7 @@ router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
 // PUT /api/positions/:id - update (owner only)
 router.put('/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { title, description, requiredSkills, minGpa, isFunded, compensationType, isOpen, status, deadline, timeCommitment, qualifications } = req.body;
+  const { title, description, requiredSkills, minGpa, isFunded, compensationType, isOpen, status, deadline, timeCommitment, qualifications, applicationQuestions } = req.body;
   const piResult = await pool.query('SELECT id FROM pi_profiles WHERE user_id = $1', [req.userId]);
   const pi = piResult.rows[0];
   if (!pi) {
@@ -220,6 +224,11 @@ router.put('/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req: R
     resolvedCompType = isFunded ? 'paid' : 'unpaid';
   }
 
+  const aqParam =
+    applicationQuestions !== undefined
+      ? JSON.stringify(Array.isArray(applicationQuestions) ? applicationQuestions : [])
+      : null;
+
   const result = await pool.query(
     `UPDATE research_positions SET
        title             = COALESCE($1, title),
@@ -230,8 +239,9 @@ router.put('/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req: R
        status            = COALESCE($6::position_status, status),
        deadline          = COALESCE($7, deadline),
        time_commitment   = COALESCE($8, time_commitment),
-       qualifications    = COALESCE($9, qualifications)
-     WHERE id = $10 AND pi_id = $11
+       qualifications    = COALESCE($9, qualifications),
+       application_questions = COALESCE($10::jsonb, application_questions)
+     WHERE id = $11 AND pi_id = $12
      RETURNING *`,
     [
       title ?? null,
@@ -243,6 +253,7 @@ router.put('/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req: R
       deadline ?? null,
       timeCommitment ?? null,
       qualifications ?? null,
+      aqParam,
       id,
       pi.id,
     ]

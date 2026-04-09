@@ -33,7 +33,7 @@ function formatYearLabel(yl: AcademicLevel | null | undefined): string {
   return map[yl] || yl;
 }
 
-/** Name + email only — nothing meaningful in profile fields */
+/** Name + email only; nothing meaningful in profile fields */
 function isProfileIncomplete(s: StudentProfile): boolean {
   const has =
     Boolean(s.major?.trim()) ||
@@ -159,7 +159,7 @@ export function StudentList() {
             <header className="bs-header">
               <h1 className="bs-title">Students</h1>
               <p className="bs-subtitle">
-                {allStudents.length} with a profile on ResearchHub — browse, open a profile, and reach out (e.g. email)
+                {allStudents.length} with a profile on ResearchHub: browse, open a profile, and reach out (e.g. email)
                 to recruit. Your active hires are listed under Lab → Roster.
               </p>
             </header>
@@ -289,7 +289,7 @@ export function StudentList() {
                               <span className="bs-card-gpa-val">{Number(s.gpa).toFixed(2)}</span>
                             </>
                           ) : (
-                            <span className="bs-card-gpa-empty">—</span>
+                            <span className="bs-card-gpa-empty">N/A</span>
                           )}
                         </div>
                       </div>

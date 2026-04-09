@@ -1,4 +1,4 @@
-import type { User, StudentProfile, PIProfile, Position, Application, LabRosterMember } from '../types';
+import type { User, StudentProfile, PIProfile, Position, Application, LabRosterMember, QuestionAnswersMap } from '../types';
 
 const API_BASE = '/api';
 
@@ -84,7 +84,7 @@ export const api = {
     recommended: () => request<Position[]>('/positions/recommended'),
   },
   applications: {
-    create: (body: { positionId: string; coverLetter?: string }) =>
+    create: (body: { positionId: string; coverLetter?: string; questionAnswers?: QuestionAnswersMap }) =>
       request<Application>('/applications', { method: 'POST', body: JSON.stringify(body) }),
     mine: () =>
       request<(Application & { positionTitle?: string; labName?: string; department?: string | null })[]>('/applications/mine'),

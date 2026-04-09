@@ -7,6 +7,7 @@ import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
 import { StudentDashboard } from './pages/student/StudentDashboard';
 import { StudentProfile } from './pages/student/StudentProfile';
+import { StudentSettings } from './pages/student/StudentSettings';
 import { PositionList } from './pages/student/PositionList';
 import { PositionDetail } from './pages/student/PositionDetail';
 import { StudentApplications } from './pages/student/StudentApplications';
@@ -38,7 +39,7 @@ function App() {
           >
             <Route path="dashboard" element={<StudentDashboard />} />
             <Route path="profile" element={<StudentProfile />} />
-            <Route path="settings" element={<StudentProfile />} />
+            <Route path="settings" element={<StudentSettings />} />
             <Route path="positions" element={<PositionList />} />
             <Route path="positions/:id" element={<PositionDetail />} />
             <Route path="applications" element={<StudentApplications />} />

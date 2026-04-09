@@ -75,7 +75,7 @@ export function LabRoster() {
             <header className="bs-header">
               <h1 className="bs-title">Lab roster</h1>
               <p className="bs-subtitle">
-                Students you have accepted for your research positions — your active lab members. For everyone on the
+                Students you have accepted for your research positions: your active lab members. For everyone on the
                 platform, use{' '}
                 <button
                   type="button"
@@ -96,7 +96,7 @@ export function LabRoster() {
             <div className="bs-cards">
               {members.length === 0 ? (
                 <div className="bs-empty">
-                  No one is on your lab roster yet. Accept applicants from your position pipelines — they will show up
+                  No one is on your lab roster yet. Accept applicants from your position pipelines; they will show up
                   here automatically.
                 </div>
               ) : (
@@ -138,7 +138,7 @@ export function LabRoster() {
                                   <span className="bs-card-gpa-val">{Number(s.gpa).toFixed(2)}</span>
                                 </>
                               ) : (
-                                <span className="bs-card-gpa-empty">—</span>
+                                <span className="bs-card-gpa-empty">N/A</span>
                               )}
                             </div>
                           </div>

@@ -92,6 +92,7 @@ create table if not exists research_positions (
   time_commitment   text,
   deadline          timestamptz,
   status            position_status  not null default 'open',
+  application_questions jsonb        not null default '[]'::jsonb,
   created_at        timestamptz      not null default now(),
   updated_at        timestamptz      not null default now()
 );
@@ -127,6 +128,7 @@ create table if not exists applications (
   student_id         uuid not null references student_profiles (id) on delete cascade,
   position_id        uuid not null references research_positions (id) on delete cascade,
   personal_statement text,
+  question_answers   jsonb                not null default '{}'::jsonb,
   status             application_status not null default 'pending',
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now(),

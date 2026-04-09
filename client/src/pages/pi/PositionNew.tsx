@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Navbar } from '../../components/Navbar';
+import { ApplicationQuestionsEditor } from '../../components/ApplicationQuestionsEditor';
 import { api } from '../../lib/api';
+import type { ApplicationQuestion } from '../../types/applicationQuestions';
 
 export function PositionNew() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [applicationQuestions, setApplicationQuestions] = useState<ApplicationQuestion[]>([]);
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -35,6 +38,7 @@ export function PositionNew() {
         minGpa: form.minGpa ? parseFloat(form.minGpa) : undefined,
         isFunded: form.isFunded,
         deadline: form.deadline || undefined,
+        applicationQuestions: applicationQuestions.filter((q) => q.label.trim()),
       });
       navigate(`/pi/positions/${position.id}/edit`);
     } catch (err: unknown) {
@@ -120,6 +124,7 @@ export function PositionNew() {
               Funded position
             </label>
           </div>
+          <ApplicationQuestionsEditor value={applicationQuestions} onChange={setApplicationQuestions} />
           <button
             type="submit"
             disabled={loading}

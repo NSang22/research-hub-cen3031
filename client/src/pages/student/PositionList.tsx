@@ -292,7 +292,7 @@ export function PositionList() {
                       </div>
                       {p.department ? <div className="bp-card-dept">{p.department}</div> : null}
 
-                      <div className="bp-card-desc">{p.description || '—'}</div>
+                      <div className="bp-card-desc">{p.description || 'No description.'}</div>
 
                       <div className="bp-card-footer">
                         <div className="bp-card-skills">

@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FlaskConical } from 'lucide-react';
 import { Navbar } from '../../components/Navbar';
 import { api, ApiError } from '../../lib/api';
-import type { Position } from '../../types';
+import type { Application, Position, QuestionAnswersMap } from '../../types';
+import type { ApplicationQuestion } from '../../types/applicationQuestions';
 import './position-detail.css';
 
 function formatDeadlineLong(iso: string | null): string {
@@ -26,31 +27,105 @@ function deadlineCountdown(iso: string | null): { kind: 'ok' | 'closed' | 'none'
   return { kind: 'ok', daysText: `(${diffDays} days left)` };
 }
 
+function buildAnswersPayload(
+  questions: ApplicationQuestion[],
+  raw: Record<string, string>
+): QuestionAnswersMap {
+  const out: QuestionAnswersMap = {};
+  for (const q of questions) {
+    const v = raw[q.id];
+    if (v === undefined || String(v).trim() === '') continue;
+    if (q.type === 'number') {
+      const n = Number(String(v).trim());
+      if (!Number.isNaN(n)) out[q.id] = n;
+    } else {
+      out[q.id] = String(v).trim();
+    }
+  }
+  return out;
+}
+
+function statusBadgeClass(status: string): string {
+  switch (status) {
+    case 'pending':
+      return 'pd-status pd-status-pending';
+    case 'reviewing':
+      return 'pd-status pd-status-reviewing';
+    case 'accepted':
+      return 'pd-status pd-status-accepted';
+    case 'rejected':
+      return 'pd-status pd-status-rejected';
+    case 'withdrawn':
+      return 'pd-status pd-status-withdrawn';
+    default:
+      return 'pd-status pd-status-pending';
+  }
+}
+
+function statusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    pending: 'Pending',
+    reviewing: 'Reviewing',
+    accepted: 'Accepted',
+    rejected: 'Rejected',
+    withdrawn: 'Withdrawn',
+  };
+  return labels[status] ?? status;
+}
+
 export function PositionDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [position, setPosition] = useState<Position | null>(null);
+  const [existingApp, setExistingApp] = useState<Application | null>(null);
+  const [appsLoading, setAppsLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
+  const [answerDraft, setAnswerDraft] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!id) return;
-    api.positions
-      .getById(id)
-      .then(setPosition)
-      .catch(() => setPosition(null))
-      .finally(() => setLoading(false));
+    setExistingApp(null);
+    setAppsLoading(true);
+    setLoading(true);
+    Promise.all([
+      api.positions.getById(id).catch(() => null),
+      api.applications.mine().catch(() => [] as Application[]),
+    ])
+      .then(([pos, apps]) => {
+        setPosition(pos);
+        const found = apps.find((a) => a.positionId === id) ?? null;
+        setExistingApp(found);
+      })
+      .finally(() => {
+        setLoading(false);
+        setAppsLoading(false);
+      });
   }, [id]);
 
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!id) return;
+    if (!id || !position) return;
+    const questions = (position.applicationQuestions || []).filter((q) => q.label?.trim());
     setError('');
+    for (const q of questions) {
+      if (!q.required) continue;
+      const v = answerDraft[q.id];
+      if (v === undefined || String(v).trim() === '') {
+        setError(`Please answer: ${q.label}`);
+        return;
+      }
+    }
     setApplying(true);
     try {
-      await api.applications.create({ positionId: id, coverLetter: coverLetter || undefined });
+      const questionAnswers = buildAnswersPayload(questions, answerDraft);
+      await api.applications.create({
+        positionId: id,
+        coverLetter: coverLetter || undefined,
+        questionAnswers: Object.keys(questionAnswers).length ? questionAnswers : undefined,
+      });
       navigate('/student/applications');
     } catch (err) {
       if (err instanceof ApiError) {
@@ -98,6 +173,8 @@ export function PositionDetail() {
 
   const deadlineLong = formatDeadlineLong(position.deadline);
   const countdown = deadlineCountdown(position.deadline);
+  const customQuestions = (position.applicationQuestions || []).filter((q) => q.label?.trim());
+  const submitted = !!existingApp;
 
   return (
     <div className="pd-page">
@@ -131,7 +208,7 @@ export function PositionDetail() {
 
           <div>
             <h2 className="pd-section-label">About This Position</h2>
-            <p className="pd-desc-body">{position.description || '—'}</p>
+            <p className="pd-desc-body">{position.description || 'No description provided.'}</p>
           </div>
 
           <hr className="pd-divider" />
@@ -182,8 +259,52 @@ export function PositionDetail() {
         </div>
 
         <div className="pd-card">
-          <h2 className="pd-apply-title">Apply for This Position</h2>
-          {!position.isOpen ? (
+          <h2 className="pd-apply-title">
+            {submitted ? 'Your application' : 'Apply for This Position'}
+          </h2>
+          {appsLoading ? (
+            <p className="text-sm text-[#8b90ad]">Loading application status…</p>
+          ) : submitted && existingApp ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-[#3d4260]">Status:</span>
+                <span className={statusBadgeClass(existingApp.status)}>{statusLabel(existingApp.status)}</span>
+                <span className="text-sm text-[#8b90ad]">
+                  Submitted{' '}
+                  {new Date(existingApp.appliedAt).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </span>
+              </div>
+              <p className="text-sm text-[#5c617a]">
+                You cannot edit a submitted application. This page is for your records only.
+              </p>
+              {existingApp.coverLetter?.trim() ? (
+                <div>
+                  <h3 className="pd-label">Cover letter</h3>
+                  <p className="pd-desc-body whitespace-pre-wrap">{existingApp.coverLetter}</p>
+                </div>
+              ) : null}
+              {customQuestions.length > 0 ? (
+                <div className="space-y-3">
+                  <h3 className="pd-label">Your answers</h3>
+                  {customQuestions.map((q) => {
+                    const ans = existingApp.questionAnswers?.[q.id];
+                    const display =
+                      ans === undefined || ans === null ? 'No answer' : String(ans);
+                    return (
+                      <div key={q.id}>
+                        <p className="text-sm font-medium text-[#3d4260]">{q.label}</p>
+                        <p className="pd-desc-body whitespace-pre-wrap">{display}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+          ) : !position.isOpen ? (
             <p className="pd-closed-msg">This position is no longer accepting applications.</p>
           ) : (
             <form onSubmit={handleApply}>
@@ -198,6 +319,71 @@ export function PositionDetail() {
                 placeholder="Why are you interested in this position? Mention relevant coursework or experience..."
                 className="pd-textarea"
               />
+              {customQuestions.map((q) => (
+                <div key={q.id} className="mt-4">
+                  <label className="pd-label" htmlFor={`pd-q-${q.id}`}>
+                    {q.label}
+                    {q.required ? ' *' : ''}
+                  </label>
+                  {q.type === 'text' && (
+                    <textarea
+                      id={`pd-q-${q.id}`}
+                      value={answerDraft[q.id] ?? ''}
+                      onChange={(e) =>
+                        setAnswerDraft((d) => ({ ...d, [q.id]: e.target.value }))
+                      }
+                      className="pd-textarea"
+                      rows={3}
+                    />
+                  )}
+                  {q.type === 'number' && (
+                    <input
+                      id={`pd-q-${q.id}`}
+                      type="number"
+                      step="any"
+                      value={answerDraft[q.id] ?? ''}
+                      onChange={(e) =>
+                        setAnswerDraft((d) => ({ ...d, [q.id]: e.target.value }))
+                      }
+                      className="pd-textarea py-2"
+                    />
+                  )}
+                  {q.type === 'dropdown' && (
+                    <select
+                      id={`pd-q-${q.id}`}
+                      value={answerDraft[q.id] ?? ''}
+                      onChange={(e) =>
+                        setAnswerDraft((d) => ({ ...d, [q.id]: e.target.value }))
+                      }
+                      className="pd-textarea py-2"
+                    >
+                      <option value="">Select…</option>
+                      {(q.options || []).map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {q.type === 'choice' && (
+                    <fieldset id={`pd-q-${q.id}`} className="pd-choice-group">
+                      <legend className="sr-only">{q.label}</legend>
+                      {(q.options || []).map((opt) => (
+                        <label key={opt} className="pd-choice-row">
+                          <input
+                            type="radio"
+                            name={`pd-q-${q.id}`}
+                            value={opt}
+                            checked={(answerDraft[q.id] ?? '') === opt}
+                            onChange={() => setAnswerDraft((d) => ({ ...d, [q.id]: opt }))}
+                          />
+                          <span>{opt}</span>
+                        </label>
+                      ))}
+                    </fieldset>
+                  )}
+                </div>
+              ))}
               <button type="submit" className="pd-submit" disabled={applying}>
                 {applying ? 'Submitting…' : 'Submit Application'}
               </button>
