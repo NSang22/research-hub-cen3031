@@ -230,3 +230,193 @@
   color: #8b90ad;
   margin: 0;
 }
+
+/* ── Toolbar ── */
+.pa-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.pa-filter-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pa-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #d5d8e8;
+  background: #fff;
+  color: #6b7194;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.pa-filter-pill:hover {
+  border-color: #5c7cfa;
+  color: #3b5bdb;
+}
+
+.pa-filter-pill-active {
+  background: #3b5bdb;
+  border-color: #3b5bdb;
+  color: #fff;
+}
+
+.pa-filter-pill-active:hover {
+  color: #fff;
+}
+
+.pa-filter-count {
+  background: rgba(255,255,255,0.25);
+  border-radius: 999px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pa-filter-pill:not(.pa-filter-pill-active) .pa-filter-count {
+  background: #eceef5;
+  color: #6b7194;
+}
+
+.pa-sort-select {
+  min-width: 140px;
+}
+
+.pa-no-results {
+  text-align: center;
+  padding: 32px 0;
+  color: #8b90ad;
+  font-size: 14px;
+}
+
+/* ── Name row with note indicator ── */
+.pa-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 4px;
+}
+
+.pa-name-row .pa-name {
+  margin: 0;
+}
+
+.pa-note-indicator {
+  color: #5c7cfa;
+  display: flex;
+  align-items: center;
+}
+
+/* ── View/Note button on card ── */
+.pa-note-btn {
+  font-size: 12px;
+  font-weight: 500;
+  color: #3b5bdb;
+  background: none;
+  border: 1px solid #c5cae8;
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.pa-note-btn:hover {
+  background: #eef0fb;
+  border-color: #5c7cfa;
+}
+
+/* ── Modal status row ── */
+.pa-modal-status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pa-modal-select {
+  min-width: 130px;
+}
+
+/* ── Private notes ── */
+.pa-notes-wrap {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 14px;
+  margin-top: 4px;
+}
+
+.pa-notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.pa-notes-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.pa-notes-saved {
+  font-size: 12px;
+  color: #4ade80;
+}
+
+.pa-notes-area {
+  width: 100%;
+  background: #f8fafc;
+  border: 1px solid #d5d8e8;
+  border-radius: 6px;
+  color: #1a1d2e;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.pa-notes-area:focus {
+  border-color: #5c7cfa;
+}
+
+.pa-notes-area::placeholder {
+  color: #94a3b8;
+}
+
+.pa-notes-btn {
+  margin-top: 8px;
+  padding: 6px 14px;
+  background: #3b5bdb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.pa-notes-btn:hover {
+  background: #2f4ac2;
+}
+
+.pa-notes-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
