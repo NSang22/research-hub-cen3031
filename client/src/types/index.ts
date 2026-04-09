@@ -99,3 +99,38 @@ export interface Application {
   positionTitle?: string;
   labName?: string;
 }
+
+export interface ActiveResearcher {
+  applicationId: string;
+  studentId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  major: string | null;
+  gpa: number | null;
+  graduationYear: number | null;
+  skills: string[];
+  bio: string | null;
+  yearLevel: AcademicLevel | null;
+  interests: string[];
+  positionTitle: string;
+  positionId: string;
+  joinedAt: string;
+}
+
+export interface Participant {
+  participantId: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  major: string | null;
+  gpa: number | null;
+  skills: string[];
+  bio: string | null;
+  yearLevel: AcademicLevel | null;
+  availableDays: string[];
+  availableTimes: string[];
+  hoursPerWeek: number | null;
+  studyTypes: string[];
+}
