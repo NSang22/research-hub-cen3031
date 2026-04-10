@@ -8,6 +8,8 @@ import positionRoutes from './routes/positions.js';
 import applicationRoutes from './routes/applications.js';
 import studiesRoutes from './routes/studies.js';
 import messageRoutes from './routes/messages.js';
+import notificationRoutes from './routes/notifications.js';
+import { processNotificationQueue } from './lib/notificationQueue.js';
 
 const app = express();
 
@@ -21,6 +23,7 @@ app.use('/api/positions', positionRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/studies', studiesRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, timestamp: new Date().toISOString() });
@@ -37,3 +40,12 @@ app.listen(config.port, () => {
   console.log(`ResearchHub server running on http://localhost:${config.port}`);
   console.log(`Environment: ${config.nodeEnv}`);
 });
+
+// Sweep unsent notification queue every hour so rate-limited students
+// receive their accumulated emails once their cooldown expires.
+const QUEUE_SWEEP_INTERVAL_MS = 60 * 60 * 1000;
+setInterval(() => {
+  processNotificationQueue().catch((err: unknown) =>
+    console.error('[notifications] Scheduled sweep error:', err)
+  );
+}, QUEUE_SWEEP_INTERVAL_MS);
