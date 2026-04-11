@@ -8,6 +8,7 @@ import positionRoutes from './routes/positions.js';
 import applicationRoutes from './routes/applications.js';
 import participantRoutes from './routes/participants.js';
 import studiesRoutes from './routes/studies.js';
+import messageRoutes from './routes/messages.js';
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use('/api/positions', positionRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/participants', participantRoutes);
 app.use('/api/studies', studiesRoutes);
+app.use('/api/messages', messageRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, timestamp: new Date().toISOString() });
