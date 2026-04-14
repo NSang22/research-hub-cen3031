@@ -1,54 +1,50 @@
-const MAX_LINKS = 5;
-const LABEL_MAX = 80;
-
-export type ProfileLinkRow = { label: string; url: string };
-
-export function parseProfileLinks(input: unknown): { ok: true; value: ProfileLinkRow[] } | { ok: false; error: string } {
-  if (input === undefined) {
-    return { ok: true, value: [] };
-  }
-  if (input === null) {
-    return { ok: true, value: [] };
-  }
-  if (!Array.isArray(input)) {
-    return { ok: false, error: 'profileLinks must be an array' };
-  }
-  if (input.length > MAX_LINKS) {
-    return { ok: false, error: `At most ${MAX_LINKS} links allowed` };
-  }
-
-  const out: ProfileLinkRow[] = [];
-  for (const item of input) {
-    if (!item || typeof item !== 'object') {
-      return { ok: false, error: 'Each link must be an object with label and url' };
-    }
-    const raw = item as { label?: unknown; url?: unknown };
-    const label = typeof raw.label === 'string' ? raw.label.trim() : '';
-    const urlRaw = typeof raw.url === 'string' ? raw.url.trim() : '';
-    if (!label || !urlRaw) {
-      return { ok: false, error: 'Each link needs a non-empty label and URL' };
-    }
-    if (label.length > LABEL_MAX) {
-      return { ok: false, error: `Link label too long (max ${LABEL_MAX} characters)` };
-    }
-    let u: URL;
-    try {
-      u = new URL(urlRaw);
-    } catch {
-      return { ok: false, error: 'Invalid URL' };
-    }
-    if (u.protocol !== 'http:' && u.protocol !== 'https:') {
-      return { ok: false, error: 'URL must use http:// or https://' };
-    }
-    out.push({ label, url: u.href });
-  }
-  return { ok: true, value: out };
+export interface ProfileLink {
+  id: string;
+  label: string;
+  url: string;
 }
 
-export function rowProfileLinks(row: { profile_links?: unknown }): ProfileLinkRow[] {
-  const raw = row.profile_links;
-  if (raw == null) return [];
+export function isValidUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw);
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+export function parseProfileLinks(raw: unknown): ProfileLink[] {
   if (!Array.isArray(raw)) return [];
-  const parsed = parseProfileLinks(raw);
-  return parsed.ok ? parsed.value : [];
+  const out: ProfileLink[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const o = item as Record<string, unknown>;
+    const id = typeof o.id === 'string' && o.id.trim() ? o.id.trim() : null;
+    const label = typeof o.label === 'string' ? o.label.trim() : '';
+    const url = typeof o.url === 'string' ? o.url.trim() : '';
+    if (!id || !label || !url) continue;
+    if (!isValidUrl(url)) continue;
+    out.push({ id, label, url });
+  }
+  return out.slice(0, 5);
+}
+
+export function validateProfileLinks(links: unknown): string | null {
+  if (!Array.isArray(links)) return 'Links must be an array';
+  if (links.length > 5) return 'Maximum 5 links allowed';
+  for (let i = 0; i < links.length; i++) {
+    const item = links[i];
+    if (!item || typeof item !== 'object') return `Link ${i + 1} is invalid`;
+    const o = item as Record<string, unknown>;
+    if (typeof o.label !== 'string' || !o.label.trim()) {
+      return `Link ${i + 1} missing label`;
+    }
+    if (typeof o.url !== 'string' || !o.url.trim()) {
+      return `Link ${i + 1} missing URL`;
+    }
+    if (!isValidUrl(o.url)) {
+      return `Link ${i + 1} has invalid URL (must be http:// or https://)`;
+    }
+  }
+  return null;
 }

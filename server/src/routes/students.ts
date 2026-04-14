@@ -5,6 +5,7 @@ import pool from '../db/pool.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
+import { parseProfileLinks, validateProfileLinks } from '../lib/profileLinks.js';
 
 const router = Router();
 
@@ -68,7 +69,17 @@ router.get('/profile', authMiddleware, requireRole('student'), asyncHandler(asyn
 
 // PUT /api/students/profile - update own profile
 router.put('/profile', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
-  const { major, gpa, graduationYear, skills, bio, resumeUrl, yearLevel, interests } = req.body;
+  const { major, gpa, graduationYear, skills, bio, resumeUrl, yearLevel, interests, profileLinks } = req.body;
+  
+  if (profileLinks !== undefined) {
+    const errMsg = validateProfileLinks(profileLinks);
+    if (errMsg) {
+      return res.status(400).json({ error: errMsg });
+    }
+  }
+
+  const linksJson = profileLinks !== undefined ? JSON.stringify(parseProfileLinks(profileLinks)) : null;
+
   const result = await pool.query(
     `UPDATE student_profiles SET
        major           = COALESCE($1, major),
@@ -79,8 +90,9 @@ router.put('/profile', authMiddleware, requireRole('student'), asyncHandler(asyn
        resume_url      = COALESCE($6, resume_url),
        academic_level  = COALESCE($7, academic_level),
        interests       = COALESCE($8, interests),
+       profile_links   = COALESCE($9::jsonb, profile_links),
        updated_at      = NOW()
-     WHERE user_id = $9
+     WHERE user_id = $10
      RETURNING *`,
     [
       major ?? null,
@@ -91,6 +103,7 @@ router.put('/profile', authMiddleware, requireRole('student'), asyncHandler(asyn
       resumeUrl ?? null,
       yearLevel ?? null,
       interests ?? null,
+      linksJson,
       req.userId,
     ]
   );
@@ -109,6 +122,7 @@ router.put('/profile', authMiddleware, requireRole('student'), asyncHandler(asyn
     resumeUrl: row.resume_url,
     yearLevel: row.academic_level,
     interests: row.interests || [],
+    profileLinks: parseProfileLinks(row.profile_links),
   });
 }));
 
@@ -166,6 +180,7 @@ router.get('/', authMiddleware, requireRole('pi'), asyncHandler(async (req: Requ
       firstName: row.first_name,
       lastName: row.last_name,
       email: row.email,
+      profileLinks: parseProfileLinks(row.profile_links),
     }))
   );
 }));
@@ -198,6 +213,7 @@ router.get('/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req: R
     firstName: row.first_name,
     lastName: row.last_name,
     email: row.email,
+    profileLinks: parseProfileLinks(row.profile_links),
   });
 }));
 

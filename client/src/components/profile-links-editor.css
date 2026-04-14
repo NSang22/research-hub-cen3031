@@ -1,0 +1,104 @@
+.profile-links-editor {
+  margin-top: 1.5rem;
+}
+
+.profile-links-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.profile-links-header label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.add-link-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #555;
+  transition: all 0.2s;
+}
+
+.add-link-btn:hover:not(:disabled) {
+  background: #f7f7f7;
+  border-color: #aaa;
+}
+
+.add-link-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.no-links-hint {
+  font-size: 0.85rem;
+  color: #777;
+  margin: 0.5rem 0;
+}
+
+.links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.link-editor-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+}
+
+.link-icon {
+  color: #888;
+  flex-shrink: 0;
+}
+
+.link-label-input {
+  width: 150px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+}
+
+.link-url-input {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+}
+
+.remove-link-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #d44;
+  padding: 0.25rem;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.remove-link-btn:hover {
+  background: #fdd;
+}
+
+.link-limit-hint {
+  font-size: 0.8rem;
+  color: #777;
+  margin-top: 0.5rem;
+}

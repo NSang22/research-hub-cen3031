@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Navbar } from '../../components/Navbar';
+import { ProfileLinksEditor } from '../../components/ProfileLinksEditor';
 import { api, getAuthToken } from '../../lib/api';
-import type { AcademicLevel } from '../../types';
+import type { AcademicLevel, ProfileLink } from '../../types';
 
 const YEAR_LEVELS: AcademicLevel[] = ['freshman', 'sophomore', 'junior', 'senior', 'grad', 'masters', 'phd', 'postdoc'];
 
@@ -19,6 +20,7 @@ export function StudentProfile() {
     bio: '',
     resumeUrl: '',
     yearLevel: '' as AcademicLevel | '',
+    profileLinks: [] as ProfileLink[],
   });
 
   useEffect(() => {
@@ -33,6 +35,7 @@ export function StudentProfile() {
           bio: p.bio || '',
           resumeUrl: p.resumeUrl || '',
           yearLevel: p.yearLevel || '',
+          profileLinks: p.profileLinks || [],
         });
       })
       .catch(() => setError('Failed to load profile'))
@@ -56,6 +59,7 @@ export function StudentProfile() {
         bio: form.bio || null,
         resumeUrl: form.resumeUrl || null,
         yearLevel: form.yearLevel || null,
+        profileLinks: form.profileLinks,
       });
     } catch (err: unknown) {
       setError((err as { message?: string })?.message || 'Failed to save');
@@ -247,6 +251,10 @@ export function StudentProfile() {
               <p className="mt-1 text-sm text-red-600">{uploadError}</p>
             )}
           </div>
+          <ProfileLinksEditor
+            links={form.profileLinks}
+            onChange={(links) => setForm((f) => ({ ...f, profileLinks: links }))}
+          />
           <button
             type="submit"
             disabled={saving}

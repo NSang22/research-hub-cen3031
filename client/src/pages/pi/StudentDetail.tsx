@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Navbar } from '../../components/Navbar';
+import { ProfileLinksDisplay } from '../../components/ProfileLinksDisplay';
 import { api } from '../../lib/api';
 import type { AcademicLevel, StudentProfile } from '../../types';
 import './student-detail-pi.css';
@@ -170,6 +171,8 @@ export function StudentDetail() {
                 </div>
               ) : null}
             </section>
+
+            <ProfileLinksDisplay links={student.profileLinks || []} />
           </div>
         </div>
       </div>

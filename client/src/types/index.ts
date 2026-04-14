@@ -2,6 +2,12 @@ import type { ApplicationQuestion, QuestionAnswersMap } from './applicationQuest
 
 export type { ApplicationQuestion, QuestionAnswersMap } from './applicationQuestions';
 
+export interface ProfileLink {
+  id: string;
+  label: string;
+  url: string;
+}
+
 export type UserRole = 'student' | 'pi';
 export type AcademicLevel = 'freshman' | 'sophomore' | 'junior' | 'senior' | 'grad' | 'masters' | 'phd' | 'postdoc';
 /** @deprecated Use AcademicLevel */
@@ -33,6 +39,7 @@ export interface StudentProfile {
   firstName?: string;
   lastName?: string;
   email?: string;
+  profileLinks?: ProfileLink[];
 }
 
 /** PI lab roster: students with an accepted application to one of this PI's positions */
