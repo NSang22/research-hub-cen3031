@@ -4,6 +4,7 @@ import { ArrowLeft, Send } from 'lucide-react';
 import { Navbar } from '../../components/Navbar';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../lib/supabase';
 import type { Message, Conversation } from '../../types';
 
 function formatTime(iso: string): string {
@@ -66,6 +67,53 @@ export function ChatView() {
       .catch(() => setMessages([]))
       .finally(() => setLoading(false));
   }, [conversationId, user?.id]);
+
+  // Subscribe to Realtime inserts on the messages table filtered to this conversation.
+  // Depends on `loading` so the subscription is set up after the initial fetch completes,
+  // avoiding duplicate messages from events that race with the initial load.
+  useEffect(() => {
+    if (!conversationId || loading) return;
+
+    const channel = supabase
+      .channel(`messages-${conversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          console.log('realtime event received', payload);
+          const row = payload.new as Record<string, unknown>;
+          const incoming: Message = {
+            id: row.id as string,
+            conversationId: row.conversation_id as string,
+            senderId: row.sender_id as string,
+            body: row.body as string,
+            readAt: (row.read_at as string | null) ?? null,
+            createdAt: row.created_at as string,
+          };
+          setMessages((prev) => {
+            // Deduplicate: ignore if we already have this message (e.g. from optimistic update)
+            if (prev.some((m) => m.id === incoming.id)) return prev;
+            return [...prev, incoming];
+          });
+          // Mark as read if we didn't send it
+          if (incoming.senderId !== user?.id) {
+            api.messages.markAsRead(incoming.id).catch(() => {});
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('realtime status', status);
+      });
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [conversationId, loading, user?.id]);
 
   // Auto-scroll to bottom when messages load or new message sent
   useEffect(() => {

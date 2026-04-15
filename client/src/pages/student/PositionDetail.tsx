@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { FlaskConical, MessageSquare } from 'lucide-react';
+import { FlaskConical } from 'lucide-react';
 import { Navbar } from '../../components/Navbar';
 import { api, ApiError } from '../../lib/api';
 import type { Position } from '../../types';
@@ -34,18 +34,6 @@ export function PositionDetail() {
   const [applying, setApplying] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
   const [error, setError] = useState('');
-  const [messagingPI, setMessagingPI] = useState(false);
-
-  const handleMessagePI = async () => {
-    if (!position?.piUserId || messagingPI) return;
-    setMessagingPI(true);
-    try {
-      await api.messages.sendMessage(position.piUserId, `Hi, I'm interested in your position: "${position.title}". I'd love to learn more.`);
-      navigate('/student/inbox');
-    } catch {
-      setMessagingPI(false);
-    }
-  };
 
   useEffect(() => {
     if (!id) return;
@@ -122,34 +110,7 @@ export function PositionDetail() {
         <div className="pd-card">
           <div className="pd-header-row">
             <h1 className="pd-title">{position.title}</h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {position.isFunded ? <span className="pd-badge-funded">Funded</span> : null}
-              {position.piUserId && (
-                <button
-                  type="button"
-                  onClick={() => { void handleMessagePI(); }}
-                  disabled={messagingPI}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(0,82,204,0.35)',
-                    background: 'rgba(0,82,204,0.06)',
-                    color: '#0052CC',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    cursor: messagingPI ? 'not-allowed' : 'pointer',
-                    opacity: messagingPI ? 0.6 : 1,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  <MessageSquare size={14} strokeWidth={2} />
-                  {messagingPI ? 'Opening…' : 'Message PI'}
-                </button>
-              )}
-            </div>
+            {position.isFunded ? <span className="pd-badge-funded">Funded</span> : null}
           </div>
 
           {(position.labName || piDisplay) && (
