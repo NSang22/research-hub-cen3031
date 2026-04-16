@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Trash2 } from 'lucide-react';
 import { Navbar } from '../../components/Navbar';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../lib/supabase';
 import type { Conversation } from '../../types';
 
 function formatRelativeTime(iso: string | null): string {
@@ -30,8 +31,10 @@ export function Inbox() {
   const navigate = useNavigate();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
+  const fetchConversations = useCallback(() => {
     api.messages
       .getConversations()
       .then((data) => {
@@ -46,6 +49,44 @@ export function Inbox() {
       .catch(() => setConversations([]))
       .finally(() => setLoading(false));
   }, []);
+
+  // Initial load
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
+
+  // Subscribe to Realtime inserts on the messages table to keep previews/unread counts live
+  useEffect(() => {
+    const channel = supabase
+      .channel('inbox:messages')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        () => {
+          // Refetch the full conversations list so last-message previews and
+          // unread counts are always up to date without manual cache management.
+          fetchConversations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [fetchConversations]);
+
+  const handleDelete = async (conversationId: string) => {
+    setDeleting(true);
+    try {
+      await api.messages.deleteConversation(conversationId);
+      setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+      setConfirmDeleteId(null);
+    } catch {
+      // leave confirm state open so user can retry
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
 
@@ -128,84 +169,176 @@ export function Inbox() {
                 : '?';
               const hasUnread = conv.unreadCount > 0;
 
+              const isConfirming = confirmDeleteId === conv.id;
+
               return (
-                <button
-                  key={conv.id}
-                  type="button"
-                  onClick={() => navigate(`${getInboxBase(user?.role)}/${conv.id}`)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.875rem',
-                    background: '#fff',
-                    borderRadius: '10px',
-                    border: `1px solid ${hasUnread ? 'rgba(0,82,204,0.25)' : 'rgba(0,82,204,0.12)'}`,
-                    padding: '0.875rem 1.25rem',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%',
-                    transition: 'box-shadow 0.15s',
-                  }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 10px rgba(0,82,204,0.1)'; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none'; }}
-                >
+                <div key={conv.id} style={{ display: 'flex', alignItems: 'stretch', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`${getInboxBase(user?.role)}/${conv.id}`)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.875rem',
+                      background: '#fff',
+                      borderRadius: '10px',
+                      border: `1px solid ${hasUnread ? 'rgba(0,82,204,0.25)' : 'rgba(0,82,204,0.12)'}`,
+                      padding: '0.875rem 1.25rem',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      flex: 1,
+                      transition: 'box-shadow 0.15s',
+                    }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 10px rgba(0,82,204,0.1)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none'; }}
+                  >
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      background: hasUnread ? '#0052CC' : 'rgba(0,82,204,0.12)',
+                      color: hasUnread ? '#fff' : '#0052CC',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      flexShrink: 0,
+                    }}>
+                      {initials}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.2rem' }}>
+                        <span style={{ fontWeight: hasUnread ? 700 : 600, fontSize: '0.9rem', color: '#1a2152' }}>
+                          {displayName}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: '#8b90ad', flexShrink: 0, marginLeft: '0.5rem' }}>
+                          {formatRelativeTime(conv.lastMessageAt)}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                        <p style={{
+                          fontSize: '0.8rem',
+                          color: hasUnread ? '#3d4260' : '#8b90ad',
+                          fontWeight: hasUnread ? 500 : 400,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          flex: 1,
+                        }}>
+                          {conv.lastMessage ?? 'No messages yet'}
+                        </p>
+                        {hasUnread && (
+                          <span style={{
+                            minWidth: '1.25rem',
+                            height: '1.25rem',
+                            borderRadius: '999px',
+                            background: '#0052CC',
+                            color: '#fff',
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0 0.25rem',
+                            flexShrink: 0,
+                          }}>
+                            {conv.unreadCount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Delete control */}
                   <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    background: hasUnread ? '#0052CC' : 'rgba(0,82,204,0.12)',
-                    color: hasUnread ? '#fff' : '#0052CC',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
                     flexShrink: 0,
                   }}>
-                    {initials}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.2rem' }}>
-                      <span style={{ fontWeight: hasUnread ? 700 : 600, fontSize: '0.9rem', color: '#1a2152' }}>
-                        {displayName}
-                      </span>
-                      <span style={{ fontSize: '0.75rem', color: '#8b90ad', flexShrink: 0, marginLeft: '0.5rem' }}>
-                        {formatRelativeTime(conv.lastMessageAt)}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                      <p style={{
-                        fontSize: '0.8rem',
-                        color: hasUnread ? '#3d4260' : '#8b90ad',
-                        fontWeight: hasUnread ? 500 : 400,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        flex: 1,
+                    {isConfirming ? (
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        background: '#fff',
+                        border: '1px solid rgba(198,40,40,0.3)',
+                        borderRadius: '10px',
+                        padding: '0.5rem 0.75rem',
+                        fontSize: '0.75rem',
                       }}>
-                        {conv.lastMessage ?? 'No messages yet'}
-                      </p>
-                      {hasUnread && (
-                        <span style={{
-                          minWidth: '1.25rem',
-                          height: '1.25rem',
-                          borderRadius: '999px',
-                          background: '#0052CC',
-                          color: '#fff',
-                          fontSize: '0.65rem',
-                          fontWeight: 700,
+                        <span style={{ color: '#c62828', fontWeight: 600 }}>Delete?</span>
+                        <div style={{ display: 'flex', gap: '0.375rem' }}>
+                          <button
+                            type="button"
+                            disabled={deleting}
+                            onClick={() => { void handleDelete(conv.id); }}
+                            style={{
+                              padding: '0.2rem 0.5rem',
+                              borderRadius: '5px',
+                              border: 'none',
+                              background: '#c62828',
+                              color: '#fff',
+                              fontSize: '0.72rem',
+                              fontWeight: 600,
+                              cursor: deleting ? 'not-allowed' : 'pointer',
+                              opacity: deleting ? 0.7 : 1,
+                            }}
+                          >
+                            {deleting ? '…' : 'Confirm'}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={deleting}
+                            onClick={() => setConfirmDeleteId(null)}
+                            style={{
+                              padding: '0.2rem 0.5rem',
+                              borderRadius: '5px',
+                              border: '1px solid rgba(0,0,0,0.15)',
+                              background: '#fff',
+                              color: '#3d4260',
+                              fontSize: '0.72rem',
+                              fontWeight: 600,
+                              cursor: deleting ? 'not-allowed' : 'pointer',
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteId(conv.id)}
+                        title="Delete conversation"
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(0,0,0,0.1)',
+                          background: '#fff',
+                          color: '#8b90ad',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          padding: '0 0.25rem',
-                          flexShrink: 0,
-                        }}>
-                          {conv.unreadCount}
-                        </span>
-                      )}
-                    </div>
+                          cursor: 'pointer',
+                          transition: 'color 0.15s, border-color 0.15s',
+                        }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.color = '#c62828';
+                          (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(198,40,40,0.35)';
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.color = '#8b90ad';
+                          (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(0,0,0,0.1)';
+                        }}
+                      >
+                        <Trash2 size={14} strokeWidth={2} />
+                      </button>
+                    )}
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
