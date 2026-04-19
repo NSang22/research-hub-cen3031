@@ -13,6 +13,70 @@ function createTransport() {
   });
 }
 
+export type NotificationPosition = {
+  id: string;
+  title: string;
+  piName: string;
+  department: string;
+  description: string | null;
+};
+
+export async function sendPositionNotificationEmail(
+  toEmail: string,
+  firstName: string,
+  positions: NotificationPosition[],
+  studentProfileId: string
+) {
+  const transport = createTransport();
+  const clientUrl = config.clientUrl;
+  const unsubscribeUrl = `${clientUrl.replace(/\/$/, '')}/api/notifications/unsubscribe?studentId=${studentProfileId}`;
+
+  if (!transport) {
+    console.log(`[email] SMTP not configured — skipping position notification to ${toEmail} (${positions.length} position(s))`);
+    return;
+  }
+
+  const isSingle = positions.length === 1;
+  const subject = isSingle
+    ? `New research opportunity: ${positions[0].title}`
+    : `${positions.length} new research opportunities matching your interests`;
+
+  const positionHtmlBlocks = positions.map((p) => {
+    const applyUrl = `${clientUrl.replace(/\/$/, '')}/positions/${p.id}`;
+    const desc = p.description ? `<p style="margin:8px 0 0;color:#444;">${p.description.slice(0, 200)}${p.description.length > 200 ? '…' : ''}</p>` : '';
+    return `
+      <div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:16px;">
+        <h3 style="margin:0 0 4px;color:#001A3E;">${p.title}</h3>
+        <p style="margin:0;color:#555;font-size:14px;">${p.piName} · ${p.department}</p>
+        ${desc}
+        <a href="${applyUrl}" style="display:inline-block;margin-top:12px;padding:8px 16px;background:#0d9488;color:#fff;border-radius:6px;text-decoration:none;font-size:14px;">View &amp; Apply</a>
+      </div>`;
+  }).join('');
+
+  const positionTextBlocks = positions.map((p) => {
+    const applyUrl = `${clientUrl.replace(/\/$/, '')}/positions/${p.id}`;
+    return `${p.title}\n${p.piName} · ${p.department}\n${applyUrl}`;
+  }).join('\n\n');
+
+  await transport.sendMail({
+    from: `"ResearchHub" <${config.fromEmail}>`,
+    to: toEmail,
+    subject,
+    text: `Hi ${firstName},\n\nNew research opportunities matching your interests were just posted on ResearchHub:\n\n${positionTextBlocks}\n\nLog in to browse more: ${clientUrl}\n\nTo unsubscribe from these alerts: ${unsubscribeUrl}\n\nBest,\nThe ResearchHub Team`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;">
+        <h2 style="color:#001A3E;">New Research ${isSingle ? 'Opportunity' : 'Opportunities'} for You</h2>
+        <p>Hi ${firstName}, the following ${isSingle ? 'position was' : 'positions were'} just posted on ResearchHub and match your interests:</p>
+        ${positionHtmlBlocks}
+        <p style="margin-top:24px;font-size:13px;color:#888;">
+          You're receiving this because you opted into new-position alerts.<br/>
+          <a href="${unsubscribeUrl}" style="color:#888;">Unsubscribe</a>
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function sendWelcomeEmail(toEmail: string, firstName: string) {
   const transport = createTransport();
   if (!transport) {

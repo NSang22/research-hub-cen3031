@@ -1,4 +1,4 @@
-import type { User, StudentProfile, PIProfile, Position, Application, LabRosterMember, QuestionAnswersMap } from '../types';
+import type { User, StudentProfile, PIProfile, Position, Application, LabRosterMember, QuestionAnswersMap, NotificationPreferences } from '../types';
 
 const API_BASE = '/api';
 
@@ -82,6 +82,14 @@ export const api = {
     close: (id: string) => request<void>(`/positions/${id}`, { method: 'DELETE' }),
     mine: () => request<(Position & { appCount?: number })[]>('/positions/mine'),
     recommended: () => request<Position[]>('/positions/recommended'),
+  },
+  notifications: {
+    getPreferences: () => request<NotificationPreferences>('/notifications/preferences'),
+    updatePreferences: (body: Partial<NotificationPreferences>) =>
+      request<NotificationPreferences>('/notifications/preferences', {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      }),
   },
   applications: {
     create: (body: { positionId: string; coverLetter?: string; questionAnswers?: QuestionAnswersMap }) =>

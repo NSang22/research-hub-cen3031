@@ -2,6 +2,15 @@ import type { ApplicationQuestion, QuestionAnswersMap } from './applicationQuest
 
 export type { ApplicationQuestion, QuestionAnswersMap } from './applicationQuestions';
 
+export type NotificationFrequency = 'immediately' | 'hourly' | 'daily' | 'weekly';
+
+export interface NotificationPreferences {
+  notifyNewPositions: boolean;
+  notificationKeywords: string[];
+  notificationDepartments: string[];
+  notificationFrequency: NotificationFrequency;
+}
+
 export interface ProfileLink {
   id: string;
   label: string;
