@@ -1,0 +1,47 @@
+.profile-links-display {
+  margin-top: 1.5rem;
+}
+
+.profile-links-display h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.75rem;
+}
+
+.profile-links-display .links-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profile-link-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #0066cc;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.profile-link-item:hover {
+  background: #f0f0f0;
+  border-color: #0066cc;
+  color: #004499;
+}
+
+.profile-link-item .link-label {
+  flex: 1;
+}
+
+.profile-link-item .external-icon {
+  color: #888;
+}

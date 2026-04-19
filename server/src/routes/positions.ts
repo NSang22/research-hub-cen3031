@@ -2,7 +2,11 @@ import { Router, Request, Response } from 'express';
 import pool from '../db/pool.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
+<<<<<<< HEAD
 import { queueNotificationsForPosition, processNotificationQueue } from '../lib/notificationQueue.js';
+=======
+import { sendPositionClosedEmail } from '../lib/email.js';
+>>>>>>> d24b3f0848d959d4867e1d58fce7820dbe321029
 
 const router = Router();
 
@@ -284,20 +288,59 @@ router.delete('/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const result = await client.query(
-      `UPDATE research_positions SET status = 'closed' WHERE id = $1 AND pi_id = $2 RETURNING id`,
+    
+    const posResult = await client.query(
+      `SELECT rp.title, pp.lab_name
+       FROM research_positions rp
+       JOIN pi_profiles pp ON pp.id = rp.pi_id
+       WHERE rp.id = $1 AND rp.pi_id = $2`,
       [id, pi.id]
     );
-    if (result.rows.length === 0) {
+    if (posResult.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Position not found or access denied' });
     }
+    const { title: positionTitle, lab_name: labName } = posResult.rows[0];
+
+    const updatePos = await client.query(
+      `UPDATE research_positions SET status = 'closed' WHERE id = $1 AND pi_id = $2 RETURNING id`,
+      [id, pi.id]
+    );
+    if (updatePos.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Position not found or access denied' });
+    }
+
+    const affectedApps = await client.query(
+      `SELECT a.id, u.email, u.first_name
+       FROM applications a
+       JOIN student_profiles sp ON sp.id = a.student_id
+       JOIN users u ON u.id = sp.user_id
+       WHERE a.position_id = $1 AND a.status IN ('pending', 'reviewing')`,
+      [id]
+    );
+
     await client.query(
       `UPDATE applications SET status = 'withdrawn'
        WHERE position_id = $1 AND status IN ('pending', 'reviewing')`,
       [id]
     );
     await client.query('COMMIT');
+
+    for (const row of affectedApps.rows) {
+      sendPositionClosedEmail(
+        row.email,
+        row.first_name || 'Student',
+        positionTitle,
+        labName
+      ).catch((err) => {
+        console.error(`[email] Failed to send position closed email to ${row.email}:`, err);
+      });
+    }
+
+    console.log(
+      `[positions] Position ${id} closed. ${affectedApps.rows.length} applicant(s) notified.`
+    );
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;

@@ -99,3 +99,33 @@ export async function sendWelcomeEmail(toEmail: string, firstName: string) {
     `,
   });
 }
+
+export async function sendPositionClosedEmail(
+  toEmail: string,
+  firstName: string,
+  positionTitle: string,
+  labName: string | null
+) {
+  const transport = createTransport();
+  if (!transport) {
+    console.log(`[email] SMTP not configured — skipping position closed email to ${toEmail}`);
+    return;
+  }
+  const labInfo = labName ? ` from ${labName}` : '';
+  await transport.sendMail({
+    from: `"ResearchHub" <${config.fromEmail}>`,
+    to: toEmail,
+    subject: `Position closed: ${positionTitle}`,
+    text: `Hi ${firstName},\n\nThe position "${positionTitle}"${labInfo} has been closed and is no longer accepting applications.\n\nYour application status has been updated to withdrawn. You can continue browsing other open positions on ResearchHub.\n\nBest,\nThe ResearchHub Team`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2 style="color: #001A3E;">Position Closed</h2>
+        <p>Hi ${firstName},</p>
+        <p>The position <strong>"${positionTitle}"</strong>${labInfo} has been closed and is no longer accepting applications.</p>
+        <p>Your application status has been updated to <strong>withdrawn</strong>. You can continue browsing other open positions on ResearchHub.</p>
+        <br/>
+        <p style="color: #555;">The ResearchHub Team</p>
+      </div>
+    `,
+  });
+}
