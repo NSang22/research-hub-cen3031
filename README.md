@@ -1,6 +1,6 @@
 # ResearchHub
 
-A dual-portal web platform connecting university students with research lab Principal Investigators (PIs). Students browse and apply to research positions; PIs post openings, manage applications, and recruit participants for studies.
+A dual-portal web platform connecting undergraduate students with research lab Principal Investigators (PIs). Students browse and apply to research positions; PIs post openings, review applications, and manage their research teams.
 
 ## Tech Stack
 
@@ -43,7 +43,6 @@ research-hub-cen3031/
 - Apply with a cover letter
 - Track application status (pending, reviewed, accepted, rejected, withdrawn)
 - Build an academic profile (major, GPA, skills, resume)
-- Create a study participant profile (availability, demographics, study preferences)
 
 **Principal Investigators**
 - Post and manage research positions
@@ -111,7 +110,6 @@ npm run dev
 | GET | `/api/positions/:id` | Position detail | — |
 | PUT | `/api/positions/:id` | Update position | PI |
 | DELETE | `/api/positions/:id` | Close position | PI |
-| GET/PUT | `/api/participants/profile` | Participant profile | Student |
 | POST | `/api/applications` | Apply to position | Student |
 | GET | `/api/applications/mine` | Student's applications | Student |
 | GET | `/api/applications/position/:id` | Applications for position | PI |
@@ -125,4 +123,6 @@ Migrations run in order from `server/src/db/migrations/`:
 |---|---|
 | `001_initial.sql` | Core schema: users, profiles, positions, applications |
 | `002_add_withdrawn_status.sql` | Adds `withdrawn` to application status enum |
-| `003_participant_profiles.sql` | Study participant profile table |
+| `003_participant_profiles.sql` | Study participant profile table (removed in 005) |
+| `004_direct_messaging.sql` | Direct messaging between students and PIs |
+| `005_drop_participant_profiles.sql` | Drops study participant recruitment tables |

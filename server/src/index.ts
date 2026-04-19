@@ -6,7 +6,6 @@ import studentRoutes from './routes/students.js';
 import piRoutes from './routes/pis.js';
 import positionRoutes from './routes/positions.js';
 import applicationRoutes from './routes/applications.js';
-import participantRoutes from './routes/participants.js';
 import studiesRoutes from './routes/studies.js';
 import messageRoutes from './routes/messages.js';
 
@@ -20,7 +19,6 @@ app.use('/api/students', studentRoutes);
 app.use('/api/pis', piRoutes);
 app.use('/api/positions', positionRoutes);
 app.use('/api/applications', applicationRoutes);
-app.use('/api/participants', participantRoutes);
 app.use('/api/studies', studiesRoutes);
 app.use('/api/messages', messageRoutes);
 

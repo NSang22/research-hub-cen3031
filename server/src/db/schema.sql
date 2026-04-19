@@ -9,7 +9,7 @@ create extension if not exists "pgcrypto";   -- gen_random_uuid()
 create extension if not exists "pg_trgm";    -- trigram indexes for text search
 
 -- Enums
-create type user_role as enum ('student', 'pi', 'study_participant', 'admin');
+create type user_role as enum ('student', 'pi', 'admin');
 create type application_status as enum ('pending', 'reviewing', 'accepted', 'rejected', 'withdrawn');
 create type position_status as enum ('open', 'closed', 'filled');
 create type study_status as enum ('recruiting', 'closed', 'completed');
@@ -63,18 +63,6 @@ create table if not exists pi_profiles (
 create index if not exists pi_profiles_user_id_idx    on pi_profiles (user_id);
 create index if not exists pi_profiles_department_idx on pi_profiles (department);
 
--- Table: study_participant_profiles
-create table if not exists study_participant_profiles (
-  id                        uuid primary key default gen_random_uuid(),
-  user_id                   uuid not null unique references users (id) on delete cascade,
-  availability              jsonb not null default '{}',
-  demographics              jsonb not null default '{}',
-  participation_preferences jsonb not null default '{}',
-  created_at                timestamptz not null default now(),
-  updated_at                timestamptz not null default now()
-);
-create index if not exists study_participant_profiles_user_id_idx on study_participant_profiles (user_id);
-
 -- Shared updated_at trigger
 create or replace function set_updated_at()
 returns trigger language plpgsql as $$
@@ -90,8 +78,6 @@ create or replace trigger trg_student_profiles_updated_at
   before update on student_profiles for each row execute function set_updated_at();
 create or replace trigger trg_pi_profiles_updated_at
   before update on pi_profiles for each row execute function set_updated_at();
-create or replace trigger trg_study_participant_profiles_updated_at
-  before update on study_participant_profiles for each row execute function set_updated_at();
 
 -- Table: research_positions (replaces the old "positions" table)
 create table if not exists research_positions (
@@ -157,7 +143,6 @@ create or replace trigger trg_applications_updated_at
 alter table users                      enable row level security;
 alter table student_profiles           enable row level security;
 alter table pi_profiles                enable row level security;
-alter table study_participant_profiles enable row level security;
 alter table research_positions         enable row level security;
 alter table study_listings             enable row level security;
 alter table applications               enable row level security;
