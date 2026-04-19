@@ -10,7 +10,6 @@ import { StudentProfile } from './pages/student/StudentProfile';
 import { PositionList } from './pages/student/PositionList';
 import { PositionDetail } from './pages/student/PositionDetail';
 import { StudentApplications } from './pages/student/StudentApplications';
-import { ParticipantProfile } from './pages/student/ParticipantProfile';
 import { PIDashboard } from './pages/pi/PIDashboard';
 import { PIProfile } from './pages/pi/PIProfile';
 import { PositionNew } from './pages/pi/PositionNew';
@@ -42,7 +41,6 @@ function App() {
             <Route path="positions" element={<PositionList />} />
             <Route path="positions/:id" element={<PositionDetail />} />
             <Route path="applications" element={<StudentApplications />} />
-            <Route path="participant" element={<ParticipantProfile />} />
           </Route>
           <Route
             path="/pi"
