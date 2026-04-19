@@ -1,9 +1,24 @@
 import { Router, Request, Response } from 'express';
+import multer from 'multer';
+import path from 'path';
 import pool from '../db/pool.js';
+import { supabaseAdmin } from '../config/supabase.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
 
 const router = Router();
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF files are allowed'));
+    }
+  },
+});
 
 // GET /api/students/profile - own profile (student only)
 router.get('/profile', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
@@ -168,6 +183,83 @@ router.get('/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req: R
     lastName: row.last_name,
     email: row.email,
   });
+}));
+
+// POST /api/students/resume - upload resume (student only)
+router.post('/resume', authMiddleware, requireRole('student'), upload.single('resume'), asyncHandler(async (req: Request, res: Response) => {
+  const file = req.file;
+  if (!file) {
+    return res.status(400).json({ error: 'No file provided' });
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    return res.status(400).json({ error: 'File too large (max 5MB)' });
+  }
+  if (file.mimetype !== 'application/pdf') {
+    return res.status(400).json({ error: 'Only PDF files are allowed' });
+  }
+
+  const studentResult = await pool.query('SELECT id FROM student_profiles WHERE user_id = $1', [req.userId]);
+  const student = studentResult.rows[0];
+  if (!student) {
+    return res.status(404).json({ error: 'Student profile not found' });
+  }
+
+  // Get current resume URL to delete old file if exists
+  const current = await pool.query('SELECT resume_url FROM student_profiles WHERE user_id = $1', [req.userId]);
+  const oldUrl = current.rows[0]?.resume_url;
+
+  const ext = path.extname(file.originalname).toLowerCase() || '.pdf';
+  const safeName = `resume_${student.id}${ext}`;
+  const filePath = `${student.id}/${safeName}`;
+
+  const { error: uploadError } = await supabaseAdmin.storage
+    .from('resumes')
+    .upload(filePath, file.buffer, {
+      contentType: 'application/pdf',
+      upsert: true,
+    });
+
+  if (uploadError) {
+    return res.status(500).json({ error: 'Upload failed: ' + uploadError.message });
+  }
+
+  const { data: urlData } = supabaseAdmin.storage.from('resumes').getPublicUrl(filePath);
+  const resumeUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+  await pool.query('UPDATE student_profiles SET resume_url = $1, updated_at = NOW() WHERE user_id = $2', [resumeUrl, req.userId]);
+
+  return res.json({ resumeUrl, filename: file.originalname });
+}));
+
+// DELETE /api/students/resume - remove resume (student only)
+router.delete('/resume', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
+  const current = await pool.query('SELECT id, resume_url FROM student_profiles WHERE user_id = $1', [req.userId]);
+  const row = current.rows[0];
+  if (!row) {
+    return res.status(404).json({ error: 'Student profile not found' });
+  }
+  if (row.resume_url) {
+    const url = new URL(row.resume_url);
+    const filePath = path.basename(url.pathname);
+    await supabaseAdmin.storage.from('resumes').remove([filePath]);
+  }
+  await pool.query('UPDATE student_profiles SET resume_url = NULL, updated_at = NOW() WHERE user_id = $1', [req.userId]);
+  return res.status(204).send();
+}));
+
+// GET /api/students/:id/resume - get resume URL (PI or owner)
+router.get('/:id/resume', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await pool.query('SELECT id, user_id, resume_url, first_name FROM student_profiles sp JOIN users u ON u.id = sp.user_id WHERE sp.id = $1', [id]);
+  const row = result.rows[0];
+  if (!row) {
+    return res.status(404).json({ error: 'Student not found' });
+  }
+  if (!row.resume_url) {
+    return res.status(404).json({ error: 'No resume uploaded' });
+  }
+  const filename = `${row.first_name?.toLowerCase().replace(/\s+/g, '_') || 'student'}_resume.pdf`;
+  return res.json({ resumeUrl: row.resume_url, filename });
 }));
 
 export default router;

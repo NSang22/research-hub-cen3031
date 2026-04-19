@@ -8,6 +8,8 @@ const YEAR_LEVELS: AcademicLevel[] = ['freshman', 'sophomore', 'junior', 'senior
 export function StudentProfile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
   const [error, setError] = useState('');
   const [form, setForm] = useState({
     major: '',
@@ -59,6 +61,51 @@ export function StudentProfile() {
       setError((err as { message?: string })?.message || 'Failed to save');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('File too large (max 5MB)');
+      return;
+    }
+    if (file.type !== 'application/pdf') {
+      setUploadError('Only PDF files are allowed');
+      return;
+    }
+    setUploadError('');
+    setUploading(true);
+    const fd = new FormData();
+    fd.append('resume', file);
+    try {
+      const data = await (await fetch('/api/students/resume', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: fd,
+      })).json();
+      if (data.resumeUrl) {
+        setForm((f) => ({ ...f, resumeUrl: data.resumeUrl }));
+      } else {
+        setUploadError(data.error || 'Upload failed');
+      }
+    } catch {
+      setUploadError('Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveResume = async () => {
+    try {
+      await fetch('/api/students/resume', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      setForm((f) => ({ ...f, resumeUrl: '' }));
+    } catch {
+      setError('Failed to remove resume');
     }
   };
 
@@ -149,14 +196,40 @@ export function StudentProfile() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-inherit mb-1">Resume URL</label>
-            <input
-              type="url"
-              value={form.resumeUrl}
-              onChange={(e) => setForm((f) => ({ ...f, resumeUrl: e.target.value }))}
-              placeholder="https://..."
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-            />
+            <label className="block text-sm font-medium text-inherit mb-1">Resume (PDF, max 5MB)</label>
+            {form.resumeUrl ? (
+              <div className="flex items-center gap-3">
+                <a
+                  href={form.resumeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200 transition-colors"
+                >
+                  View Uploaded Resume
+                </a>
+                <button
+                  type="button"
+                  onClick={handleRemoveResume}
+                  className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <label className={`flex items-center gap-2 px-4 py-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-teal-500 transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                <span className="text-sm text-slate-500">{uploading ? 'Uploading...' : 'Click to upload PDF'}</span>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleResumeUpload}
+                  className="hidden"
+                  disabled={uploading}
+                />
+              </label>
+            )}
+            {uploadError && (
+              <p className="mt-1 text-sm text-red-600">{uploadError}</p>
+            )}
           </div>
           <button
             type="submit"
