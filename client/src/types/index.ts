@@ -65,6 +65,25 @@ export interface PIProfile {
   email?: string;
 }
 
+export interface LabMetrics {
+  labName: string | null;
+  department: string | null;
+  totalPositions: number;
+  positionsByStatus: Record<PositionStatus, number>;
+  totalApplications: number;
+  applicationsByStatus: Record<ApplicationStatus, number>;
+  avgTimeToFill: number | null;
+  totalEnrolled: number;
+  recentPositions: Array<{
+    id: string;
+    title: string;
+    status: PositionStatus;
+    compensationType: CompensationType;
+    createdAt: string;
+    applicationCount: number;
+  }>;
+}
+
 export interface Position {
   id: string;
   piId: string;

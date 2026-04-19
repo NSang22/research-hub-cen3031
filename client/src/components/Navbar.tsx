@@ -10,6 +10,7 @@ import {
   Users,
   Settings,
   UsersRound,
+  BarChart3,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -31,6 +32,7 @@ function studentNavActive(pathname: string, url: string): boolean {
 
 function piNavActive(pathname: string, url: string): boolean {
   if (url === '/pi/dashboard') return pathname === '/pi/dashboard';
+  if (url === '/pi/metrics') return pathname === '/pi/metrics';
   if (url === '/pi/positions/new') return pathname.startsWith('/pi/positions');
   if (url === '/pi/roster') return pathname === '/pi/roster';
   if (url === '/pi/students') return pathname.startsWith('/pi/students');
@@ -57,6 +59,7 @@ const studentAccountItems: NavItem[] = [
 
 const piLabItems: NavItem[] = [
   { name: 'Dashboard', url: '/pi/dashboard', icon: LayoutDashboard },
+  { name: 'Metrics', url: '/pi/metrics', icon: BarChart3 },
   { name: 'Positions', url: '/pi/positions/new', icon: Briefcase },
   { name: 'Roster', url: '/pi/roster', icon: UsersRound },
 ];

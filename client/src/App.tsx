@@ -19,6 +19,7 @@ import { PositionApplications } from './pages/pi/PositionApplications';
 import { StudentList } from './pages/pi/StudentList';
 import { StudentDetail } from './pages/pi/StudentDetail';
 import { LabRoster } from './pages/pi/LabRoster';
+import { AdminDashboard } from './pages/pi/AdminDashboard';
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
             }
           >
             <Route path="dashboard" element={<PIDashboard />} />
+            <Route path="metrics" element={<AdminDashboard />} />
             <Route path="roster" element={<LabRoster />} />
             <Route path="profile" element={<PIProfile />} />
             <Route path="positions/new" element={<PositionNew />} />

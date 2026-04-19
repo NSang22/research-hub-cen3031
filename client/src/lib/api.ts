@@ -1,4 +1,4 @@
-import type { User, StudentProfile, PIProfile, Position, Application, LabRosterMember, QuestionAnswersMap } from '../types';
+import type { User, StudentProfile, PIProfile, Position, Application, LabRosterMember, QuestionAnswersMap, LabMetrics } from '../types';
 
 const API_BASE = '/api';
 
@@ -68,6 +68,10 @@ export const api = {
     updateProfile: (body: Partial<PIProfile>) =>
       request<PIProfile>('/pis/profile', { method: 'PUT', body: JSON.stringify(body) }),
     getRoster: () => request<LabRosterMember[]>('/pis/roster'),
+    getMetrics: (params?: { lab?: string; startDate?: string; endDate?: string; positionType?: string }) => {
+      const q = new URLSearchParams(params as Record<string, string>).toString();
+      return request<LabMetrics>(`/pis/metrics${q ? `?${q}` : ''}`);
+    },
   },
   positions: {
     list: (params?: { search?: string; skills?: string; isFunded?: string; department?: string }) => {
