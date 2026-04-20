@@ -96,10 +96,41 @@ export interface Position {
   researchArea?: string;
   labWebsite?: string;
   /** Present on position detail (from PI user record) */
+  piUserId?: string;
   piFirstName?: string;
   piLastName?: string;
   /** Custom questions applicants answer (set by PI) */
   applicationQuestions?: ApplicationQuestion[];
+}
+
+export interface ConversationParticipant {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: UserRole;
+}
+
+export interface Conversation {
+  id: string;
+  lastMessage: string | null;
+  lastMessageAt: string | null;
+  unreadCount: number;
+  otherParticipant: ConversationParticipant | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  body: string;
+  readAt: string | null;
+  createdAt: string;
+  senderFirstName?: string;
+  senderLastName?: string;
+  senderRole?: UserRole;
 }
 
 export interface Application {
