@@ -21,56 +21,115 @@ export type NotificationPosition = {
   description: string | null;
 };
 
-export async function sendPositionNotificationEmail(
-  toEmail: string,
-  firstName: string,
-  positions: NotificationPosition[],
-  studentProfileId: string
-) {
+export type NotificationMessageThread = {
+  conversationId: string;
+  fromName: string;
+  unreadCount: number;
+  latestPreview: string;
+};
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+export async function sendNotificationDigestEmail(args: {
+  toEmail: string;
+  firstName: string;
+  positions: NotificationPosition[];
+  messages: NotificationMessageThread[];
+  userId: string;
+}) {
+  const { toEmail, firstName, positions, messages, userId } = args;
   const transport = createTransport();
-  const clientUrl = config.clientUrl;
-  const unsubscribeUrl = `${clientUrl.replace(/\/$/, '')}/api/notifications/unsubscribe?studentId=${studentProfileId}`;
+  const clientUrl = config.clientUrl.replace(/\/$/, '');
+  const unsubscribeUrl = `${clientUrl}/api/notifications/unsubscribe?userId=${userId}`;
+
+  if (positions.length === 0 && messages.length === 0) return;
 
   if (!transport) {
-    console.log(`[email] SMTP not configured — skipping position notification to ${toEmail} (${positions.length} position(s))`);
+    console.log(
+      `[email] SMTP not configured — skipping digest to ${toEmail} (${positions.length} position(s), ${messages.length} message thread(s))`
+    );
     return;
   }
 
-  const isSingle = positions.length === 1;
-  const subject = isSingle
-    ? `New research opportunity: ${positions[0].title}`
-    : `${positions.length} new research opportunities matching your interests`;
+  const totalItems = positions.length + messages.length;
+  const subject =
+    positions.length > 0 && messages.length > 0
+      ? `ResearchHub digest: ${positions.length} new position(s), ${messages.length} unread message thread(s)`
+      : positions.length > 0
+      ? positions.length === 1
+        ? `New research opportunity: ${positions[0].title}`
+        : `${positions.length} new research opportunities matching your interests`
+      : messages.length === 1
+      ? `New message from ${messages[0].fromName}`
+      : `${messages.length} new unread message threads`;
 
-  const positionHtmlBlocks = positions.map((p) => {
-    const applyUrl = `${clientUrl.replace(/\/$/, '')}/positions/${p.id}`;
-    const desc = p.description ? `<p style="margin:8px 0 0;color:#444;">${p.description.slice(0, 200)}${p.description.length > 200 ? '…' : ''}</p>` : '';
-    return `
-      <div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:16px;">
-        <h3 style="margin:0 0 4px;color:#001A3E;">${p.title}</h3>
-        <p style="margin:0;color:#555;font-size:14px;">${p.piName} · ${p.department}</p>
-        ${desc}
-        <a href="${applyUrl}" style="display:inline-block;margin-top:12px;padding:8px 16px;background:#0d9488;color:#fff;border-radius:6px;text-decoration:none;font-size:14px;">View &amp; Apply</a>
-      </div>`;
-  }).join('');
+  const positionHtml = positions
+    .map((p) => {
+      const applyUrl = `${clientUrl}/positions/${p.id}`;
+      const desc = p.description
+        ? `<p style="margin:8px 0 0;color:#444;">${escapeHtml(p.description.slice(0, 200))}${p.description.length > 200 ? '…' : ''}</p>`
+        : '';
+      return `
+        <div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:12px;">
+          <h3 style="margin:0 0 4px;color:#001A3E;">${escapeHtml(p.title)}</h3>
+          <p style="margin:0;color:#555;font-size:14px;">${escapeHtml(p.piName)} · ${escapeHtml(p.department)}</p>
+          ${desc}
+          <a href="${applyUrl}" style="display:inline-block;margin-top:12px;padding:8px 16px;background:#0d9488;color:#fff;border-radius:6px;text-decoration:none;font-size:14px;">View &amp; Apply</a>
+        </div>`;
+    })
+    .join('');
 
-  const positionTextBlocks = positions.map((p) => {
-    const applyUrl = `${clientUrl.replace(/\/$/, '')}/positions/${p.id}`;
-    return `${p.title}\n${p.piName} · ${p.department}\n${applyUrl}`;
-  }).join('\n\n');
+  const messageHtml = messages
+    .map((m) => {
+      const threadUrl = `${clientUrl}/messages`;
+      const countLabel = m.unreadCount === 1 ? '1 new message' : `${m.unreadCount} new messages`;
+      const preview = m.latestPreview
+        ? `<p style="margin:8px 0 0;color:#444;font-style:italic;">“${escapeHtml(m.latestPreview.slice(0, 180))}${m.latestPreview.length > 180 ? '…' : ''}”</p>`
+        : '';
+      return `
+        <div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:12px;">
+          <h3 style="margin:0 0 4px;color:#001A3E;">${escapeHtml(m.fromName)}</h3>
+          <p style="margin:0;color:#555;font-size:14px;">${countLabel}</p>
+          ${preview}
+          <a href="${threadUrl}" style="display:inline-block;margin-top:12px;padding:8px 16px;background:#0052CC;color:#fff;border-radius:6px;text-decoration:none;font-size:14px;">Open conversation</a>
+        </div>`;
+    })
+    .join('');
+
+  const positionText = positions
+    .map((p) => `${p.title}\n${p.piName} · ${p.department}\n${clientUrl}/positions/${p.id}`)
+    .join('\n\n');
+  const messageText = messages
+    .map((m) => `${m.fromName} — ${m.unreadCount} new message${m.unreadCount === 1 ? '' : 's'}\n${clientUrl}/messages`)
+    .join('\n\n');
+
+  const textParts = [`Hi ${firstName},`, `You have ${totalItems} new item(s) on ResearchHub:`];
+  if (positions.length > 0) textParts.push(`--- New positions ---\n${positionText}`);
+  if (messages.length > 0) textParts.push(`--- Unread messages ---\n${messageText}`);
+  textParts.push(`To unsubscribe from digest emails: ${unsubscribeUrl}`);
+  textParts.push(`Best,\nThe ResearchHub Team`);
 
   await transport.sendMail({
     from: `"ResearchHub" <${config.fromEmail}>`,
     to: toEmail,
     subject,
-    text: `Hi ${firstName},\n\nNew research opportunities matching your interests were just posted on ResearchHub:\n\n${positionTextBlocks}\n\nLog in to browse more: ${clientUrl}\n\nTo unsubscribe from these alerts: ${unsubscribeUrl}\n\nBest,\nThe ResearchHub Team`,
+    text: textParts.join('\n\n'),
     html: `
-      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;">
-        <h2 style="color:#001A3E;">New Research ${isSingle ? 'Opportunity' : 'Opportunities'} for You</h2>
-        <p>Hi ${firstName}, the following ${isSingle ? 'position was' : 'positions were'} just posted on ResearchHub and match your interests:</p>
-        ${positionHtmlBlocks}
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;">
+        <h2 style="color:#001A3E;">Your ResearchHub digest</h2>
+        <p>Hi ${escapeHtml(firstName)}, here's what's new since your last email:</p>
+        ${positions.length > 0 ? `<h3 style="margin:24px 0 8px;color:#0d9488;">New positions</h3>${positionHtml}` : ''}
+        ${messages.length > 0 ? `<h3 style="margin:24px 0 8px;color:#0052CC;">Unread messages</h3>${messageHtml}` : ''}
         <p style="margin-top:24px;font-size:13px;color:#888;">
-          You're receiving this because you opted into new-position alerts.<br/>
-          <a href="${unsubscribeUrl}" style="color:#888;">Unsubscribe</a>
+          You're receiving this because you opted into ResearchHub digest emails.<br/>
+          <a href="${unsubscribeUrl}" style="color:#888;">Unsubscribe from all digest emails</a>
         </p>
       </div>
     `,

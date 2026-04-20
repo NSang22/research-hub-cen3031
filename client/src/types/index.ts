@@ -6,6 +6,7 @@ export type NotificationFrequency = 'immediately' | 'hourly' | 'daily' | 'weekly
 
 export interface NotificationPreferences {
   notifyNewPositions: boolean;
+  notifyNewMessages: boolean;
   notificationKeywords: string[];
   notificationDepartments: string[];
   notificationFrequency: NotificationFrequency;
@@ -136,6 +137,36 @@ export interface Position {
   piLastName?: string;
   /** Custom questions applicants answer (set by PI) */
   applicationQuestions?: ApplicationQuestion[];
+}
+
+export interface ConversationParticipant {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: UserRole;
+}
+
+export interface Conversation {
+  id: string;
+  lastMessage: string | null;
+  lastMessageAt: string | null;
+  unreadCount: number;
+  otherParticipant: ConversationParticipant | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  body: string;
+  readAt: string | null;
+  createdAt: string;
+  senderFirstName?: string;
+  senderLastName?: string;
+  senderRole?: UserRole;
 }
 
 /** A lab administrator user listed for PI association */

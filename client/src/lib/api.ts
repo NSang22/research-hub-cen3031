@@ -6,6 +6,8 @@ import type {
   Position,
   Application,
   LabRosterMember,
+  Conversation,
+  Message,
   QuestionAnswersMap,
   NotificationPreferences,
   ConversationSummary,
@@ -62,6 +64,19 @@ export class ApiError extends Error {
     super(message);
     this.name = 'ApiError';
   }
+}
+
+// URLSearchParams stringifies undefined → "undefined". Strip empty values first
+// so the server doesn't receive bogus filters like `major=undefined`.
+function buildQuery(params?: Record<string, unknown>): string {
+  if (!params) return '';
+  const sp = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === null || v === '') continue;
+    sp.append(k, String(v));
+  }
+  const s = sp.toString();
+  return s ? `?${s}` : '';
 }
 
 export const api = {
@@ -138,6 +153,18 @@ export const api = {
         readAt: string | null;
         createdAt: string;
       }>(`/messages/${messageId}/read`, { method: 'PATCH' }),
+    sendMessage: (recipientId: string, body: string) =>
+      request<Message>('/messages', { method: 'POST', body: JSON.stringify({ recipientId, body }) }),
+    findOrCreateConversation: (recipientId: string) =>
+      request<{ conversationId: string }>('/messages/conversations', { method: 'POST', body: JSON.stringify({ recipientId }) }),
+    getConversations: () =>
+      request<Conversation[]>('/messages/conversations'),
+    getConversationMessages: (conversationId: string) =>
+      request<Message[]>(`/messages/conversations/${conversationId}`),
+    markAsRead: (messageId: string) =>
+      request<Message>(`/messages/${messageId}/read`, { method: 'PATCH' }),
+    deleteConversation: (conversationId: string) =>
+      request<void>(`/messages/conversations/${conversationId}`, { method: 'DELETE' }),
   },
   admin: {
     getMetrics: (params?: { startDate?: string; endDate?: string; positionType?: string; piId?: string }) =>
@@ -150,10 +177,12 @@ export const api = {
     mine: () =>
       request<(Application & { positionTitle?: string; labName?: string; department?: string | null })[]>('/applications/mine'),
     byPosition: (positionId: string) =>
-      request<(Application & { firstName?: string; lastName?: string; email?: string; major?: string; gpa?: number; skills?: string[]; bio?: string; resumeUrl?: string; yearLevel?: string })[]>(
+      request<(Application & { studentUserId?: string; firstName?: string; lastName?: string; email?: string; major?: string; gpa?: number; skills?: string[]; bio?: string; resumeUrl?: string; yearLevel?: string })[]>(
         `/applications/position/${positionId}`
       ),
     updateStatus: (id: string, status: string) =>
       request<Application>(`/applications/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+    updateNotes: (id: string, notes: string) =>
+      request<{ id: string; piNotes: string | null }>(`/applications/${id}/notes`, { method: 'PATCH', body: JSON.stringify({ notes }) }),
   },
 };

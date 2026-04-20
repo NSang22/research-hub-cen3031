@@ -5,6 +5,7 @@ export type ValidNotificationFrequency = (typeof VALID_NOTIFICATION_FREQUENCIES)
 
 export interface NotificationPreferencesDTO {
   notifyNewPositions: boolean;
+  notifyNewMessages: boolean;
   notificationKeywords: string[];
   notificationDepartments: string[];
   notificationFrequency: string;
@@ -12,6 +13,7 @@ export interface NotificationPreferencesDTO {
 
 export interface NotificationPreferencesUpdateBody {
   notifyNewPositions?: boolean;
+  notifyNewMessages?: boolean;
   notificationKeywords?: string[];
   notificationDepartments?: string[];
   notificationFrequency?: string;
@@ -86,12 +88,14 @@ export function validateNotificationPreferencesUpdate(body: NotificationPreferen
 
 export function rowToNotificationPreferences(row: {
   notify_new_positions: boolean;
+  notify_new_messages: boolean;
   notification_keywords: unknown;
   notification_departments: unknown;
   notification_frequency: string;
 }): NotificationPreferencesDTO {
   return {
     notifyNewPositions: row.notify_new_positions,
+    notifyNewMessages: row.notify_new_messages,
     notificationKeywords: (row.notification_keywords as string[]) ?? [],
     notificationDepartments: (row.notification_departments as string[]) ?? [],
     notificationFrequency: row.notification_frequency ?? 'hourly',
@@ -102,13 +106,34 @@ export async function fetchNotificationPreferencesForUser(
   userId: string
 ): Promise<NotificationPreferencesDTO | null> {
   const result = await pool.query(
-    `SELECT notify_new_positions, notification_keywords, notification_departments, notification_frequency
-     FROM student_profiles WHERE user_id = $1`,
+    `SELECT notify_new_positions, notify_new_messages,
+            notification_keywords, notification_departments, notification_frequency
+     FROM user_notification_settings WHERE user_id = $1`,
     [userId]
   );
-  const row = result.rows[0];
-  if (!row) return null;
-  return rowToNotificationPreferences(row);
+  if (result.rows.length > 0) {
+    return rowToNotificationPreferences(result.rows[0]);
+  }
+  // First-time fetch for a user whose settings row hasn't been created yet
+  // (e.g. new signup after the backfill migration). Create defaults and return.
+  const created = await pool.query(
+    `INSERT INTO user_notification_settings (user_id) VALUES ($1)
+     ON CONFLICT (user_id) DO NOTHING
+     RETURNING notify_new_positions, notify_new_messages,
+               notification_keywords, notification_departments, notification_frequency`,
+    [userId]
+  );
+  if (created.rows.length > 0) {
+    return rowToNotificationPreferences(created.rows[0]);
+  }
+  // Raced against a concurrent insert — re-read
+  const reread = await pool.query(
+    `SELECT notify_new_positions, notify_new_messages,
+            notification_keywords, notification_departments, notification_frequency
+     FROM user_notification_settings WHERE user_id = $1`,
+    [userId]
+  );
+  return reread.rows.length > 0 ? rowToNotificationPreferences(reread.rows[0]) : null;
 }
 
 export async function updateNotificationPreferencesForUser(
@@ -120,20 +145,29 @@ export async function updateNotificationPreferencesForUser(
     return { ok: false, error: v.error, status: 400 };
   }
 
+  // Make sure the row exists before the UPDATE — new users may not have one yet.
+  await pool.query(
+    `INSERT INTO user_notification_settings (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING`,
+    [userId]
+  );
+
   const kwParam = v.keywords !== null ? v.keywords : null;
   const deptParam = v.departments !== null ? v.departments : null;
 
   const result = await pool.query(
-    `UPDATE student_profiles SET
+    `UPDATE user_notification_settings SET
        notify_new_positions     = COALESCE($1, notify_new_positions),
-       notification_keywords    = COALESCE($2, notification_keywords),
-       notification_departments = COALESCE($3, notification_departments),
-       notification_frequency   = COALESCE($4, notification_frequency),
+       notify_new_messages      = COALESCE($2, notify_new_messages),
+       notification_keywords    = COALESCE($3, notification_keywords),
+       notification_departments = COALESCE($4, notification_departments),
+       notification_frequency   = COALESCE($5, notification_frequency),
        updated_at               = NOW()
-     WHERE user_id = $5
-     RETURNING notify_new_positions, notification_keywords, notification_departments, notification_frequency`,
+     WHERE user_id = $6
+     RETURNING notify_new_positions, notify_new_messages,
+               notification_keywords, notification_departments, notification_frequency`,
     [
       body.notifyNewPositions ?? null,
+      body.notifyNewMessages ?? null,
       kwParam,
       deptParam,
       body.notificationFrequency ?? null,

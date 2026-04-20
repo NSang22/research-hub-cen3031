@@ -20,6 +20,8 @@ import { PositionApplications } from './pages/pi/PositionApplications';
 import { StudentList } from './pages/pi/StudentList';
 import { StudentDetail } from './pages/pi/StudentDetail';
 import { LabRoster } from './pages/pi/LabRoster';
+import { Inbox } from './pages/shared/Inbox';
+import { ChatView } from './pages/shared/ChatView';
 import { MessagesPage } from './pages/MessagesPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 
@@ -48,6 +50,8 @@ function App() {
             <Route path="positions" element={<PositionList />} />
             <Route path="positions/:id" element={<PositionDetail />} />
             <Route path="applications" element={<StudentApplications />} />
+            <Route path="inbox" element={<Inbox />} />
+            <Route path="inbox/:conversationId" element={<ChatView />} />
           </Route>
           <Route
             path="/pi"
@@ -65,6 +69,8 @@ function App() {
             <Route path="positions/:id/applications" element={<PositionApplications />} />
             <Route path="students" element={<StudentList />} />
             <Route path="students/:id" element={<StudentDetail />} />
+            <Route path="inbox" element={<Inbox />} />
+            <Route path="inbox/:conversationId" element={<ChatView />} />
           </Route>
           <Route
             path="/admin"
