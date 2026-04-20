@@ -1,6 +1,6 @@
 # ResearchHub
 
-A dual-portal web platform connecting undergraduate students with research lab Principal Investigators (PIs). Students browse and apply to research positions; PIs post openings, review applications, and manage their research teams.
+A multi-portal web platform connecting undergraduate students with research lab Principal Investigators (PIs) and lab administrators. Students browse and apply to research positions; PIs post openings, review applications, and manage their research teams; lab administrators oversee lab-wide activity and analytics.
 
 ## Tech Stack
 
@@ -24,7 +24,8 @@ research-hub-cen3031/
 │       ├── pages/
 │       │   ├── auth/                # Landing, Login, Register
 │       │   ├── student/             # Student-facing pages
-│       │   └── pi/                  # PI-facing pages
+│       │   ├── pi/                  # PI-facing pages
+│       │   └── admin/               # Lab administrator dashboard
 │       └── types/                   # Shared TypeScript types
 ├── server/                          # Express backend
 │   └── src/
@@ -49,6 +50,12 @@ research-hub-cen3031/
 - Review applications and update statuses
 - Close positions (automatically notifies applicants)
 - Browse student profiles
+
+**Lab Administrators**
+- View all positions and applications across their associated PIs
+- Monitor lab-wide metrics (total positions, application counts, acceptance rates)
+- Manage which PIs are associated with their lab
+- Control lab-wide fields (department, lab name) for associated PIs
 
 ## Setup
 
@@ -114,6 +121,13 @@ npm run dev
 | GET | `/api/applications/mine` | Student's applications | Student |
 | GET | `/api/applications/position/:id` | Applications for position | PI |
 | PATCH | `/api/applications/:id/status` | Update application status | PI |
+| GET | `/api/admin/metrics` | Lab-wide metrics and analytics | Admin |
+| GET | `/api/admin/pis` | List PIs associated with the lab | Admin |
+| POST | `/api/messages` | Send a message | Student / PI |
+| GET | `/api/messages/conversations` | List conversations | Student / PI |
+| GET | `/api/messages/conversations/:id` | Get messages in a conversation | Student / PI |
+| PATCH | `/api/messages/:id/read` | Mark message as read | Student / PI |
+| DELETE | `/api/messages/conversations/:id` | Hide a conversation | Student / PI |
 
 ## Database Migrations
 
