@@ -45,18 +45,36 @@ router.put(
   })
 );
 
-// GET /api/notifications/unsubscribe?studentId=xxx — one-click unsubscribe (no auth)
+// GET /api/notifications/unsubscribe?userId=xxx (new) or ?studentId=xxx (legacy)
+// One-click unsubscribe from ALL digest emails (positions + messages).
 router.get(
   '/unsubscribe',
   asyncHandler(async (req: Request, res: Response) => {
-    const { studentId } = req.query;
-    if (!studentId || typeof studentId !== 'string') {
-      return res.status(400).send('Missing studentId parameter.');
+    const { userId, studentId } = req.query;
+    let targetUserId: string | null = null;
+    if (typeof userId === 'string' && userId) {
+      targetUserId = userId;
+    } else if (typeof studentId === 'string' && studentId) {
+      // Legacy link: resolve user_id from student_profile_id
+      const lookup = await pool.query(
+        `SELECT user_id FROM student_profiles WHERE id = $1`,
+        [studentId]
+      );
+      if (lookup.rows.length === 0) {
+        return res.status(404).send('Profile not found.');
+      }
+      targetUserId = lookup.rows[0].user_id as string;
+    }
+    if (!targetUserId) {
+      return res.status(400).send('Missing userId parameter.');
     }
     const result = await pool.query(
-      `UPDATE student_profiles SET notify_new_positions = false, updated_at = NOW()
-       WHERE id = $1 RETURNING id`,
-      [studentId]
+      `UPDATE user_notification_settings
+         SET notify_new_positions = false,
+             notify_new_messages  = false,
+             updated_at = NOW()
+       WHERE user_id = $1 RETURNING user_id`,
+      [targetUserId]
     );
     if (result.rowCount === 0) {
       return res.status(404).send('Profile not found.');
@@ -182,7 +200,7 @@ router.post(
     }
 
     // Reset rate limits so we can re-trigger immediately
-    await pool.query(`UPDATE student_profiles SET notification_last_sent_at = NULL`);
+    await pool.query(`UPDATE user_notification_settings SET notification_last_sent_at = NULL`);
 
     // Clear any existing unsent queue entries for this position so we can re-queue
     await pool.query(

@@ -165,6 +165,7 @@ export function StudentSettings() {
 
   const [prefs, setPrefs] = useState<NotificationPreferences>({
     notifyNewPositions: false,
+    notifyNewMessages: true,
     notificationKeywords: [],
     notificationDepartments: [],
     notificationFrequency: 'hourly',
@@ -275,12 +276,30 @@ export function StudentSettings() {
                     />
                   </div>
 
-                  {prefs.notifyNewPositions ? (
+                  <div className="flex items-start justify-between gap-4 border-t border-slate-100 pt-4">
+                    <div className="space-y-1 min-w-0">
+                      <Label htmlFor="message-email-master" className="text-base">
+                        Email me when I get new messages
+                      </Label>
+                      <p className="text-sm text-slate-600">
+                        When on, unread messages in your inbox will be included in your digest email at the frequency you
+                        pick below.
+                      </p>
+                    </div>
+                    <Switch
+                      id="message-email-master"
+                      checked={prefs.notifyNewMessages}
+                      onCheckedChange={(checked) => void savePrefs({ notifyNewMessages: checked })}
+                      aria-label="Enable new-message emails"
+                    />
+                  </div>
+
+                  {prefs.notifyNewPositions || prefs.notifyNewMessages ? (
                     <div className="space-y-5 border-t border-slate-100 pt-4">
                       <div className="space-y-2">
                         <Label className="text-base">Email frequency</Label>
                         <p className="text-sm text-slate-600">
-                          How often we send a single email that batches new matching positions.
+                          How often we send a single digest email covering new positions and unread messages.
                         </p>
                         <div className="flex flex-wrap gap-2 mt-1">
                           {(
@@ -307,6 +326,7 @@ export function StudentSettings() {
                         </div>
                       </div>
 
+                      {prefs.notifyNewPositions ? (
                       <TagInput
                         label="Keyword filters"
                         hint='Notify when a position title, description, PI research areas, or required skills contain any of these phrases (for example "machine learning", "biology", "psychology"). Works together with your profile skills and GPA.'
@@ -315,7 +335,9 @@ export function StudentSettings() {
                         maxItems={MAX_KEYWORDS}
                         onChange={(next) => void savePrefs({ notificationKeywords: next })}
                       />
+                      ) : null}
 
+                      {prefs.notifyNewPositions ? (
                       <div className="space-y-2">
                         <Label className="text-base">Department filters</Label>
                         <p className="text-sm text-slate-600">
@@ -342,7 +364,9 @@ export function StudentSettings() {
                           })}
                         </div>
                       </div>
+                      ) : null}
 
+                      {prefs.notifyNewPositions ? (
                       <TagInput
                         label="Your departments"
                         hint="Add custom department names if they are not listed above."
@@ -351,6 +375,7 @@ export function StudentSettings() {
                         maxItems={MAX_DEPARTMENTS}
                         onChange={(next) => void savePrefs({ notificationDepartments: next })}
                       />
+                      ) : null}
                     </div>
                   ) : null}
                 </>

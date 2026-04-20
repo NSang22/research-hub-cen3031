@@ -1,5 +1,9 @@
 import pool from '../db/pool.js';
-import { sendPositionNotificationEmail, NotificationPosition } from './email.js';
+import {
+  sendNotificationDigestEmail,
+  NotificationPosition,
+  NotificationMessageThread,
+} from './email.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -20,6 +24,7 @@ export type NotificationFrequency = 'immediately' | 'hourly' | 'daily' | 'weekly
 
 type StudentMeta = {
   id: string;
+  userId: string;
   gpa: number | null;
   skills: string[];
   interests: string[];
@@ -74,7 +79,6 @@ export function matchStudent(student: StudentMeta, pos: PositionMeta): MatchReas
   if (skillMatch) return 'skill_overlap';
 
   // ── 2b. GPA qualifies ────────────────────────────────────────────────────
-  // Student GPA must be set, and must meet the position's minimum (if any)
   const gpaMatch =
     student.gpa !== null &&
     (pos.min_gpa === null || student.gpa >= pos.min_gpa);
@@ -133,13 +137,15 @@ const COOLDOWN_MS: Record<NotificationFrequency, number> = {
 
 async function fetchOptedInStudents(): Promise<StudentMeta[]> {
   const result = await pool.query(
-    `SELECT sp.id, sp.gpa, sp.skills, sp.interests,
-            sp.notification_keywords, sp.notification_departments
+    `SELECT sp.id, sp.user_id, sp.gpa, sp.skills, sp.interests,
+            uns.notification_keywords, uns.notification_departments
      FROM student_profiles sp
-     WHERE sp.notify_new_positions = true`
+     JOIN user_notification_settings uns ON uns.user_id = sp.user_id
+     WHERE uns.notify_new_positions = true`
   );
   return result.rows.map((r) => ({
     id: r.id as string,
+    userId: r.user_id as string,
     gpa: r.gpa !== null ? parseFloat(r.gpa as string) : null,
     skills: (r.skills as string[]) ?? [],
     interests: (r.interests as string[]) ?? [],
@@ -149,13 +155,9 @@ async function fetchOptedInStudents(): Promise<StudentMeta[]> {
 }
 
 // ---------------------------------------------------------------------------
-// Public API
+// Public API — positions
 // ---------------------------------------------------------------------------
 
-/**
- * Dry run: returns which students would be matched for a position and why.
- * Does NOT write to DB or send emails.
- */
 export async function dryRunMatchForPosition(positionId: string): Promise<{
   position: PositionMeta | null;
   matches: MatchResult[];
@@ -174,10 +176,6 @@ export async function dryRunMatchForPosition(positionId: string): Promise<{
   return { position: pos, matches };
 }
 
-/**
- * After a new position is created, find opted-in students whose profiles match
- * and insert them into the notification_queue.
- */
 export async function queueNotificationsForPosition(positionId: string): Promise<void> {
   const pos = await fetchPosition(positionId);
   if (!pos) return;
@@ -203,61 +201,106 @@ export async function queueNotificationsForPosition(positionId: string): Promise
   console.log(`[notifications] Queued position ${positionId} for ${toQueue.length} student(s)`);
 }
 
+// ---------------------------------------------------------------------------
+// Public API — messages
+// ---------------------------------------------------------------------------
+
 /**
- * Process unsent queue entries: group by student, enforce 1-email-per-hour rate
- * limit, send batched emails, mark as sent.
+ * Queue a newly-sent message for digest delivery to its recipient. Respects
+ * the recipient's `notify_new_messages` flag. Silently no-ops if the recipient
+ * has the feature disabled.
+ */
+export async function queueMessageNotification(
+  recipientUserId: string,
+  conversationId: string,
+  messageId: string
+): Promise<void> {
+  const prefs = await pool.query(
+    `SELECT notify_new_messages FROM user_notification_settings WHERE user_id = $1`,
+    [recipientUserId]
+  );
+  if (prefs.rows.length === 0 || prefs.rows[0].notify_new_messages !== true) return;
+
+  await pool.query(
+    `INSERT INTO message_notification_queue (user_id, conversation_id, message_id)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (user_id, message_id) DO NOTHING`,
+    [recipientUserId, conversationId, messageId]
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Unified digest processing
+// ---------------------------------------------------------------------------
+
+type UserDigestState = {
+  email: string;
+  firstName: string;
+  userId: string;
+  studentProfileId: string | null;
+  lastSentAt: Date | null;
+  frequency: NotificationFrequency;
+  notifyNewPositions: boolean;
+  notifyNewMessages: boolean;
+  positionEntries: Array<{ queueId: string; position: NotificationPosition }>;
+  messageQueueIds: string[];
+  messagesByConversation: Map<
+    string,
+    { fromName: string; previews: Array<{ body: string; createdAt: Date }>; unreadCount: number }
+  >;
+};
+
+/**
+ * Processes both queues together: for each user with pending items (positions
+ * or messages), if their cooldown has elapsed, send one digest email covering
+ * everything, then mark both queues' entries as sent and bump last_sent_at.
  *
- * @param bypassRateLimit  Skip the 1-hour cooldown (dev/test only)
+ * @param bypassRateLimit  Skip the cooldown check (dev/test only).
  */
 export async function processNotificationQueue(bypassRateLimit = false): Promise<void> {
-  const result = await pool.query(
-    `SELECT nq.id as queue_id, nq.student_id, nq.position_id,
-            nq.queued_at,
+  const byUser = new Map<string, UserDigestState>();
+
+  // ── Positions ───────────────────────────────────────────────────────────
+  const posRows = await pool.query(
+    `SELECT nq.id as queue_id, nq.position_id,
+            sp.user_id, sp.id as student_profile_id,
             u.email, u.first_name,
-            sp.notification_last_sent_at,
-            sp.notification_frequency,
+            uns.notification_last_sent_at, uns.notification_frequency,
+            uns.notify_new_positions, uns.notify_new_messages,
             rp.title, rp.description,
             pp.name as pi_name, pp.department
      FROM notification_queue nq
      JOIN student_profiles sp ON sp.id = nq.student_id
+     JOIN user_notification_settings uns ON uns.user_id = sp.user_id
      JOIN users u ON u.id = sp.user_id
      JOIN research_positions rp ON rp.id = nq.position_id
      JOIN pi_profiles pp ON pp.id = rp.pi_id
      WHERE nq.sent_at IS NULL
        AND rp.status = 'open'
-       AND sp.notify_new_positions = true
-     ORDER BY nq.student_id, nq.queued_at`
+       AND uns.notify_new_positions = true
+     ORDER BY sp.user_id, nq.queued_at`
   );
 
-  if (result.rows.length === 0) return;
-
-  const byStudent = new Map<
-    string,
-    {
-      email: string;
-      firstName: string;
-      studentProfileId: string;
-      lastSentAt: Date | null;
-      frequency: NotificationFrequency;
-      entries: Array<{ queueId: string; position: NotificationPosition }>;
-    }
-  >();
-
-  for (const row of result.rows) {
-    const sid = row.student_id as string;
-    if (!byStudent.has(sid)) {
-      byStudent.set(sid, {
+  for (const row of posRows.rows) {
+    const uid = row.user_id as string;
+    if (!byUser.has(uid)) {
+      byUser.set(uid, {
         email: row.email as string,
         firstName: row.first_name as string,
-        studentProfileId: sid,
+        userId: uid,
+        studentProfileId: row.student_profile_id as string,
         lastSentAt: row.notification_last_sent_at
           ? new Date(row.notification_last_sent_at as string)
           : null,
         frequency: (row.notification_frequency as NotificationFrequency) ?? 'hourly',
-        entries: [],
+        notifyNewPositions: row.notify_new_positions as boolean,
+        notifyNewMessages: row.notify_new_messages as boolean,
+        positionEntries: [],
+        messageQueueIds: [],
+        messagesByConversation: new Map(),
       });
     }
-    byStudent.get(sid)!.entries.push({
+    byUser.get(uid)!.positionEntries.push({
       queueId: row.queue_id as string,
       position: {
         id: row.position_id as string,
@@ -269,39 +312,136 @@ export async function processNotificationQueue(bypassRateLimit = false): Promise
     });
   }
 
+  // ── Messages ────────────────────────────────────────────────────────────
+  // Only include messages that are still unread (read_at IS NULL) — if the
+  // user already opened the conversation, no reason to email them about it.
+  const msgRows = await pool.query(
+    `SELECT mnq.id as queue_id, mnq.user_id, mnq.conversation_id, mnq.message_id,
+            u.email, u.first_name,
+            uns.notification_last_sent_at, uns.notification_frequency,
+            uns.notify_new_positions, uns.notify_new_messages,
+            sp.id as student_profile_id,
+            m.body, m.created_at,
+            sender.first_name as sender_first_name, sender.last_name as sender_last_name
+     FROM message_notification_queue mnq
+     JOIN user_notification_settings uns ON uns.user_id = mnq.user_id
+     JOIN users u ON u.id = mnq.user_id
+     JOIN messages m ON m.id = mnq.message_id
+     JOIN users sender ON sender.id = m.sender_id
+     LEFT JOIN student_profiles sp ON sp.user_id = mnq.user_id
+     WHERE mnq.sent_at IS NULL
+       AND m.read_at IS NULL
+       AND uns.notify_new_messages = true
+     ORDER BY mnq.user_id, m.created_at`
+  );
+
+  for (const row of msgRows.rows) {
+    const uid = row.user_id as string;
+    if (!byUser.has(uid)) {
+      byUser.set(uid, {
+        email: row.email as string,
+        firstName: row.first_name as string,
+        userId: uid,
+        studentProfileId: (row.student_profile_id as string | null) ?? null,
+        lastSentAt: row.notification_last_sent_at
+          ? new Date(row.notification_last_sent_at as string)
+          : null,
+        frequency: (row.notification_frequency as NotificationFrequency) ?? 'hourly',
+        notifyNewPositions: row.notify_new_positions as boolean,
+        notifyNewMessages: row.notify_new_messages as boolean,
+        positionEntries: [],
+        messageQueueIds: [],
+        messagesByConversation: new Map(),
+      });
+    }
+    const state = byUser.get(uid)!;
+    state.messageQueueIds.push(row.queue_id as string);
+    const cid = row.conversation_id as string;
+    const fromName =
+      `${(row.sender_first_name as string) ?? ''} ${(row.sender_last_name as string) ?? ''}`.trim() ||
+      'A ResearchHub user';
+    let thread = state.messagesByConversation.get(cid);
+    if (!thread) {
+      thread = { fromName, previews: [], unreadCount: 0 };
+      state.messagesByConversation.set(cid, thread);
+    }
+    thread.unreadCount += 1;
+    thread.previews.push({
+      body: (row.body as string) ?? '',
+      createdAt: new Date(row.created_at as string),
+    });
+  }
+
+  if (byUser.size === 0) return;
+
   const now = new Date();
 
-  for (const [studentId, data] of byStudent) {
-    const cooldownMs = COOLDOWN_MS[data.frequency] ?? COOLDOWN_MS.hourly;
-    const cooldownExpiry = data.lastSentAt
-      ? new Date(data.lastSentAt.getTime() + cooldownMs)
+  for (const [userId, state] of byUser) {
+    const cooldownMs = COOLDOWN_MS[state.frequency] ?? COOLDOWN_MS.hourly;
+    const cooldownExpiry = state.lastSentAt
+      ? new Date(state.lastSentAt.getTime() + cooldownMs)
       : null;
 
     if (!bypassRateLimit && cooldownMs > 0 && cooldownExpiry && cooldownExpiry > now) {
       console.log(
-        `[notifications] Rate-limited student ${studentId} (${data.frequency}) — next send after ${cooldownExpiry.toISOString()}`
+        `[notifications] Rate-limited user ${userId} (${state.frequency}) — next send after ${cooldownExpiry.toISOString()}`
       );
       continue;
     }
 
-    const positions = data.entries.map((e) => e.position);
-    const queueIds = data.entries.map((e) => e.queueId);
+    const positions = state.positionEntries.map((e) => e.position);
+    const messages: NotificationMessageThread[] = Array.from(state.messagesByConversation.entries()).map(
+      ([conversationId, thread]) => {
+        const latest = thread.previews.reduce<{ body: string; createdAt: Date } | null>(
+          (acc, p) => (acc === null || p.createdAt > acc.createdAt ? p : acc),
+          null
+        );
+        return {
+          conversationId,
+          fromName: thread.fromName,
+          unreadCount: thread.unreadCount,
+          latestPreview: latest?.body ?? '',
+        };
+      }
+    );
+
+    if (positions.length === 0 && messages.length === 0) continue;
+
+    const positionQueueIds = state.positionEntries.map((e) => e.queueId);
+    const messageQueueIds = state.messageQueueIds;
 
     try {
-      await sendPositionNotificationEmail(data.email, data.firstName, positions, studentId);
+      await sendNotificationDigestEmail({
+        toEmail: state.email,
+        firstName: state.firstName,
+        positions,
+        messages,
+        userId,
+      });
 
+      if (positionQueueIds.length > 0) {
+        await pool.query(
+          `UPDATE notification_queue SET sent_at = NOW() WHERE id = ANY($1::uuid[])`,
+          [positionQueueIds]
+        );
+      }
+      if (messageQueueIds.length > 0) {
+        await pool.query(
+          `UPDATE message_notification_queue SET sent_at = NOW() WHERE id = ANY($1::uuid[])`,
+          [messageQueueIds]
+        );
+      }
       await pool.query(
-        `UPDATE notification_queue SET sent_at = NOW() WHERE id = ANY($1::uuid[])`,
-        [queueIds]
-      );
-      await pool.query(
-        `UPDATE student_profiles SET notification_last_sent_at = NOW() WHERE id = $1`,
-        [studentId]
+        `UPDATE user_notification_settings SET notification_last_sent_at = NOW(), updated_at = NOW()
+         WHERE user_id = $1`,
+        [userId]
       );
 
-      console.log(`[notifications] Sent ${positions.length} position(s) to ${data.email}`);
+      console.log(
+        `[notifications] Sent digest to ${state.email}: ${positions.length} position(s), ${messages.length} message thread(s)`
+      );
     } catch (err) {
-      console.error(`[notifications] Failed to send to ${data.email}:`, err);
+      console.error(`[notifications] Failed to send digest to ${state.email}:`, err);
     }
   }
 }

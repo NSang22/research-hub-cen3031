@@ -6,6 +6,7 @@ export type NotificationFrequency = 'immediately' | 'hourly' | 'daily' | 'weekly
 
 export interface NotificationPreferences {
   notifyNewPositions: boolean;
+  notifyNewMessages: boolean;
   notificationKeywords: string[];
   notificationDepartments: string[];
   notificationFrequency: NotificationFrequency;

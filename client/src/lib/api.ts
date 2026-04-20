@@ -58,6 +58,19 @@ export class ApiError extends Error {
   }
 }
 
+// URLSearchParams stringifies undefined → "undefined". Strip empty values first
+// so the server doesn't receive bogus filters like `major=undefined`.
+function buildQuery(params?: Record<string, unknown>): string {
+  if (!params) return '';
+  const sp = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === null || v === '') continue;
+    sp.append(k, String(v));
+  }
+  const s = sp.toString();
+  return s ? `?${s}` : '';
+}
+
 export const api = {
   auth: {
     register: (body: { email: string; password: string; role: string; firstName: string; lastName: string }) =>
@@ -80,10 +93,8 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify(body),
       }),
-    list: (params?: { major?: string; minGpa?: number; skills?: string; yearLevel?: string }) => {
-      const q = new URLSearchParams(params as Record<string, string>).toString();
-      return request<StudentProfile[]>(`/students${q ? `?${q}` : ''}`);
-    },
+    list: (params?: { major?: string; minGpa?: number; skills?: string; yearLevel?: string }) =>
+      request<StudentProfile[]>(`/students${buildQuery(params)}`),
     getById: (id: string) => request<StudentProfile>(`/students/${id}`),
   },
   pis: {
@@ -94,10 +105,8 @@ export const api = {
     listLabs: () => request<LabAdminOption[]>('/pis/labs'),
   },
   positions: {
-    list: (params?: { search?: string; skills?: string; isFunded?: string; department?: string }) => {
-      const q = new URLSearchParams(params as Record<string, string>).toString();
-      return request<Position[]>(`/positions${q ? `?${q}` : ''}`);
-    },
+    list: (params?: { search?: string; skills?: string; isFunded?: string; department?: string }) =>
+      request<Position[]>(`/positions${buildQuery(params)}`),
     getById: (id: string) => request<Position>(`/positions/${id}`),
     create: (body: Partial<Position> & { title: string }) =>
       request<Position>('/positions', { method: 'POST', body: JSON.stringify(body) }),
@@ -150,10 +159,8 @@ export const api = {
       request<void>(`/messages/conversations/${conversationId}`, { method: 'DELETE' }),
   },
   admin: {
-    getMetrics: (params?: { startDate?: string; endDate?: string; positionType?: string; piId?: string }) => {
-      const q = new URLSearchParams(params as Record<string, string>).toString();
-      return request<AdminMetrics>(`/admin/metrics${q ? `?${q}` : ''}`);
-    },
+    getMetrics: (params?: { startDate?: string; endDate?: string; positionType?: string; piId?: string }) =>
+      request<AdminMetrics>(`/admin/metrics${buildQuery(params)}`),
     getPIs: () => request<LabPIMember[]>('/admin/pis'),
   },
   applications: {

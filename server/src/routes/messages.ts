@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import pool from '../db/pool.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
+import { queueMessageNotification, processNotificationQueue } from '../lib/notificationQueue.js';
 
 const router = Router();
 
@@ -77,6 +78,22 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
   } finally {
     client.release();
   }
+
+  // Queue a digest notification for the recipient — fire-and-forget, never
+  // block the response. If their frequency is 'immediately' we also kick off
+  // the processor right after so the email goes out now instead of waiting
+  // for the next hourly sweep.
+  queueMessageNotification(recipientId as string, row.conversation_id as string, row.id as string)
+    .then(async () => {
+      const prefs = await pool.query(
+        `SELECT notification_frequency FROM user_notification_settings WHERE user_id = $1`,
+        [recipientId]
+      );
+      if (prefs.rows[0]?.notification_frequency === 'immediately') {
+        await processNotificationQueue();
+      }
+    })
+    .catch((err: unknown) => console.error('[notifications] Error queuing message notification:', err));
 
   return res.status(201).json({
     id: row.id,
