@@ -1,10 +1,6 @@
 # ResearchHub
 
-<<<<<<< HEAD
 A multi-portal web platform connecting undergraduate students with research lab Principal Investigators (PIs) and lab administrators. Students browse and apply to research positions; PIs post openings, review applications, and manage their research teams; lab administrators oversee lab-wide activity and analytics.
-=======
-A multi-portal web platform connecting undergraduate students with research lab Principal Investigators (PIs) and administrators. Students browse and apply to research positions; PIs post openings, review applications, manage their teams; administrators manage PIs and their labs. 
->>>>>>> ba514972b5cf6764c5339add78cc0a3d452f2838
 
 ## Tech Stack
 
