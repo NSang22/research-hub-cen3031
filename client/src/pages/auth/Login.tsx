@@ -20,7 +20,10 @@ export function Login() {
     setLoading(true);
     try {
       const user = await login(email, password);
-      const dest = user.role === 'student' ? '/student/dashboard' : '/pi/dashboard';
+      const dest =
+        user.role === 'student' ? '/student/dashboard' :
+        user.role === 'admin'   ? '/admin/dashboard' :
+        '/pi/dashboard';
       navigate(from || dest, { replace: true });
     } catch (err: unknown) {
       setError((err as { message?: string })?.message || 'Login failed');
@@ -81,7 +84,10 @@ export function Login() {
                 setLoading(true);
                 try {
                   const user = await loginWithGoogle(response.credential);
-                  const dest = user.role === 'student' ? '/student/dashboard' : '/pi/dashboard';
+                  const dest =
+                    user.role === 'student' ? '/student/dashboard' :
+                    user.role === 'admin'   ? '/admin/dashboard' :
+                    '/pi/dashboard';
                   navigate(from || dest, { replace: true });
                 } catch (err: unknown) {
                   setError((err as { message?: string })?.message || 'Google sign-in failed');

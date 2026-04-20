@@ -15,13 +15,16 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
     return res.status(400).json({ error: 'Message body cannot be empty' });
   }
 
-  // Find existing conversation between these two users
+  // Find existing 1:1 conversation between these two users (exactly two participant rows).
+  // Note: the old query used HAVING COUNT(*) = 2 on a join that only produces one row per
+  // conversation, so it never matched and every message created a new thread.
   const existingConv = await pool.query(
-    `SELECT c.id FROM conversations c
-     JOIN conversation_participants cp1 ON cp1.conversation_id = c.id AND cp1.user_id = $1
-     JOIN conversation_participants cp2 ON cp2.conversation_id = c.id AND cp2.user_id = $2
-     GROUP BY c.id
-     HAVING COUNT(*) = 2`,
+    `SELECT conversation_id AS id
+     FROM conversation_participants
+     WHERE user_id IN ($1::uuid, $2::uuid)
+     GROUP BY conversation_id
+     HAVING COUNT(*) = 2 AND COUNT(DISTINCT user_id) = 2
+     LIMIT 1`,
     [req.userId, recipientId]
   );
 

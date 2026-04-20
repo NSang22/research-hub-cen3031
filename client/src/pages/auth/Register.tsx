@@ -22,7 +22,10 @@ export function Register() {
     setLoading(true);
     try {
       const user = await register(email, password, role, firstName, lastName);
-      const dest = user.role === 'student' ? '/student/dashboard' : '/pi/dashboard';
+      const dest =
+        user.role === 'student' ? '/student/dashboard' :
+        user.role === 'admin'   ? '/admin/dashboard' :
+        '/pi/dashboard';
       navigate(dest, { replace: true });
     } catch (err: unknown) {
       setError((err as { message?: string })?.message || 'Registration failed');
@@ -50,6 +53,7 @@ export function Register() {
             >
               <option value="student">Student</option>
               <option value="pi">Principal Investigator (PI)</option>
+              <option value="admin">Lab Administrator</option>
             </select>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -117,7 +121,10 @@ export function Register() {
                 setLoading(true);
                 try {
                   const user = await loginWithGoogle(response.credential, role);
-                  const dest = user.role === 'student' ? '/student/dashboard' : '/pi/dashboard';
+                  const dest =
+                    user.role === 'student' ? '/student/dashboard' :
+                    user.role === 'admin'   ? '/admin/dashboard' :
+                    '/pi/dashboard';
                   navigate(dest, { replace: true });
                 } catch (err: unknown) {
                   setError((err as { message?: string })?.message || 'Google sign-up failed');

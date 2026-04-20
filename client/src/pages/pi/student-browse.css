@@ -343,6 +343,359 @@
   font-size: 14px;
 }
 
+/* ── Search input with icon ─────────────────────────── */
+.bs-input-icon-wrap {
+  position: relative;
+}
+.bs-input-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #b0b4cc;
+  pointer-events: none;
+}
+.bs-input-pl {
+  padding-left: 30px;
+}
+
+/* ── Skills any/all toggle ──────────────────────────── */
+.bs-filter-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.bs-skill-mode-toggle {
+  display: inline-flex;
+  border: 1px solid #d5d8e8;
+  border-radius: 6px;
+  overflow: hidden;
+  gap: 0;
+}
+.bs-mode-btn {
+  background: none;
+  border: none;
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #8b90ad;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.bs-mode-btn.active {
+  background: #3b5bdb;
+  color: #fff;
+}
+
+/* ── Results bar ────────────────────────────────────── */
+.bs-results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0 10px;
+  gap: 12px;
+}
+.bs-sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #8b90ad;
+  font-size: 12px;
+  position: relative;
+}
+.bs-sort-select {
+  appearance: none;
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  font-family: inherit;
+  color: #3b5bdb;
+  font-weight: 600;
+  cursor: pointer;
+  padding-right: 14px;
+  outline: none;
+}
+.bs-sort-chevron {
+  position: absolute;
+  right: 0;
+  pointer-events: none;
+}
+
+/* ── Card right cluster ─────────────────────────────── */
+.bs-card-right {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* ── Match score badge ──────────────────────────────── */
+.sb-match {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 9px;
+  border: 1px solid;
+  border-radius: 8px;
+  line-height: 1;
+}
+.sb-match-pct {
+  font-size: 15px;
+  font-weight: 700;
+}
+.sb-match-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+  opacity: 0.75;
+}
+
+/* ── Card actions row ───────────────────────────────── */
+.bs-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f1f8;
+}
+.bs-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  background: #f0f1f8;
+  border: 1px solid #d5d8e8;
+  color: #3d4260;
+}
+.bs-action-btn:hover {
+  background: #edf2ff;
+  border-color: #bac8ff;
+  color: #3b5bdb;
+}
+.bs-action-invite {
+  background: #fff0f6;
+  border-color: #fcc2d7;
+  color: #c2255c;
+}
+.bs-action-invite:hover {
+  background: #ffe0ed;
+  border-color: #f783ac;
+  color: #a61e4d;
+}
+.bs-email {
+  margin-left: auto;
+  font-size: 12px;
+  color: #8b90ad;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.bs-email:hover {
+  color: #3b5bdb;
+}
+
+/* ── Load more ──────────────────────────────────────── */
+.bs-load-more {
+  background: #fff;
+  border: 1px solid #d5d8e8;
+  border-radius: 8px;
+  padding: 10px 28px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3b5bdb;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.bs-load-more:hover {
+  background: #edf2ff;
+  border-color: #bac8ff;
+}
+
+/* ── Spin animation ─────────────────────────────────── */
+.sb-spin {
+  animation: sb-spin 0.7s linear infinite;
+}
+@keyframes sb-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Invite modal ───────────────────────────────────── */
+.sb-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 24, 60, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.sb-modal {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(20, 24, 60, 0.22);
+  width: 100%;
+  max-width: 440px;
+  overflow: hidden;
+}
+.sb-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 0;
+}
+.sb-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1d2e;
+  margin: 0;
+}
+.sb-modal-close {
+  background: none;
+  border: none;
+  color: #8b90ad;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.sb-modal-close:hover {
+  background: #f0f1f8;
+  color: #3d4260;
+}
+.sb-modal-sub {
+  padding: 10px 24px 0;
+  font-size: 13.5px;
+  color: #6b7194;
+  margin: 0;
+}
+.sb-modal-empty {
+  padding: 20px 24px;
+  font-size: 13px;
+  color: #8b90ad;
+  text-align: center;
+}
+.sb-position-list {
+  padding: 14px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.sb-position-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #d5d8e8;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.sb-position-option input[type="radio"] {
+  accent-color: #3b5bdb;
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+.sb-position-option.selected {
+  border-color: #3b5bdb;
+  background: #eef2ff;
+}
+.sb-position-option:hover {
+  border-color: #91a7ff;
+}
+.sb-position-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.sb-position-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1a1d2e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sb-position-dept {
+  font-size: 11.5px;
+  color: #8b90ad;
+}
+.sb-modal-error {
+  margin: 0 24px;
+  padding: 8px 12px;
+  background: #fff0f0;
+  border: 1px solid #fcc;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: #c62828;
+}
+.sb-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px 20px;
+}
+.sb-btn-ghost {
+  background: none;
+  border: 1px solid #d5d8e8;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7194;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sb-btn-ghost:hover { background: #f6f7fb; }
+.sb-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #3b5bdb;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sb-btn-primary:hover { background: #3451b2; }
+.sb-btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* Sent state */
+.sb-modal-sent {
+  padding: 40px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.sb-sent-icon { color: #2f9e44; }
+.sb-sent-title { font-size: 18px; font-weight: 700; color: #1a1d2e; margin: 0; }
+.sb-sent-sub { font-size: 13.5px; color: #6b7194; margin: 0; }
+
 /* Lab roster cards — avatar + meta */
 .bs-roster-card-top {
   display: flex;

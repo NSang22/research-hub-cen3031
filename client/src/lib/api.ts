@@ -1,4 +1,19 @@
-import type { User, StudentProfile, PIProfile, Position, Application, LabRosterMember, QuestionAnswersMap, NotificationPreferences } from '../types';
+import type {
+  User,
+  UserRole,
+  StudentProfile,
+  PIProfile,
+  Position,
+  Application,
+  LabRosterMember,
+  QuestionAnswersMap,
+  NotificationPreferences,
+  ConversationSummary,
+  ChatMessage,
+  AdminMetrics,
+  LabAdminOption,
+  LabPIMember,
+} from '../types';
 
 const API_BASE = '/api';
 
@@ -50,7 +65,7 @@ export const api = {
     me: () => request<User>('/auth/me'),
     demo: (role: 'student' | 'pi') =>
       request<{ token: string; user: User }>('/auth/demo', { method: 'POST', body: JSON.stringify({ role }) }),
-    google: (body: { credential: string; role?: 'student' | 'pi' }) =>
+    google: (body: { credential: string; role?: UserRole }) =>
       request<{ token: string; user: User }>('/auth/google', { method: 'POST', body: JSON.stringify(body) }),
   },
   students: {
@@ -71,9 +86,10 @@ export const api = {
   },
   pis: {
     getProfile: () => request<PIProfile>('/pis/profile'),
-    updateProfile: (body: Partial<PIProfile>) =>
+    updateProfile: (body: Partial<PIProfile> & { labAdminId?: string | null }) =>
       request<PIProfile>('/pis/profile', { method: 'PUT', body: JSON.stringify(body) }),
     getRoster: () => request<LabRosterMember[]>('/pis/roster'),
+    listLabs: () => request<LabAdminOption[]>('/pis/labs'),
   },
   positions: {
     list: (params?: { search?: string; skills?: string; isFunded?: string; department?: string }) => {
@@ -96,6 +112,35 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify(body),
       }),
+  },
+  messages: {
+    listConversations: () => request<ConversationSummary[]>('/messages/conversations'),
+    getConversation: (id: string) => request<ChatMessage[]>(`/messages/conversations/${id}`),
+    send: (body: { recipientId: string; body: string }) =>
+      request<{
+        id: string;
+        conversationId: string;
+        senderId: string;
+        body: string;
+        readAt: string | null;
+        createdAt: string;
+      }>('/messages', { method: 'POST', body: JSON.stringify(body) }),
+    markRead: (messageId: string) =>
+      request<{
+        id: string;
+        conversationId: string;
+        senderId: string;
+        body: string;
+        readAt: string | null;
+        createdAt: string;
+      }>(`/messages/${messageId}/read`, { method: 'PATCH' }),
+  },
+  admin: {
+    getMetrics: (params?: { startDate?: string; endDate?: string; positionType?: string; piId?: string }) => {
+      const q = new URLSearchParams(params as Record<string, string>).toString();
+      return request<AdminMetrics>(`/admin/metrics${q ? `?${q}` : ''}`);
+    },
+    getPIs: () => request<LabPIMember[]>('/admin/pis'),
   },
   applications: {
     create: (body: { positionId: string; coverLetter?: string; questionAnswers?: QuestionAnswersMap }) =>

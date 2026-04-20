@@ -9,6 +9,7 @@ import applicationRoutes from './routes/applications.js';
 import studiesRoutes from './routes/studies.js';
 import messageRoutes from './routes/messages.js';
 import notificationRoutes from './routes/notifications.js';
+import adminRoutes from './routes/admin.js';
 import { processNotificationQueue } from './lib/notificationQueue.js';
 
 const app = express();
@@ -24,6 +25,7 @@ app.use('/api/applications', applicationRoutes);
 app.use('/api/studies', studiesRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, timestamp: new Date().toISOString() });

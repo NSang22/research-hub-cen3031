@@ -62,12 +62,36 @@ router.get('/roster', authMiddleware, requireRole('pi'), asyncHandler(async (req
   );
 }));
 
+// GET /api/pis/labs - list all lab administrators so PIs can associate themselves
+router.get('/labs', authMiddleware, asyncHandler(async (_req: Request, res: Response) => {
+  const result = await pool.query(
+    `SELECT u.id, u.first_name, u.last_name, u.email
+     FROM users u
+     WHERE u.role = 'admin'
+     ORDER BY u.last_name, u.first_name`
+  );
+  return res.json(
+    result.rows.map((r) => ({
+      id: r.id,
+      firstName: r.first_name,
+      lastName: r.last_name,
+      email: r.email,
+      displayName: `${r.first_name} ${r.last_name}`.trim() || r.email,
+    }))
+  );
+}));
+
 // GET /api/pis/profile - own profile
 router.get('/profile', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const result = await pool.query(
-    `SELECT pp.*, u.first_name, u.last_name, u.email
+    `SELECT pp.*,
+            u.first_name, u.last_name, u.email,
+            la.first_name AS lab_admin_first_name,
+            la.last_name  AS lab_admin_last_name,
+            la.email      AS lab_admin_email
      FROM pi_profiles pp
      JOIN users u ON u.id = pp.user_id
+     LEFT JOIN users la ON la.id = pp.lab_admin_id
      WHERE pp.user_id = $1`,
     [req.userId]
   );
@@ -85,6 +109,10 @@ router.get('/profile', authMiddleware, requireRole('pi'), asyncHandler(async (re
     researchAreas: row.research_areas || [],
     labWebsite: row.lab_website,
     staffingNeeds: row.staffing_needs,
+    labAdminId: row.lab_admin_id ?? null,
+    labAdminName: row.lab_admin_id
+      ? `${row.lab_admin_first_name ?? ''} ${row.lab_admin_last_name ?? ''}`.trim() || row.lab_admin_email
+      : null,
     firstName: row.first_name,
     lastName: row.last_name,
     email: row.email,
@@ -93,7 +121,7 @@ router.get('/profile', authMiddleware, requireRole('pi'), asyncHandler(async (re
 
 // PUT /api/pis/profile - update own profile
 router.put('/profile', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
-  const { name, department, labName, researchArea, researchAreas, labWebsite, staffingNeeds } = req.body;
+  const { name, department, labName, researchArea, researchAreas, labWebsite, staffingNeeds, labAdminId } = req.body;
 
   // Accept either researchAreas (array) or researchArea (string)
   let areas: string[] | null = null;
@@ -105,6 +133,22 @@ router.put('/profile', authMiddleware, requireRole('pi'), asyncHandler(async (re
       : [];
   }
 
+  // Validate labAdminId when provided: must reference a user with role = 'admin'
+  if (labAdminId !== undefined && labAdminId !== null) {
+    const check = await pool.query(
+      `SELECT id FROM users WHERE id = $1 AND role = 'admin'`,
+      [labAdminId]
+    );
+    if (!check.rows[0]) {
+      return res.status(400).json({ error: 'Invalid lab administrator ID' });
+    }
+  }
+
+  // $7 = whether to update lab_admin_id (true = update, false = keep existing)
+  // $8 = new lab_admin_id value (uuid or null)
+  const updateLabAdmin = labAdminId !== undefined;
+  const labAdminValue = labAdminId || null;
+
   const result = await pool.query(
     `UPDATE pi_profiles SET
        name            = COALESCE($1, name),
@@ -113,8 +157,9 @@ router.put('/profile', authMiddleware, requireRole('pi'), asyncHandler(async (re
        research_areas  = COALESCE($4, research_areas),
        lab_website     = COALESCE($5, lab_website),
        staffing_needs  = COALESCE($6, staffing_needs),
+       lab_admin_id    = CASE WHEN $7 THEN $8::uuid ELSE lab_admin_id END,
        updated_at      = NOW()
-     WHERE user_id = $7
+     WHERE user_id = $9
      RETURNING *`,
     [
       name ?? null,
@@ -123,6 +168,8 @@ router.put('/profile', authMiddleware, requireRole('pi'), asyncHandler(async (re
       areas,
       labWebsite ?? null,
       staffingNeeds ?? null,
+      updateLabAdmin,
+      labAdminValue,
       req.userId,
     ]
   );
@@ -140,6 +187,7 @@ router.put('/profile', authMiddleware, requireRole('pi'), asyncHandler(async (re
     researchAreas: row.research_areas || [],
     labWebsite: row.lab_website,
     staffingNeeds: row.staffing_needs,
+    labAdminId: row.lab_admin_id ?? null,
   });
 }));
 

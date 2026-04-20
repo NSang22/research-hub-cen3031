@@ -27,8 +27,8 @@ router.post('/register', asyncHandler(async (req: Request, res: Response) => {
   if (!email || !password || !role || !firstName || !lastName) {
     return res.status(400).json({ error: 'Missing required fields: email, password, role, firstName, lastName' });
   }
-  if (role !== 'student' && role !== 'pi') {
-    return res.status(400).json({ error: 'Role must be student or pi' });
+  if (role !== 'student' && role !== 'pi' && role !== 'admin') {
+    return res.status(400).json({ error: 'Role must be student, pi, or admin' });
   }
   const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
   try {
@@ -44,12 +44,13 @@ router.post('/register', asyncHandler(async (req: Request, res: Response) => {
         'INSERT INTO student_profiles (user_id) VALUES ($1)',
         [user.id]
       );
-    } else {
+    } else if (role === 'pi') {
       await pool.query(
         'INSERT INTO pi_profiles (user_id) VALUES ($1)',
         [user.id]
       );
     }
+    // admin users have no separate profile table
     const token = signToken(user.id, role);
     sendWelcomeEmail(user.email, user.first_name).catch(() => {});
     return res.status(201).json({
@@ -121,7 +122,7 @@ router.post('/google', asyncHandler(async (req: Request, res: Response) => {
   }
 
   // New user — role is required for registration
-  const resolvedRole: UserRole = role === 'pi' ? 'pi' : 'student';
+  const resolvedRole: UserRole = role === 'pi' ? 'pi' : role === 'admin' ? 'admin' : 'student';
   const passwordHash = await bcrypt.hash(crypto.randomUUID(), SALT_ROUNDS);
 
   const result = await pool.query(
@@ -134,7 +135,7 @@ router.post('/google', asyncHandler(async (req: Request, res: Response) => {
 
   if (resolvedRole === 'student') {
     await pool.query('INSERT INTO student_profiles (user_id) VALUES ($1)', [user.id]);
-  } else {
+  } else if (resolvedRole === 'pi') {
     await pool.query('INSERT INTO pi_profiles (user_id) VALUES ($1)', [user.id]);
   }
 

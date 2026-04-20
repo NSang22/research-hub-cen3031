@@ -1,4 +1,4 @@
-export type UserRole = 'student' | 'pi';
+export type UserRole = 'student' | 'pi' | 'admin';
 export type YearLevel = 'freshman' | 'sophomore' | 'junior' | 'senior' | 'grad';
 export type ApplicationStatus = 'pending' | 'reviewed' | 'accepted' | 'rejected';
 

@@ -110,11 +110,21 @@ export function StudentDetail() {
                 </div>
                 <h1 className="sd-name">{name}</h1>
               </div>
-              {email ? (
-                <a href={`mailto:${email}`} className="sd-email">
-                  {email}
-                </a>
-              ) : null}
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap">
+                {email ? (
+                  <a href={`mailto:${email}`} className="sd-email">
+                    {email}
+                  </a>
+                ) : null}
+                {student.userId ? (
+                  <Link
+                    to={`/messages?composeTo=${encodeURIComponent(student.userId)}&composeName=${encodeURIComponent(name)}`}
+                    className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium bg-teal-600 text-white hover:bg-teal-700 transition-colors w-fit"
+                  >
+                    New message
+                  </Link>
+                ) : null}
+              </div>
             </header>
 
             <section className="sd-grid-section" aria-label="Student information">

@@ -11,13 +11,44 @@ export interface NotificationPreferences {
   notificationFrequency: NotificationFrequency;
 }
 
+/** Raw shape from GET /api/messages/conversations (other participant row) */
+export interface ConversationOtherParticipant {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string;
+  role: string;
+}
+
+export interface ConversationSummary {
+  id: string;
+  lastMessage: string | null;
+  lastMessageAt: string | null;
+  unreadCount: number;
+  otherParticipant: ConversationOtherParticipant | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  body: string;
+  readAt: string | null;
+  createdAt: string;
+  senderFirstName: string | null;
+  senderLastName: string | null;
+  senderRole: string;
+}
+
 export interface ProfileLink {
   id: string;
   label: string;
   url: string;
 }
 
-export type UserRole = 'student' | 'pi';
+export type UserRole = 'student' | 'pi' | 'admin';
 export type AcademicLevel = 'freshman' | 'sophomore' | 'junior' | 'senior' | 'grad' | 'masters' | 'phd' | 'postdoc';
 /** @deprecated Use AcademicLevel */
 export type YearLevel = AcademicLevel;
@@ -69,6 +100,10 @@ export interface PIProfile {
   researchAreas?: string[];
   labWebsite: string | null;
   staffingNeeds?: string | null;
+  /** UUID of the lab administrator this PI is associated with */
+  labAdminId?: string | null;
+  /** Display name of the associated lab administrator */
+  labAdminName?: string | null;
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -100,6 +135,70 @@ export interface Position {
   piLastName?: string;
   /** Custom questions applicants answer (set by PI) */
   applicationQuestions?: ApplicationQuestion[];
+}
+
+/** A lab administrator user listed for PI association */
+export interface LabAdminOption {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  displayName: string;
+}
+
+/** A PI record as seen by a lab admin */
+export interface LabPIMember {
+  id: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  department: string | null;
+  labName: string | null;
+  researchAreas: string[];
+  labWebsite: string | null;
+  positionCount: number;
+  applicationCount: number;
+}
+
+export interface AdminMetrics {
+  positions: {
+    total: number;
+    open_count: number;
+    closed_count: number;
+    filled_count: number;
+  };
+  applications: {
+    total: number;
+    pending_count: number;
+    reviewed_count: number;
+    accepted_count: number;
+    rejected_count: number;
+    withdrawn_count: number;
+  };
+  avgDaysToFill: string | null;
+  totalEnrolled: number;
+  piCount: number;
+  recentPositions: Array<{
+    id: string;
+    title: string;
+    status: string;
+    created_at: string;
+    lab_name: string | null;
+    department: string | null;
+    pi_first_name: string;
+    pi_last_name: string;
+    application_count: number;
+  }>;
+  piBreakdown: Array<{
+    id: string;
+    first_name: string;
+    last_name: string;
+    department: string | null;
+    position_count: number;
+    application_count: number;
+    enrolled_count: number;
+  }>;
 }
 
 export interface Application {

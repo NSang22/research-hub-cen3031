@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { MessageUnreadProvider } from './context/MessageUnreadContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Landing } from './pages/auth/Landing';
@@ -19,16 +20,20 @@ import { PositionApplications } from './pages/pi/PositionApplications';
 import { StudentList } from './pages/pi/StudentList';
 import { StudentDetail } from './pages/pi/StudentDetail';
 import { LabRoster } from './pages/pi/LabRoster';
+import { MessagesPage } from './pages/MessagesPage';
+import { AdminDashboard } from './pages/admin/AdminDashboard';
 
 function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <MessageUnreadProvider>
         <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/messages" element={<MessagesPage />} />
           <Route
             path="/student"
             element={
@@ -61,9 +66,20 @@ function App() {
             <Route path="students" element={<StudentList />} />
             <Route path="students/:id" element={<StudentDetail />} />
           </Route>
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute role="admin">
+                <Outlet />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="dashboard" element={<AdminDashboard />} />
+          </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </BrowserRouter>
+        </MessageUnreadProvider>
       </AuthProvider>
     </ThemeProvider>
   );
