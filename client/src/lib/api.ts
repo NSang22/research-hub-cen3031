@@ -108,6 +108,22 @@ export const api = {
       ),
     updateStatus: (id: string, status: string) =>
       request<Application>(`/applications/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+    updateNotes: (id: string, notes: string) =>
+      request<{ id: string; piNotes: string | null }>(`/applications/${id}/notes`, { method: 'PATCH', body: JSON.stringify({ notes }) }),
+  },
+  messages: {
+    sendMessage: (recipientId: string, body: string) =>
+      request<Message>('/messages', { method: 'POST', body: JSON.stringify({ recipientId, body }) }),
+    findOrCreateConversation: (recipientId: string) =>
+      request<{ conversationId: string }>('/messages/conversations', { method: 'POST', body: JSON.stringify({ recipientId }) }),
+    getConversations: () =>
+      request<Conversation[]>('/messages/conversations'),
+    getConversationMessages: (conversationId: string) =>
+      request<Message[]>(`/messages/conversations/${conversationId}`),
+    markAsRead: (messageId: string) =>
+      request<Message>(`/messages/${messageId}/read`, { method: 'PATCH' }),
+    deleteConversation: (conversationId: string) =>
+      request<void>(`/messages/conversations/${conversationId}`, { method: 'DELETE' }),
   },
   messages: {
     sendMessage: (recipientId: string, body: string) =>

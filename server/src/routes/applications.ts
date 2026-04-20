@@ -145,8 +145,35 @@ router.get('/position/:id', authMiddleware, requireRole('pi'), asyncHandler(asyn
       lastName: row.last_name,
       email: row.email,
       questionAnswers: row.question_answers || {},
+      piNotes: row.pi_notes ?? null,
     }))
   );
+}));
+
+// PATCH /api/applications/:id/notes - save private PI notes (PI only)
+router.patch('/:id/notes', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { notes } = req.body;
+  if (typeof notes !== 'string') {
+    return res.status(400).json({ error: 'notes must be a string' });
+  }
+  const piResult = await pool.query('SELECT id FROM pi_profiles WHERE user_id = $1', [req.userId]);
+  const pi = piResult.rows[0];
+  if (!pi) {
+    return res.status(404).json({ error: 'PI profile not found' });
+  }
+  const result = await pool.query(
+    `UPDATE applications a
+     SET pi_notes = $1
+     FROM research_positions rp
+     WHERE a.position_id = rp.id AND rp.pi_id = $2 AND a.id = $3
+     RETURNING a.id, a.pi_notes`,
+    [notes, pi.id, id]
+  );
+  if (result.rows.length === 0) {
+    return res.status(404).json({ error: 'Application not found or access denied' });
+  }
+  return res.json({ id: result.rows[0].id, piNotes: result.rows[0].pi_notes });
 }));
 
 // PATCH /api/applications/:id/status - update status (PI only)
