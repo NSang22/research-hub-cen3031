@@ -15,42 +15,69 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
     return res.status(400).json({ error: 'Message body cannot be empty' });
   }
 
-  // Find existing conversation between these two users
-  const existingConv = await pool.query(
-    `SELECT c.id FROM conversations c
-     JOIN conversation_participants cp1 ON cp1.conversation_id = c.id AND cp1.user_id = $1
-     JOIN conversation_participants cp2 ON cp2.conversation_id = c.id AND cp2.user_id = $2
-     GROUP BY c.id
-     HAVING COUNT(*) = 2`,
-    [req.userId, recipientId]
-  );
+  // Use a transaction + advisory lock to prevent duplicate conversations from
+  // race conditions when the button is clicked multiple times simultaneously.
+  const client = await pool.connect();
+  let row;
+  try {
+    await client.query('BEGIN');
 
-  let conversationId;
-  if (existingConv.rows.length > 0) {
-    conversationId = existingConv.rows[0].id;
-  } else {
-    // Create new conversation
-    const newConv = await pool.query(
-      'INSERT INTO conversations DEFAULT VALUES RETURNING id'
-    );
-    conversationId = newConv.rows[0].id;
+    // Advisory lock: deterministic key derived from sorted user IDs prevents
+    // two concurrent requests from creating a duplicate conversation.
+    const lockKey = [req.userId, recipientId].sort().join(':');
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [lockKey]);
 
-    // Add both participants
-    await pool.query(
-      'INSERT INTO conversation_participants (conversation_id, user_id) VALUES ($1, $2), ($1, $3)',
-      [conversationId, req.userId, recipientId]
+    // Find existing 1-to-1 conversation between these two users using EXISTS
+    // (the previous HAVING COUNT(*) = 2 was wrong — the double-join produces
+    // exactly 1 row per matching conversation, so that clause never fired)
+    const existingConv = await client.query(
+      `SELECT c.id FROM conversations c
+       WHERE EXISTS (
+         SELECT 1 FROM conversation_participants WHERE conversation_id = c.id AND user_id = $1
+       ) AND EXISTS (
+         SELECT 1 FROM conversation_participants WHERE conversation_id = c.id AND user_id = $2
+       )
+       LIMIT 1`,
+      [req.userId, recipientId]
     );
+
+    let conversationId;
+    if (existingConv.rows.length > 0) {
+      conversationId = existingConv.rows[0].id;
+    } else {
+      const newConv = await client.query(
+        'INSERT INTO conversations DEFAULT VALUES RETURNING id'
+      );
+      conversationId = newConv.rows[0].id;
+
+      await client.query(
+        'INSERT INTO conversation_participants (conversation_id, user_id) VALUES ($1, $2), ($1, $3)',
+        [conversationId, req.userId, recipientId]
+      );
+    }
+
+    // Unhide the conversation for all participants so it reappears in everyone's inbox
+    await client.query(
+      'UPDATE conversation_participants SET hidden = false WHERE conversation_id = $1',
+      [conversationId]
+    );
+
+    const messageResult = await client.query(
+      `INSERT INTO messages (conversation_id, sender_id, body)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [conversationId, req.userId, body.trim()]
+    );
+    row = messageResult.rows[0];
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
   }
 
-  // Insert message
-  const messageResult = await pool.query(
-    `INSERT INTO messages (conversation_id, sender_id, body)
-     VALUES ($1, $2, $3)
-     RETURNING *`,
-    [conversationId, req.userId, body.trim()]
-  );
-
-  const row = messageResult.rows[0];
   return res.status(201).json({
     id: row.id,
     conversationId: row.conversation_id,
@@ -59,6 +86,57 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
     readAt: row.read_at,
     createdAt: row.created_at,
   });
+}));
+
+// POST /api/messages/conversations - find or create an empty conversation (no message sent)
+router.post('/conversations', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const { recipientId } = req.body;
+  if (!recipientId) {
+    return res.status(400).json({ error: 'recipientId is required' });
+  }
+
+  const client = await pool.connect();
+  let conversationId: string;
+  try {
+    await client.query('BEGIN');
+
+    const lockKey = [req.userId, recipientId].sort().join(':');
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [lockKey]);
+
+    const existingConv = await client.query(
+      `SELECT c.id FROM conversations c
+       WHERE EXISTS (
+         SELECT 1 FROM conversation_participants WHERE conversation_id = c.id AND user_id = $1
+       ) AND EXISTS (
+         SELECT 1 FROM conversation_participants WHERE conversation_id = c.id AND user_id = $2
+       )
+       LIMIT 1`,
+      [req.userId, recipientId]
+    );
+
+    if (existingConv.rows.length > 0) {
+      conversationId = existingConv.rows[0].id as string;
+    } else {
+      const newConv = await client.query(
+        'INSERT INTO conversations DEFAULT VALUES RETURNING id'
+      );
+      conversationId = newConv.rows[0].id as string;
+
+      await client.query(
+        'INSERT INTO conversation_participants (conversation_id, user_id) VALUES ($1, $2), ($1, $3)',
+        [conversationId, req.userId, recipientId]
+      );
+    }
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  return res.status(200).json({ conversationId });
 }));
 
 // GET /api/messages/conversations - list all conversations for current user
@@ -70,7 +148,7 @@ router.get('/conversations', authMiddleware, asyncHandler(async (req: Request, r
             (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND sender_id != $1 AND read_at IS NULL) as unread_count
      FROM conversations c
      JOIN conversation_participants cp ON cp.conversation_id = c.id
-     WHERE cp.user_id = $1
+     WHERE cp.user_id = $1 AND cp.hidden = false
      ORDER BY last_message_at DESC NULLS LAST`,
     [req.userId]
   );
@@ -133,6 +211,30 @@ router.get('/conversations/:id', authMiddleware, asyncHandler(async (req: Reques
       senderRole: row.sender_role,
     }))
   );
+}));
+
+// DELETE /api/messages/conversations/:id - hide a conversation from the current user's inbox
+// Sets hidden = true on the participant row rather than deleting it, so the other
+// participant's row is unaffected and they can still send and receive messages normally.
+router.delete('/conversations/:id', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  // Verify the user is actually a participant (hidden or not)
+  const check = await pool.query(
+    'SELECT 1 FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2',
+    [id, req.userId]
+  );
+  if (check.rows.length === 0) {
+    return res.status(403).json({ error: 'Not a participant of this conversation' });
+  }
+
+  // Soft-hide: keep the row so the other participant can still message this user
+  await pool.query(
+    'UPDATE conversation_participants SET hidden = true WHERE conversation_id = $1 AND user_id = $2',
+    [id, req.userId]
+  );
+
+  return res.status(204).send();
 }));
 
 // PATCH /api/messages/:id/read - mark a message as read

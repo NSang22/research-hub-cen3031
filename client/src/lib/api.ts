@@ -1,4 +1,4 @@
-import type { User, StudentProfile, PIProfile, Position, Application, LabRosterMember, QuestionAnswersMap, NotificationPreferences } from '../types';
+import type { User, StudentProfile, PIProfile, Position, Application, LabRosterMember, Conversation, Message, QuestionAnswersMap, NotificationPreferences } from '../types';
 
 const API_BASE = '/api';
 
@@ -57,6 +57,12 @@ export const api = {
     getProfile: () => request<StudentProfile>('/students/profile'),
     updateProfile: (body: Partial<StudentProfile>) =>
       request<StudentProfile>('/students/profile', { method: 'PUT', body: JSON.stringify(body) }),
+    getNotificationPreferences: () => request<NotificationPreferences>('/students/notification-preferences'),
+    updateNotificationPreferences: (body: Partial<NotificationPreferences>) =>
+      request<NotificationPreferences>('/students/notification-preferences', {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      }),
     list: (params?: { major?: string; minGpa?: number; skills?: string; yearLevel?: string }) => {
       const q = new URLSearchParams(params as Record<string, string>).toString();
       return request<StudentProfile[]>(`/students${q ? `?${q}` : ''}`);
@@ -97,12 +103,26 @@ export const api = {
     mine: () =>
       request<(Application & { positionTitle?: string; labName?: string; department?: string | null })[]>('/applications/mine'),
     byPosition: (positionId: string) =>
-      request<(Application & { firstName?: string; lastName?: string; email?: string; major?: string; gpa?: number; skills?: string[]; bio?: string; resumeUrl?: string; yearLevel?: string })[]>(
+      request<(Application & { studentUserId?: string; firstName?: string; lastName?: string; email?: string; major?: string; gpa?: number; skills?: string[]; bio?: string; resumeUrl?: string; yearLevel?: string })[]>(
         `/applications/position/${positionId}`
       ),
     updateStatus: (id: string, status: string) =>
       request<Application>(`/applications/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
     updateNotes: (id: string, notes: string) =>
       request<{ id: string; piNotes: string | null }>(`/applications/${id}/notes`, { method: 'PATCH', body: JSON.stringify({ notes }) }),
+  },
+  messages: {
+    sendMessage: (recipientId: string, body: string) =>
+      request<Message>('/messages', { method: 'POST', body: JSON.stringify({ recipientId, body }) }),
+    findOrCreateConversation: (recipientId: string) =>
+      request<{ conversationId: string }>('/messages/conversations', { method: 'POST', body: JSON.stringify({ recipientId }) }),
+    getConversations: () =>
+      request<Conversation[]>('/messages/conversations'),
+    getConversationMessages: (conversationId: string) =>
+      request<Message[]>(`/messages/conversations/${conversationId}`),
+    markAsRead: (messageId: string) =>
+      request<Message>(`/messages/${messageId}/read`, { method: 'PATCH' }),
+    deleteConversation: (conversationId: string) =>
+      request<void>(`/messages/conversations/${conversationId}`, { method: 'DELETE' }),
   },
 };

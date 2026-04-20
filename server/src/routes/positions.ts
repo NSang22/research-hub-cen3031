@@ -196,9 +196,11 @@ router.get('/recommended', authMiddleware, requireRole('student'), asyncHandler(
 router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await pool.query(
-    `SELECT rp.*, pp.department, pp.lab_name, pp.research_areas, pp.lab_website
+    `SELECT rp.*, pp.department, pp.lab_name, pp.research_areas, pp.lab_website,
+            u.id as pi_user_id, u.first_name as pi_first_name, u.last_name as pi_last_name
      FROM research_positions rp
      JOIN pi_profiles pp ON pp.id = rp.pi_id
+     JOIN users u ON u.id = pp.user_id
      WHERE rp.id = $1`,
     [id]
   );
@@ -206,7 +208,12 @@ router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
   if (!row) {
     return res.status(404).json({ error: 'Position not found' });
   }
-  return res.json(rowToPosition(row));
+  return res.json({
+    ...rowToPosition(row),
+    piUserId: row.pi_user_id,
+    piFirstName: row.pi_first_name,
+    piLastName: row.pi_last_name,
+  });
 }));
 
 // PUT /api/positions/:id - update (owner only)

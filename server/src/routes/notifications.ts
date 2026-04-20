@@ -8,10 +8,12 @@ import {
   queueNotificationsForPosition,
   processNotificationQueue,
 } from '../lib/notificationQueue.js';
+import {
+  fetchNotificationPreferencesForUser,
+  updateNotificationPreferencesForUser,
+} from '../lib/studentNotificationPreferences.js';
 
 const router = Router();
-
-const VALID_FREQUENCIES = ['immediately', 'hourly', 'daily', 'weekly'];
 
 // GET /api/notifications/preferences — fetch notification prefs (student only)
 router.get(
@@ -19,20 +21,11 @@ router.get(
   authMiddleware,
   requireRole('student'),
   asyncHandler(async (req: Request, res: Response) => {
-    const result = await pool.query(
-      `SELECT notify_new_positions, notification_keywords, notification_departments,
-              notification_frequency
-       FROM student_profiles WHERE user_id = $1`,
-      [req.userId]
-    );
-    const row = result.rows[0];
-    if (!row) return res.status(404).json({ error: 'Profile not found' });
-    return res.json({
-      notifyNewPositions: row.notify_new_positions as boolean,
-      notificationKeywords: (row.notification_keywords as string[]) ?? [],
-      notificationDepartments: (row.notification_departments as string[]) ?? [],
-      notificationFrequency: (row.notification_frequency as string) ?? 'hourly',
-    });
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const data = await fetchNotificationPreferencesForUser(userId);
+    if (!data) return res.status(404).json({ error: 'Profile not found' });
+    return res.json(data);
   })
 );
 
@@ -42,44 +35,13 @@ router.put(
   authMiddleware,
   requireRole('student'),
   asyncHandler(async (req: Request, res: Response) => {
-    const { notifyNewPositions, notificationKeywords, notificationDepartments, notificationFrequency } =
-      req.body as {
-        notifyNewPositions?: boolean;
-        notificationKeywords?: string[];
-        notificationDepartments?: string[];
-        notificationFrequency?: string;
-      };
-
-    if (notificationFrequency !== undefined && !VALID_FREQUENCIES.includes(notificationFrequency)) {
-      return res.status(400).json({ error: `notificationFrequency must be one of: ${VALID_FREQUENCIES.join(', ')}` });
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const result = await updateNotificationPreferencesForUser(userId, req.body);
+    if (!result.ok) {
+      return res.status(result.status).json({ error: result.error });
     }
-
-    const result = await pool.query(
-      `UPDATE student_profiles SET
-         notify_new_positions     = COALESCE($1, notify_new_positions),
-         notification_keywords    = COALESCE($2, notification_keywords),
-         notification_departments = COALESCE($3, notification_departments),
-         notification_frequency   = COALESCE($4, notification_frequency),
-         updated_at               = NOW()
-       WHERE user_id = $5
-       RETURNING notify_new_positions, notification_keywords,
-                 notification_departments, notification_frequency`,
-      [
-        notifyNewPositions ?? null,
-        notificationKeywords ?? null,
-        notificationDepartments ?? null,
-        notificationFrequency ?? null,
-        req.userId,
-      ]
-    );
-    const row = result.rows[0];
-    if (!row) return res.status(404).json({ error: 'Profile not found' });
-    return res.json({
-      notifyNewPositions: row.notify_new_positions as boolean,
-      notificationKeywords: (row.notification_keywords as string[]) ?? [],
-      notificationDepartments: (row.notification_departments as string[]) ?? [],
-      notificationFrequency: row.notification_frequency as string,
-    });
+    return res.json(result.data);
   })
 );
 

@@ -10,6 +10,7 @@ import {
   Users,
   Settings,
   UsersRound,
+  MessageSquare,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -24,6 +25,7 @@ function studentNavActive(pathname: string, url: string): boolean {
   if (url === '/student/dashboard') return pathname === '/student/dashboard';
   if (url === '/student/positions') return pathname.startsWith('/student/positions');
   if (url === '/student/applications') return pathname === '/student/applications';
+  if (url === '/student/inbox') return pathname.startsWith('/student/inbox');
   if (url === '/student/profile') return pathname === '/student/profile';
   if (url === '/student/settings') return pathname === '/student/settings';
   return false;
@@ -33,6 +35,7 @@ function piNavActive(pathname: string, url: string): boolean {
   if (url === '/pi/dashboard') return pathname === '/pi/dashboard';
   if (url === '/pi/positions/new') return pathname.startsWith('/pi/positions');
   if (url === '/pi/roster') return pathname === '/pi/roster';
+  if (url === '/pi/inbox') return pathname.startsWith('/pi/inbox');
   if (url === '/pi/students') return pathname.startsWith('/pi/students');
   if (url === '/pi/profile') return pathname === '/pi/profile';
   return false;
@@ -48,6 +51,7 @@ const studentMainItems: NavItem[] = [
   { name: 'Dashboard', url: '/student/dashboard', icon: LayoutDashboard },
   { name: 'Browse Positions', url: '/student/positions', icon: Briefcase },
   { name: 'My Applications', url: '/student/applications', icon: FileText },
+  { name: 'Inbox', url: '/student/inbox', icon: MessageSquare },
 ];
 
 const studentAccountItems: NavItem[] = [
@@ -59,6 +63,7 @@ const piLabItems: NavItem[] = [
   { name: 'Dashboard', url: '/pi/dashboard', icon: LayoutDashboard },
   { name: 'Positions', url: '/pi/positions/new', icon: Briefcase },
   { name: 'Roster', url: '/pi/roster', icon: UsersRound },
+  { name: 'Inbox', url: '/pi/inbox', icon: MessageSquare },
 ];
 
 const piAccountItems: NavItem[] = [

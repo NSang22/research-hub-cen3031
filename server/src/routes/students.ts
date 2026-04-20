@@ -6,6 +6,10 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
 import { parseProfileLinks, validateProfileLinks } from '../lib/profileLinks.js';
+import {
+  fetchNotificationPreferencesForUser,
+  updateNotificationPreferencesForUser,
+} from '../lib/studentNotificationPreferences.js';
 
 const router = Router();
 
@@ -125,6 +129,36 @@ router.put('/profile', authMiddleware, requireRole('student'), asyncHandler(asyn
     profileLinks: parseProfileLinks(row.profile_links),
   });
 }));
+
+// GET /api/students/notification-preferences — research opportunity email prefs (student only)
+router.get(
+  '/notification-preferences',
+  authMiddleware,
+  requireRole('student'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const data = await fetchNotificationPreferencesForUser(userId);
+    if (!data) return res.status(404).json({ error: 'Profile not found' });
+    return res.json(data);
+  })
+);
+
+// PUT /api/students/notification-preferences
+router.put(
+  '/notification-preferences',
+  authMiddleware,
+  requireRole('student'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const result = await updateNotificationPreferencesForUser(userId, req.body);
+    if (!result.ok) {
+      return res.status(result.status).json({ error: result.error });
+    }
+    return res.json(result.data);
+  })
+);
 
 // GET /api/students - list with filters (PI only)
 router.get('/', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Navbar } from '../../components/Navbar';
 import { ProfileLinksEditor } from '../../components/ProfileLinksEditor';
 import { api, getAuthToken } from '../../lib/api';
@@ -144,7 +145,14 @@ export function StudentProfile() {
     <div className="min-h-screen">
       <Navbar />
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-inherit mb-6">Edit Profile</h1>
+        <h1 className="text-2xl font-bold text-inherit mb-2">Edit Profile</h1>
+        <p className="text-sm text-slate-600 mb-6">
+          Manage email notification preferences for research opportunities (departments, keywords, and opt out) on{' '}
+          <Link to="/student/settings" className="text-teal-600 hover:underline font-medium">
+            Settings
+          </Link>
+          .
+        </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { MessageSquare } from 'lucide-react';
 import { Navbar } from '../../components/Navbar';
 import { Modal } from '../../components/Modal';
 import { api } from '../../lib/api';
@@ -9,6 +10,7 @@ import './position-applications.css';
 interface AppWithStudent {
   id: string;
   studentId: string;
+  studentUserId?: string;
   status: string;
   coverLetter: string | null;
   appliedAt: string;
@@ -143,6 +145,7 @@ function NotesEditor({ appId, initial, onSaved }: { appId: string; initial: stri
 // ---------------------------------------------------------------------------
 export function PositionApplications() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [applications, setApplications] = useState<AppWithStudent[]>([]);
   const [position, setPosition] = useState<Position | null>(null);
   const [loading, setLoading] = useState(true);
@@ -150,6 +153,18 @@ export function PositionApplications() {
   const [updating, setUpdating] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [sortKey, setSortKey] = useState<SortKey>('date_desc');
+  const [messagingStudentId, setMessagingStudentId] = useState<string | null>(null);
+
+  const handleMessageStudent = async (app: AppWithStudent) => {
+    if (!app.studentUserId || messagingStudentId) return;
+    setMessagingStudentId(app.id);
+    try {
+      const { conversationId } = await api.messages.findOrCreateConversation(app.studentUserId);
+      navigate(`/pi/inbox/${conversationId}`);
+    } catch {
+      setMessagingStudentId(null);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -298,6 +313,34 @@ export function PositionApplications() {
                               <option value="rejected">Rejected</option>
                               <option value="withdrawn">Withdrawn</option>
                             </select>
+                            <Link to={`/pi/students/${app.studentId}`} className="pa-profile-link">
+                              View Profile
+                            </Link>
+                            {app.studentUserId && (
+                              <button
+                                type="button"
+                                onClick={() => { void handleMessageStudent(app); }}
+                                disabled={!!messagingStudentId}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.3rem',
+                                  padding: '0.3rem 0.65rem',
+                                  borderRadius: '8px',
+                                  border: '1px solid rgba(0,82,204,0.35)',
+                                  background: 'rgba(0,82,204,0.06)',
+                                  color: '#0052CC',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 600,
+                                  cursor: messagingStudentId ? 'not-allowed' : 'pointer',
+                                  opacity: messagingStudentId ? 0.6 : 1,
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                <MessageSquare size={13} strokeWidth={2} />
+                                {messagingStudentId === app.id ? 'Opening…' : 'Message'}
+                              </button>
+                            )}
                             <button
                               type="button"
                               className="pa-note-btn"

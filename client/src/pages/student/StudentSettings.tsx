@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Navbar } from '../../components/Navbar';
-import { api } from '../../lib/api';
+import { Label } from '../../components/ui/label';
+import { Switch } from '../../components/ui/switch';
+import { ApiError, api } from '../../lib/api';
 import type { NotificationFrequency, NotificationPreferences } from '../../types';
 
 // ---------------------------------------------------------------------------
@@ -36,6 +38,23 @@ function loadLocalSettings(): LocalSettings {
   }
 }
 
+const MAX_KEYWORDS = 25;
+const MAX_DEPARTMENTS = 15;
+const MAX_TAG_LEN = 80;
+
+const DEPARTMENT_SUGGESTIONS = [
+  'Computer Science',
+  'Psychology',
+  'Biology',
+  'Chemistry',
+  'Physics',
+  'Neuroscience',
+  'Mathematics',
+  'Engineering',
+  'Public Health',
+  'Economics',
+];
+
 // ---------------------------------------------------------------------------
 // Tag-input helper
 // ---------------------------------------------------------------------------
@@ -46,21 +65,37 @@ function TagInput({
   values,
   placeholder,
   onChange,
+  maxItems,
 }: {
   label: string;
   hint: string;
   values: string[];
   placeholder: string;
   onChange: (next: string[]) => void;
+  maxItems: number;
 }) {
   const [draft, setDraft] = useState('');
+  const [hintMsg, setHintMsg] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const atMax = values.length >= maxItems;
 
   const add = () => {
+    setHintMsg(null);
     const trimmed = draft.trim();
-    if (trimmed && !values.includes(trimmed)) {
-      onChange([...values, trimmed]);
+    if (!trimmed) return;
+    if (atMax) {
+      setHintMsg(`You can add at most ${maxItems} entries.`);
+      return;
     }
+    if (trimmed.length > MAX_TAG_LEN) {
+      setHintMsg(`Each entry must be at most ${MAX_TAG_LEN} characters.`);
+      return;
+    }
+    if (values.some((v) => v.toLowerCase() === trimmed.toLowerCase())) {
+      setHintMsg('That value is already added.');
+      return;
+    }
+    onChange([...values, trimmed]);
     setDraft('');
   };
 
@@ -95,6 +130,7 @@ function TagInput({
           className="flex-1 border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
           placeholder={placeholder}
           value={draft}
+          disabled={atMax}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ',') {
@@ -105,12 +141,17 @@ function TagInput({
         />
         <button
           type="button"
-          className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md"
+          className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md disabled:opacity-50"
           onClick={add}
+          disabled={atMax}
         >
           Add
         </button>
       </div>
+      {hintMsg ? <p className="text-sm text-amber-700">{hintMsg}</p> : null}
+      {atMax ? (
+        <p className="text-xs text-slate-500">Maximum reached. Remove a tag to add another.</p>
+      ) : null}
     </div>
   );
 }
@@ -122,7 +163,6 @@ function TagInput({
 export function StudentSettings() {
   const [local, setLocal] = useState<LocalSettings>(LOCAL_DEFAULTS);
 
-  // Server-backed notification prefs
   const [prefs, setPrefs] = useState<NotificationPreferences>({
     notifyNewPositions: false,
     notificationKeywords: [],
@@ -136,14 +176,15 @@ export function StudentSettings() {
 
   useEffect(() => {
     setLocal(loadLocalSettings());
-    api.notifications
-      .getPreferences()
-      .then((p) => setPrefs(p))
+    api.students
+      .getNotificationPreferences()
+      .then((p) => {
+        setPrefs(p);
+        setPrefsError(null);
+      })
       .catch(() => setPrefsError('Could not load notification preferences.'))
       .finally(() => setPrefsLoading(false));
   }, []);
-
-  // ── Local settings ────────────────────────────────────────────────────────
 
   const persistLocal = (next: LocalSettings) => {
     setLocal(next);
@@ -156,18 +197,28 @@ export function StudentSettings() {
     persistLocal({ ...local, [key]: !local[key] });
   };
 
-  // ── Server prefs ──────────────────────────────────────────────────────────
-
-  const savePrefs = async (next: NotificationPreferences) => {
+  const savePrefs = async (patch: Partial<NotificationPreferences>) => {
+    setPrefsError(null);
+    const next: NotificationPreferences = { ...prefs, ...patch };
+    const prev = prefs;
     setPrefs(next);
     try {
-      const saved = await api.notifications.updatePreferences(next);
+      const saved = await api.students.updateNotificationPreferences(next);
       setPrefs(saved);
       setSavedFlash('Notification preferences saved.');
-    } catch {
-      setPrefsError('Failed to save preferences — please try again.');
+    } catch (err) {
+      setPrefs(prev);
+      const msg =
+        err instanceof ApiError ? err.message : 'Failed to save preferences. Please try again.';
+      setPrefsError(msg);
     }
     window.setTimeout(() => setSavedFlash(null), 2500);
+  };
+
+  const addSuggestedDepartment = (name: string) => {
+    if (prefs.notificationDepartments.length >= MAX_DEPARTMENTS) return;
+    if (prefs.notificationDepartments.some((d) => d.toLowerCase() === name.toLowerCase())) return;
+    void savePrefs({ notificationDepartments: [...prefs.notificationDepartments, name] });
   };
 
   return (
@@ -184,65 +235,66 @@ export function StudentSettings() {
         </p>
 
         {savedFlash ? (
-          <div className="mb-4 p-3 bg-teal-50 text-teal-800 rounded-lg text-sm">{savedFlash}</div>
+          <div className="mb-4 p-3 bg-teal-50 text-teal-800 rounded-lg text-sm border border-teal-100" role="status">
+            {savedFlash}
+          </div>
         ) : null}
         {prefsError ? (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">{prefsError}</div>
+          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm border border-red-100" role="alert">
+            {prefsError}
+          </div>
         ) : null}
 
         <section className="space-y-6">
-
-          {/* ── New-position alerts (server-backed) ── */}
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">
-              New Position Alerts
-            </h2>
+            <h2 className="text-lg font-semibold text-inherit mb-1">Notification preferences</h2>
+            <p className="text-sm text-slate-600 mb-3">
+              Choose departments and keywords so we only email you about research opportunities you care about. These
+              settings control new position alert emails from ResearchHub.
+            </p>
             <div className="space-y-5 border border-slate-200 rounded-lg p-4 bg-white">
               {prefsLoading ? (
                 <p className="text-sm text-slate-500">Loading…</p>
               ) : (
                 <>
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="mt-1 rounded border-slate-300"
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1 min-w-0">
+                      <Label htmlFor="research-email-master" className="text-base">
+                        Email notifications for research opportunities
+                      </Label>
+                      <p className="text-sm text-slate-600">
+                        When on, you can receive batched emails when new open positions match your profile, keywords, and
+                        department filters. Turn off to stop all research opportunity alert emails.
+                      </p>
+                    </div>
+                    <Switch
+                      id="research-email-master"
                       checked={prefs.notifyNewPositions}
-                      onChange={() =>
-                        savePrefs({ ...prefs, notifyNewPositions: !prefs.notifyNewPositions })
-                      }
+                      onCheckedChange={(checked) => void savePrefs({ notifyNewPositions: checked })}
+                      aria-label="Enable research opportunity emails"
                     />
-                    <span>
-                      <span className="font-medium text-inherit block">
-                        Email me when new positions are posted
-                      </span>
-                      <span className="text-sm text-slate-600">
-                        Receive an email (at most once per hour) when a new position matches your skills or
-                        GPA on your profile. Custom keyword filters add to that. Department filter, if set,
-                        restricts alerts to only those departments.
-                      </span>
-                    </span>
-                  </label>
+                  </div>
 
-                  {prefs.notifyNewPositions && (
-                    <div className="pl-7 space-y-5 border-t border-slate-100 pt-4">
+                  {prefs.notifyNewPositions ? (
+                    <div className="space-y-5 border-t border-slate-100 pt-4">
                       <div className="space-y-2">
-                        <span className="font-medium text-inherit block">Email frequency</span>
-                        <span className="text-sm text-slate-600 block">
-                          How often you receive notification emails. Batches all new matches into one email.
-                        </span>
+                        <Label className="text-base">Email frequency</Label>
+                        <p className="text-sm text-slate-600">
+                          How often we send a single email that batches new matching positions.
+                        </p>
                         <div className="flex flex-wrap gap-2 mt-1">
                           {(
                             [
                               { value: 'immediately', label: 'Immediately' },
-                              { value: 'hourly',       label: 'Hourly' },
-                              { value: 'daily',        label: 'Daily' },
-                              { value: 'weekly',       label: 'Weekly' },
+                              { value: 'hourly', label: 'Hourly' },
+                              { value: 'daily', label: 'Daily' },
+                              { value: 'weekly', label: 'Weekly' },
                             ] as { value: NotificationFrequency; label: string }[]
                           ).map(({ value, label }) => (
                             <button
                               key={value}
                               type="button"
-                              onClick={() => savePrefs({ ...prefs, notificationFrequency: value })}
+                              onClick={() => void savePrefs({ notificationFrequency: value })}
                               className={`px-4 py-1.5 rounded-full text-sm border transition-colors ${
                                 prefs.notificationFrequency === value
                                   ? 'bg-teal-600 text-white border-teal-600'
@@ -256,35 +308,58 @@ export function StudentSettings() {
                       </div>
 
                       <TagInput
-                        label="Keyword filters (additive)"
-                        hint="Also notify me for positions whose title, description, or research area contains any of these keywords — on top of your skill/GPA matches."
+                        label="Keyword filters"
+                        hint='Notify when a position title, description, PI research areas, or required skills contain any of these phrases (for example "machine learning", "biology", "psychology"). Works together with your profile skills and GPA.'
                         values={prefs.notificationKeywords}
                         placeholder="e.g. machine learning"
-                        onChange={(next) =>
-                          savePrefs({ ...prefs, notificationKeywords: next })
-                        }
+                        maxItems={MAX_KEYWORDS}
+                        onChange={(next) => void savePrefs({ notificationKeywords: next })}
                       />
+
+                      <div className="space-y-2">
+                        <Label className="text-base">Department filters</Label>
+                        <p className="text-sm text-slate-600">
+                          If you add any department, you will only get alerts for positions whose PI department matches
+                          one of them. Leave empty to allow all departments.
+                        </p>
+                        <p className="text-xs text-slate-500">Quick add:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {DEPARTMENT_SUGGESTIONS.map((d) => {
+                            const taken = prefs.notificationDepartments.some(
+                              (x) => x.toLowerCase() === d.toLowerCase()
+                            );
+                            return (
+                              <button
+                                key={d}
+                                type="button"
+                                disabled={taken || prefs.notificationDepartments.length >= MAX_DEPARTMENTS}
+                                onClick={() => addSuggestedDepartment(d)}
+                                className="px-2.5 py-1 text-xs rounded-full border border-slate-200 bg-slate-50 text-slate-700 hover:border-teal-400 hover:bg-teal-50 disabled:opacity-40 disabled:pointer-events-none"
+                              >
+                                {d}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
                       <TagInput
-                        label="Department filters (exclusive)"
-                        hint="Only receive alerts from these departments. Leave empty to receive alerts from all departments."
+                        label="Your departments"
+                        hint="Add custom department names if they are not listed above."
                         values={prefs.notificationDepartments}
-                        placeholder="e.g. Computer Science"
-                        onChange={(next) =>
-                          savePrefs({ ...prefs, notificationDepartments: next })
-                        }
+                        placeholder="e.g. Cognitive Science"
+                        maxItems={MAX_DEPARTMENTS}
+                        onChange={(next) => void savePrefs({ notificationDepartments: next })}
                       />
                     </div>
-                  )}
+                  ) : null}
                 </>
               )}
             </div>
           </div>
 
-          {/* ── Other notification settings (local-only) ── */}
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">
-              Other Notifications
-            </h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">Other notifications</h2>
             <div className="space-y-4 border border-slate-200 rounded-lg p-4 bg-white">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
@@ -296,8 +371,8 @@ export function StudentSettings() {
                 <span>
                   <span className="font-medium text-inherit block">Application status emails</span>
                   <span className="text-sm text-slate-600">
-                    When a lab updates your application (e.g. reviewing, accepted). Email delivery depends on
-                    server configuration.
+                    When a lab updates your application (for example reviewing or accepted). Delivery depends on server
+                    email configuration.
                   </span>
                 </span>
               </label>
@@ -319,9 +394,7 @@ export function StudentSettings() {
           </div>
 
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">
-              Miscellaneous
-            </h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">Miscellaneous</h2>
             <div className="border border-slate-200 rounded-lg p-4 bg-white text-sm text-slate-600">
               More preferences (language, accessibility) can be added here as the product grows.
             </div>
