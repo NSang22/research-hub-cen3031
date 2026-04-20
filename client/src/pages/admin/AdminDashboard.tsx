@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Users,
@@ -39,13 +39,20 @@ function MetricCard({ label, value, sub, icon, color }: MetricCardProps) {
 }
 
 function statusBadge(status: string) {
-  const map: Record<string, string> = {
-    open:   'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-    closed: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
-    filled: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  const styles: Record<string, React.CSSProperties> = {
+    open:   { background: '#dcfce7', color: '#166534' },
+    closed: { background: '#f1f5f9', color: '#475569' },
+    filled: { background: '#dbeafe', color: '#1e40af' },
   };
+  const style = styles[status] ?? { background: '#f1f5f9', color: '#475569' };
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${map[status] ?? 'bg-muted text-muted-foreground'}`}>
+    <span style={{
+      ...style,
+      padding: '0.15rem 0.6rem',
+      borderRadius: '9999px',
+      fontSize: '0.75rem',
+      fontWeight: 600,
+    }}>
       {status}
     </span>
   );
