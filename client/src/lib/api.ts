@@ -170,6 +170,12 @@ export const api = {
     getMetrics: (params?: { startDate?: string; endDate?: string; positionType?: string; piId?: string }) =>
       request<AdminMetrics>(`/admin/metrics${toQuery(params)}`),
     getPIs: () => request<LabPIMember[]>('/admin/pis'),
+    getLab: () => request<{ department: string | null; labName: string | null; labWebsite: string | null }>('/admin/lab'),
+    updateLab: (body: { department?: string; labName?: string; labWebsite?: string }) =>
+      request<{ department: string | null; labName: string | null; labWebsite: string | null }>('/admin/lab', {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      }),
   },
   applications: {
     create: (body: { positionId: string; coverLetter?: string; questionAnswers?: QuestionAnswersMap }) =>
