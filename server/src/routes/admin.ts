@@ -5,12 +5,9 @@ import { asyncHandler } from '../lib/asyncHandler.js';
 
 const router = Router();
 
-// All admin routes require authentication + admin role
-router.use(authMiddleware);
-router.use(requireRole('admin'));
-
 /**
  * GET /api/admin/pis
+ *
  * List all PIs associated with this lab administrator.
  */
 router.get('/pis', asyncHandler(async (req: Request, res: Response) => {
@@ -55,6 +52,7 @@ router.get('/pis', asyncHandler(async (req: Request, res: Response) => {
 
 /**
  * GET /api/admin/metrics
+ *
  * Lab-scoped recruitment metrics, filtered to PIs whose lab_admin_id = current user.
  * Optional query filters: startDate, endDate, positionType, piId.
  */

@@ -41,7 +41,14 @@ const upload = multer({
   },
 });
 
-// GET /api/students/profile - own profile (student only)
+// ---------------------------------------------------------------------------
+// Student profile
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /api/students/profile — own profile (student only)
+ * Returns the authenticated student's full profile including user info.
+ */
 router.get('/profile', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
   const result = await pool.query(
     `SELECT sp.*, u.first_name, u.last_name, u.email
@@ -130,7 +137,13 @@ router.put('/profile', authMiddleware, requireRole('student'), asyncHandler(asyn
   });
 }));
 
-// GET /api/students/notification-preferences — research opportunity email prefs (student only)
+// ---------------------------------------------------------------------------
+// Notification preferences
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /api/students/notification-preferences — research opportunity email prefs (student only)
+ */
 router.get(
   '/notification-preferences',
   authMiddleware,

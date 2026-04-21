@@ -7,6 +7,8 @@ import { sendPositionClosedEmail } from '../lib/email.js';
 
 const router = Router();
 
+const VALID_POSITION_STATUSES = ['open', 'paused', 'closed'];
+
 function rowToPosition(row: Record<string, unknown>) {
   const aq = row.application_questions;
   return {
@@ -32,7 +34,10 @@ function rowToPosition(row: Record<string, unknown>) {
   };
 }
 
-// POST /api/positions - create (PI only)
+/**
+ * POST /api/positions - create (PI only)
+ * Creates a new research position and triggers notification matching.
+ */
 router.post('/', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const { title, description, requiredSkills, minGpa, isFunded, compensationType, deadline, timeCommitment, qualifications, applicationQuestions } = req.body;
   if (!title) {
@@ -74,7 +79,10 @@ router.post('/', authMiddleware, requireRole('pi'), asyncHandler(async (req: Req
   return res.status(201).json(rowToPosition(newPosition));
 }));
 
-// GET /api/positions - list with filters (public)
+/**
+ * GET /api/positions - list with optional filters (public)
+ * Supports search, skills, isFunded, and department filters.
+ */
 router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const { search, skills, isFunded, department } = req.query;
   let query = `
@@ -114,7 +122,9 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
   return res.json(result.rows.map(rowToPosition));
 }));
 
-// GET /api/positions/mine - PI's own positions
+/**
+ * GET /api/positions/mine - PI's own positions with application counts
+ */
 router.get('/mine', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const piResult = await pool.query('SELECT id FROM pi_profiles WHERE user_id = $1', [req.userId]);
   const pi = piResult.rows[0];
@@ -137,7 +147,10 @@ router.get('/mine', authMiddleware, requireRole('pi'), asyncHandler(async (req: 
   );
 }));
 
-// GET /api/positions/recommended - top matching open positions for the logged-in student
+/**
+ * GET /api/positions/recommended - top 4 matching open positions for logged-in student
+ * Scores by skill overlap (70%) and GPA fit (30%), excludes already-applied positions.
+ */
 router.get('/recommended', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
   const studentResult = await pool.query(
     'SELECT id, skills, gpa FROM student_profiles WHERE user_id = $1',
@@ -192,7 +205,9 @@ router.get('/recommended', authMiddleware, requireRole('student'), asyncHandler(
   return res.json(scored.slice(0, 4).map(({ row }) => rowToPosition(row)));
 }));
 
-// GET /api/positions/:id - detail
+/**
+ * GET /api/positions/:id - full position detail including PI user info
+ */
 router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await pool.query(
@@ -216,7 +231,10 @@ router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
   });
 }));
 
-// PUT /api/positions/:id - update (owner only)
+/**
+ * PUT /api/positions/:id - update position fields (owner PI only)
+ * Supports both `status` (open/paused/closed) and legacy `isOpen` boolean.
+ */
 router.put('/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const { title, description, requiredSkills, minGpa, isFunded, compensationType, isOpen, status, deadline, timeCommitment, qualifications, applicationQuestions } = req.body;
@@ -281,7 +299,10 @@ router.put('/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req: R
   return res.json(rowToPosition(row));
 }));
 
-// DELETE /api/positions/:id - close (owner only)
+/**
+ * DELETE /api/positions/:id - close a position and withdraw pending applications (owner PI only)
+ * Sends position-closed emails to all affected applicants.
+ */
 router.delete('/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const piResult = await pool.query('SELECT id FROM pi_profiles WHERE user_id = $1', [req.userId]);
