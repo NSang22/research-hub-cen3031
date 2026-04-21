@@ -9,6 +9,9 @@ const router = Router();
 
 const VALID_POSITION_STATUSES = ['open', 'paused', 'closed'];
 
+//AI-generated: used Claude to write the rowToPosition mapper below since
+//manually mapping every snake_case DB column to camelCase with type casts
+//is repetitive and easy to get wrong, AI handles this pattern well.
 function rowToPosition(row: Record<string, unknown>) {
   const aq = row.application_questions;
   return {

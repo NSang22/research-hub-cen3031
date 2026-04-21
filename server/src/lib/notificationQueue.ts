@@ -5,9 +5,11 @@ import {
   NotificationMessageThread,
 } from './email.js';
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+//AI-generated: we used Claude to scaffold the full type definitions below
+//(PositionMeta, StudentMeta, MatchResult, MatchReason) since writing out every
+//field with proper JSDoc by hand would have been tedious and error-prone given
+//how many columns we were mapping from the DB.
+
 
 type PositionMeta = {
   id: string;

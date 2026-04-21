@@ -13,6 +13,9 @@ import { queueMessageNotification, processNotificationQueue } from '../lib/notif
  * between two users, or creates a new one. Returns { conversationId, isNew }.
  * Callers are responsible for committing or rolling back the transaction.
  */
+//AI-generated: used Claude to write findOrCreateConversationTx below, the
+//advisory lock pattern to safely handle concurrent conversation creation
+//without race conditions is something we looked up and had Claude implement.
 async function findOrCreateConversationTx(
   client: import('pg').PoolClient,
   userId1: string,

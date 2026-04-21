@@ -29,6 +29,9 @@ function resumeObjectPathFromPublicUrl(resumeUrl: string): string | null {
   }
 }
 
+//AI-generated: used Claude to scaffold the multer config below, file upload
+//middleware setup with memory storage, size limits, and mime type filtering
+//is boilerplate we didn't want to look up and wire together from scratch.
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
