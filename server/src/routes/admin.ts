@@ -156,7 +156,7 @@ router.get('/metrics', asyncHandler(async (req: Request, res: Response) => {
     params
   );
 
-  // Per-PI breakdown
+  // Per-PI breakdown — respects positionType / date filters but always shows all PIs in lab
   const piBreakdown = await pool.query(
     `SELECT
        pip.id,
@@ -169,11 +169,14 @@ router.get('/metrics', asyncHandler(async (req: Request, res: Response) => {
      FROM pi_profiles pip
      JOIN users u ON u.id = pip.user_id
      LEFT JOIN research_positions rp ON rp.pi_id = pip.id
+       AND rp.id IN (SELECT rp2.id FROM research_positions rp2
+                     JOIN pi_profiles pip2 ON pip2.id = rp2.pi_id
+                     ${where})
      LEFT JOIN applications a ON a.position_id = rp.id
      WHERE pip.lab_admin_id = $1
      GROUP BY pip.id, u.first_name, u.last_name, pip.department
      ORDER BY application_count DESC`,
-    [req.userId]
+    params
   );
 
   return res.json({
