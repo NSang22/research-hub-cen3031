@@ -4,6 +4,95 @@ import { authMiddleware } from '../middleware/auth.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
 import { queueMessageNotification, processNotificationQueue } from '../lib/notificationQueue.js';
 
+// ---------------------------------------------------------------------------
+// Shared conversation helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Acquires an advisory lock and returns an existing 1-to-1 conversation ID
+ * between two users, or creates a new one. Returns { conversationId, isNew }.
+ * Callers are responsible for committing or rolling back the transaction.
+ */
+async function findOrCreateConversationTx(
+  client: import('pg').PoolClient,
+  userId1: string,
+  userId2: string
+): Promise<{ conversationId: string; isNew: boolean }> {
+  const lockKey = [userId1, userId2].sort().join(':');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [lockKey]);
+
+  const existing = await client.query(
+    `SELECT c.id FROM conversations c
+     WHERE EXISTS (
+       SELECT 1 FROM conversation_participants WHERE conversation_id = c.id AND user_id = $1
+     ) AND EXISTS (
+       SELECT 1 FROM conversation_participants WHERE conversation_id = c.id AND user_id = $2
+     )
+     LIMIT 1`,
+    [userId1, userId2]
+  );
+
+  if (existing.rows.length > 0) {
+    return { conversationId: existing.rows[0].id as string, isNew: false };
+  }
+
+  const newConv = await client.query('INSERT INTO conversations DEFAULT VALUES RETURNING id');
+  const conversationId = newConv.rows[0].id as string;
+  await client.query(
+    'INSERT INTO conversation_participants (conversation_id, user_id) VALUES ($1, $2), ($1, $3)',
+    [conversationId, userId1, userId2]
+  );
+  return { conversationId, isNew: true };
+}
+
+/**
+ * Unhides a conversation for all participants by setting hidden = false.
+ * Use after sending a message so the conversation reappears in everyone's inbox.
+ */
+async function revealConversation(client: import('pg').PoolClient, conversationId: string): Promise<void> {
+  await client.query(
+    'UPDATE conversation_participants SET hidden = false WHERE conversation_id = $1',
+    [conversationId]
+  );
+}
+
+/**
+ * Returns the count of unread messages in a conversation for a given user.
+ * Unread means sender is not the current user AND read_at IS NULL.
+ */
+async function getUnreadCount(conversationId: string, userId: string): Promise<number> {
+  const r = await pool.query(
+    `SELECT COUNT(*) FROM messages
+     WHERE conversation_id = $1 AND sender_id != $2 AND read_at IS NULL`,
+    [conversationId, userId]
+  );
+  return parseInt(r.rows[0].count, 10);
+}
+
+/**
+ * Fires a message notification to the recipient via the notification queue.
+ * Runs fire-and-forget (catches and logs errors without blocking the response).
+ */
+function sendMessageNotification(
+  recipientId: string,
+  conversationId: string,
+  messageId: string
+): void {
+  queueMessageNotification(recipientId, conversationId, messageId)
+    .then(async () => {
+      const prefs = await pool.query(
+        `SELECT notification_frequency FROM user_notification_settings WHERE user_id = $1`,
+        [recipientId]
+      );
+      if (prefs.rows[0]?.notification_frequency === 'immediately') {
+        await processNotificationQueue();
+      }
+    })
+    .catch((err: unknown) => console.error('[notifications] Error queuing message notification:', err));
+}
+
+
 const router = Router();
 
 // POST /api/messages - send a message (creates conversation if needed)
@@ -16,6 +105,9 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
     return res.status(400).json({ error: 'Message body cannot be empty' });
   }
 
+  // ---------------------------------------------------------------------------
+  // Message sending
+  // ---------------------------------------------------------------------------
   // Use a transaction + advisory lock to prevent duplicate conversations from
   // race conditions when the button is clicked multiple times simultaneously.
   const client = await pool.connect();
@@ -23,45 +115,10 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
   try {
     await client.query('BEGIN');
 
-    // Advisory lock: deterministic key derived from sorted user IDs prevents
-    // two concurrent requests from creating a duplicate conversation.
-    const lockKey = [req.userId, recipientId].sort().join(':');
-    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [lockKey]);
-
-    // Find existing 1-to-1 conversation between these two users using EXISTS
-    // (the previous HAVING COUNT(*) = 2 was wrong — the double-join produces
-    // exactly 1 row per matching conversation, so that clause never fired)
-    const existingConv = await client.query(
-      `SELECT c.id FROM conversations c
-       WHERE EXISTS (
-         SELECT 1 FROM conversation_participants WHERE conversation_id = c.id AND user_id = $1
-       ) AND EXISTS (
-         SELECT 1 FROM conversation_participants WHERE conversation_id = c.id AND user_id = $2
-       )
-       LIMIT 1`,
-      [req.userId, recipientId]
-    );
-
-    let conversationId;
-    if (existingConv.rows.length > 0) {
-      conversationId = existingConv.rows[0].id;
-    } else {
-      const newConv = await client.query(
-        'INSERT INTO conversations DEFAULT VALUES RETURNING id'
-      );
-      conversationId = newConv.rows[0].id;
-
-      await client.query(
-        'INSERT INTO conversation_participants (conversation_id, user_id) VALUES ($1, $2), ($1, $3)',
-        [conversationId, req.userId, recipientId]
-      );
-    }
+    const { conversationId } = await findOrCreateConversationTx(client, req.userId, recipientId as string);
 
     // Unhide the conversation for all participants so it reappears in everyone's inbox
-    await client.query(
-      'UPDATE conversation_participants SET hidden = false WHERE conversation_id = $1',
-      [conversationId]
-    );
+    await revealConversation(client, conversationId);
 
     const messageResult = await client.query(
       `INSERT INTO messages (conversation_id, sender_id, body)
@@ -83,17 +140,7 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
   // block the response. If their frequency is 'immediately' we also kick off
   // the processor right after so the email goes out now instead of waiting
   // for the next hourly sweep.
-  queueMessageNotification(recipientId as string, row.conversation_id as string, row.id as string)
-    .then(async () => {
-      const prefs = await pool.query(
-        `SELECT notification_frequency FROM user_notification_settings WHERE user_id = $1`,
-        [recipientId]
-      );
-      if (prefs.rows[0]?.notification_frequency === 'immediately') {
-        await processNotificationQueue();
-      }
-    })
-    .catch((err: unknown) => console.error('[notifications] Error queuing message notification:', err));
+  sendMessageNotification(recipientId as string, row.conversation_id as string, row.id as string);
 
   return res.status(201).json({
     id: row.id,
@@ -104,6 +151,10 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
     createdAt: row.created_at,
   });
 }));
+
+// ---------------------------------------------------------------------------
+// Conversation management (no message sent)
+// ---------------------------------------------------------------------------
 
 // POST /api/messages/conversations - find or create an empty conversation (no message sent)
 router.post('/conversations', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
@@ -155,6 +206,10 @@ router.post('/conversations', authMiddleware, asyncHandler(async (req: Request, 
 
   return res.status(200).json({ conversationId });
 }));
+
+// ---------------------------------------------------------------------------
+// Conversation listing & messages
+// ---------------------------------------------------------------------------
 
 // GET /api/messages/conversations - list all conversations for current user
 router.get('/conversations', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
@@ -256,6 +311,10 @@ router.delete('/conversations/:id', authMiddleware, asyncHandler(async (req: Req
 
   return res.status(204).send();
 }));
+
+// ---------------------------------------------------------------------------
+// Mark-read
+// ---------------------------------------------------------------------------
 
 // PATCH /api/messages/:id/read - mark a message as read
 router.patch('/:id/read', authMiddleware, asyncHandler(async (req: Request, res: Response) => {

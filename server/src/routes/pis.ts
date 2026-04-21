@@ -5,7 +5,14 @@ import { asyncHandler } from '../lib/asyncHandler.js';
 
 const router = Router();
 
-// GET /api/pis/roster — students currently in the lab (accepted on this PI's positions)
+// ---------------------------------------------------------------------------
+// Lab roster
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /api/pis/roster — students currently in the lab (PI only)
+ * Returns students who have been accepted on the authenticated PI's positions.
+ */
 router.get('/roster', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const piResult = await pool.query('SELECT id FROM pi_profiles WHERE user_id = $1', [req.userId]);
   const pi = piResult.rows[0];

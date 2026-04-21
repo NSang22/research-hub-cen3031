@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { config } from '../config/env.js';
 
+/** Nodemailer transport configuration (null when SMTP is not configured). */
 function createTransport() {
   if (!config.smtpHost || !config.smtpUser || !config.smtpPass) {
     return null;

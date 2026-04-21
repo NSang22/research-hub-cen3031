@@ -21,23 +21,33 @@ type PositionMeta = {
 };
 
 export type NotificationFrequency = 'immediately' | 'hourly' | 'daily' | 'weekly';
+/** How often a student wants to receive digest emails. */
 
 type StudentMeta = {
+  /** Unique student profile id (references student_profiles.id) */
   id: string;
+  /** Corresponding user id */
   userId: string;
+  /** Current GPA as a decimal (e.g. 3.75), or null if not set */
   gpa: number | null;
+  /** List of self-reported skill tags */
   skills: string[];
+  /** List of self-reported research interest tags */
   interests: string[];
+  /** Custom keyword filters for position matching */
   notification_keywords: string[];
+  /** Department filters — only positions in these depts will match */
   notification_departments: string[];
 };
 
 export type MatchReason = 'skill_overlap' | 'gpa_match' | 'keyword_filter';
+/** Why a student matched a position: skill overlap, GPA qualifies, or keyword hit. */
 
 export type MatchResult = {
   studentId: string;
   reason: MatchReason;
 };
+/** A matched student paired with the match reason. */
 
 // ---------------------------------------------------------------------------
 // Core matching logic (pure — no DB calls)
@@ -53,6 +63,11 @@ export type MatchResult = {
 //      (encourages profile completion instead of spamming every opted-in student)
 // ---------------------------------------------------------------------------
 
+/**
+ * Pure function: evaluates whether a student matches a position based on
+ * department filters, skill overlap, GPA, and custom keywords.
+ * Returns the primary MatchReason if a match is found, or null otherwise.
+ */
 export function matchStudent(student: StudentMeta, pos: PositionMeta): MatchReason | null {
   const positionDept = pos.department.toLowerCase();
   const positionTitle = pos.title.toLowerCase();
@@ -158,6 +173,10 @@ async function fetchOptedInStudents(): Promise<StudentMeta[]> {
 // Public API — positions
 // ---------------------------------------------------------------------------
 
+/**
+ * Dry-run: returns which opted-in students would be matched for a position
+ * and why, without writing to the DB or sending any email.
+ */
 export async function dryRunMatchForPosition(positionId: string): Promise<{
   position: PositionMeta | null;
   matches: MatchResult[];
@@ -176,6 +195,11 @@ export async function dryRunMatchForPosition(positionId: string): Promise<{
   return { position: pos, matches };
 }
 
+/**
+ * Finds all opted-in students that match the given position and inserts
+ * entries into the notification_queue for each, avoiding duplicates via
+ * ON CONFLICT DO NOTHING.
+ */
 export async function queueNotificationsForPosition(positionId: string): Promise<void> {
   const pos = await fetchPosition(positionId);
   if (!pos) return;
@@ -206,6 +230,23 @@ export async function queueNotificationsForPosition(positionId: string): Promise
 // ---------------------------------------------------------------------------
 
 /**
+ * Low-level helper: inserts a single entry into the message_notification_queue
+ * table. Idempotent via ON CONFLICT DO NOTHING.
+ */
+async function queueMessageQueueEntry(
+  userId: string,
+  conversationId: string,
+  messageId: string
+): Promise<void> {
+  await pool.query(
+    `INSERT INTO message_notification_queue (user_id, conversation_id, message_id)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (user_id, message_id) DO NOTHING`,
+    [userId, conversationId, messageId]
+  );
+}
+
+/**
  * Queue a newly-sent message for digest delivery to its recipient. Respects
  * the recipient's `notify_new_messages` flag. Silently no-ops if the recipient
  * has the feature disabled.
@@ -221,12 +262,7 @@ export async function queueMessageNotification(
   );
   if (prefs.rows.length === 0 || prefs.rows[0].notify_new_messages !== true) return;
 
-  await pool.query(
-    `INSERT INTO message_notification_queue (user_id, conversation_id, message_id)
-     VALUES ($1, $2, $3)
-     ON CONFLICT (user_id, message_id) DO NOTHING`,
-    [recipientUserId, conversationId, messageId]
-  );
+  await queueMessageQueueEntry(recipientUserId, conversationId, messageId);
 }
 
 // ---------------------------------------------------------------------------

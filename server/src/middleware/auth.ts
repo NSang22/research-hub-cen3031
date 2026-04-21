@@ -14,6 +14,7 @@ declare global {
 
 const JWT_SECRET = config.jwtSecret;
 
+/** Verifies the Bearer JWT token and attaches userId and role to req. */
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
