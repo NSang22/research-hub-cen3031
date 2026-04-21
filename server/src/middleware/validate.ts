@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiResponse } from '@research-hub/shared';
 
+//AI-generated: we used Claude to generate this entire validation middleware
+//because writing a generic, reusable rule-based validator with proper type
+//coverage for uuid, enum, array, etc. is boilerplate we didn't want to
+//re-implement for every route.
 type Rule = {
   field: string;
   required?: boolean;

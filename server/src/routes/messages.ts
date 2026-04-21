@@ -4,9 +4,9 @@ import { authMiddleware } from '../middleware/auth.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
 import { queueMessageNotification, processNotificationQueue } from '../lib/notificationQueue.js';
 
-// ---------------------------------------------------------------------------
-// Shared conversation helpers
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Shared conversation helpers
+//---------------------------------------------------------------------------
 
 /**
  * Acquires an advisory lock and returns an existing 1-to-1 conversation ID
@@ -19,7 +19,7 @@ async function findOrCreateConversationTx(
   userId2: string
 ): Promise<{ conversationId: string; isNew: boolean }> {
   const lockKey = [userId1, userId2].sort().join(':');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
   await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [lockKey]);
 
   const existing = await client.query(
@@ -95,7 +95,7 @@ function sendMessageNotification(
 
 const router = Router();
 
-// POST /api/messages - send a message (creates conversation if needed)
+//POST /api/messages - send a message (creates conversation if needed)
 router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const { recipientId, body } = req.body;
   if (!recipientId || !body) {
@@ -105,11 +105,11 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
     return res.status(400).json({ error: 'Message body cannot be empty' });
   }
 
-  // ---------------------------------------------------------------------------
-  // Message sending
-  // ---------------------------------------------------------------------------
-  // Use a transaction + advisory lock to prevent duplicate conversations from
-  // race conditions when the button is clicked multiple times simultaneously.
+  //---------------------------------------------------------------------------
+  //Message sending
+  //---------------------------------------------------------------------------
+  //Use a transaction + advisory lock to prevent duplicate conversations from
+  //race conditions when the button is clicked multiple times simultaneously.
   const client = await pool.connect();
   let row;
   try {
@@ -117,7 +117,7 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
 
     const { conversationId } = await findOrCreateConversationTx(client, req.userId, recipientId as string);
 
-    // Unhide the conversation for all participants so it reappears in everyone's inbox
+    //Unhide the conversation for all participants so it reappears in everyone's inbox
     await revealConversation(client, conversationId);
 
     const messageResult = await client.query(
@@ -136,10 +136,10 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
     client.release();
   }
 
-  // Queue a digest notification for the recipient — fire-and-forget, never
-  // block the response. If their frequency is 'immediately' we also kick off
-  // the processor right after so the email goes out now instead of waiting
-  // for the next hourly sweep.
+  //Queue a digest notification for the recipient — fire-and-forget, never
+  //block the response. If their frequency is 'immediately' we also kick off
+  //the processor right after so the email goes out now instead of waiting
+  //for the next hourly sweep.
   sendMessageNotification(recipientId as string, row.conversation_id as string, row.id as string);
 
   return res.status(201).json({
@@ -152,11 +152,11 @@ router.post('/', authMiddleware, asyncHandler(async (req: Request, res: Response
   });
 }));
 
-// ---------------------------------------------------------------------------
-// Conversation management (no message sent)
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Conversation management (no message sent)
+//---------------------------------------------------------------------------
 
-// POST /api/messages/conversations - find or create an empty conversation (no message sent)
+//POST /api/messages/conversations - find or create an empty conversation (no message sent)
 router.post('/conversations', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const { recipientId } = req.body;
   if (!recipientId) {
@@ -207,11 +207,11 @@ router.post('/conversations', authMiddleware, asyncHandler(async (req: Request, 
   return res.status(200).json({ conversationId });
 }));
 
-// ---------------------------------------------------------------------------
-// Conversation listing & messages
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Conversation listing & messages
+//---------------------------------------------------------------------------
 
-// GET /api/messages/conversations - list all conversations for current user
+//GET /api/messages/conversations - list all conversations for current user
 router.get('/conversations', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const result = await pool.query(
     `SELECT c.*,
@@ -225,7 +225,7 @@ router.get('/conversations', authMiddleware, asyncHandler(async (req: Request, r
     [req.userId]
   );
 
-  // Get other participant info for each conversation
+  //Get other participant info for each conversation
   const conversations = await Promise.all(result.rows.map(async (conv) => {
     const participants = await pool.query(
       `SELECT u.id, u.first_name, u.last_name, u.email, u.role
@@ -251,11 +251,11 @@ router.get('/conversations', authMiddleware, asyncHandler(async (req: Request, r
   return res.json(conversations);
 }));
 
-// GET /api/messages/conversations/:id - get messages in a conversation
+//GET /api/messages/conversations/:id - get messages in a conversation
 router.get('/conversations/:id', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  // Verify user is participant
+  //Verify user is participant
   const participant = await pool.query(
     'SELECT 1 FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2',
     [id, req.userId]
@@ -288,13 +288,13 @@ router.get('/conversations/:id', authMiddleware, asyncHandler(async (req: Reques
   );
 }));
 
-// DELETE /api/messages/conversations/:id - hide a conversation from the current user's inbox
-// Sets hidden = true on the participant row rather than deleting it, so the other
-// participant's row is unaffected and they can still send and receive messages normally.
+//DELETE /api/messages/conversations/:id - hide a conversation from the current user's inbox
+//Sets hidden = true on the participant row rather than deleting it, so the other
+//participant's row is unaffected and they can still send and receive messages normally.
 router.delete('/conversations/:id', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  // Verify the user is actually a participant (hidden or not)
+  //Verify the user is actually a participant (hidden or not)
   const check = await pool.query(
     'SELECT 1 FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2',
     [id, req.userId]
@@ -303,7 +303,7 @@ router.delete('/conversations/:id', authMiddleware, asyncHandler(async (req: Req
     return res.status(403).json({ error: 'Not a participant of this conversation' });
   }
 
-  // Soft-hide: keep the row so the other participant can still message this user
+  //Soft-hide: keep the row so the other participant can still message this user
   await pool.query(
     'UPDATE conversation_participants SET hidden = true WHERE conversation_id = $1 AND user_id = $2',
     [id, req.userId]
@@ -312,15 +312,15 @@ router.delete('/conversations/:id', authMiddleware, asyncHandler(async (req: Req
   return res.status(204).send();
 }));
 
-// ---------------------------------------------------------------------------
-// Mark-read
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Mark-read
+//---------------------------------------------------------------------------
 
-// PATCH /api/messages/:id/read - mark a message as read
+//PATCH /api/messages/:id/read - mark a message as read
 router.patch('/:id/read', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  // Verify user is participant of the conversation
+  //Verify user is participant of the conversation
   const message = await pool.query(
     `SELECT m.id, m.conversation_id, m.sender_id
      FROM messages m
@@ -341,7 +341,7 @@ router.patch('/:id/read', authMiddleware, asyncHandler(async (req: Request, res:
   );
 
   if (result.rows.length === 0) {
-    // Already read or not found
+    //Already read or not found
     const existing = await pool.query('SELECT * FROM messages WHERE id = $1', [id]);
     return res.json({
       id: existing.rows[0].id,

@@ -10,9 +10,9 @@ import {
   UpdateStudyBody,
 } from '../types/studyListing';
 
-// ---------------------------------------------------------------------------
-// PUT /api/studies/:id
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//PUT /api/studies/:id
+//---------------------------------------------------------------------------
 
 export async function updateStudy(
   req: Request,
@@ -22,7 +22,7 @@ export async function updateStudy(
   try {
     const { id } = req.params;
 
-    // Confirm study exists before attempting update
+    //Confirm study exists before attempting update
     const { data: existing, error: fetchError } = await supabaseAdmin
       .from('study_listings')
       .select('id, status')
@@ -44,7 +44,7 @@ export async function updateStudy(
       return;
     }
 
-    // Build patch from allowed fields only
+    //Build patch from allowed fields only
     const patch: Partial<UpdateStudyBody> = {};
     for (const field of UPDATE_ALLOWED_FIELDS) {
       if (req.body[field] !== undefined) {
@@ -62,7 +62,7 @@ export async function updateStudy(
       return;
     }
 
-    // Reject re-opening a closed/completed study via PUT
+    //Reject re-opening a closed/completed study via PUT
     if (
       (existing as { status: StudyStatus }).status !== 'recruiting' &&
       patch.status === 'recruiting'
@@ -95,9 +95,9 @@ export async function updateStudy(
   }
 }
 
-// ---------------------------------------------------------------------------
-// DELETE /api/studies/:id
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//DELETE /api/studies/:id
+//---------------------------------------------------------------------------
 
 export async function closeStudy(
   req: Request,
@@ -107,7 +107,7 @@ export async function closeStudy(
   try {
     const { id } = req.params;
 
-    // Confirm study exists
+    //Confirm study exists
     const { data: existing, error: fetchError } = await supabaseAdmin
       .from('study_listings')
       .select('id, status')
@@ -162,9 +162,9 @@ export async function closeStudy(
   }
 }
 
-// ---------------------------------------------------------------------------
-// GET /api/studies
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//GET /api/studies
+//---------------------------------------------------------------------------
 
 export async function listStudies(
   req: Request,
@@ -174,7 +174,7 @@ export async function listStudies(
   try {
     const { pi_id, status } = req.query;
 
-    // Validate status query param if provided
+    //Validate status query param if provided
     const statusFilter = (status as string) ?? 'recruiting';
     if (!STUDY_STATUSES.includes(statusFilter as StudyStatus)) {
       const response: ApiResponse<never> = {
@@ -210,9 +210,9 @@ export async function listStudies(
   }
 }
 
-// ---------------------------------------------------------------------------
-// GET /api/studies/:id
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//GET /api/studies/:id
+//---------------------------------------------------------------------------
 
 export async function getStudyById(
   req: Request,
@@ -250,9 +250,9 @@ export async function getStudyById(
   }
 }
 
-// ---------------------------------------------------------------------------
-// POST /api/studies
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//POST /api/studies
+//---------------------------------------------------------------------------
 
 export async function createStudy(
   req: Request,
@@ -263,7 +263,7 @@ export async function createStudy(
     const { pi_id, title, eligibility_criteria, compensation_details, scheduling_options } =
       req.body;
 
-    // Verify the pi_id references an existing pi_profile
+    //Verify the pi_id references an existing pi_profile
     const { data: pi, error: piError } = await supabaseAdmin
       .from('pi_profiles')
       .select('id')

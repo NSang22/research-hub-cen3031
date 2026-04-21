@@ -1,14 +1,14 @@
 import { useEffect, useRef, useCallback } from "react";
 
-// ── CONFIG ──────────────────────────────────────────────────────
+//── CONFIG ──────────────────────────────────────────────────────
 const NODE_COUNT = 40;
 const CONNECTION_DISTANCE = 180;
 const MOUSE_RADIUS = 220;
 const BASE_SPEED = 0.3;
 const MOUSE_REPEL_FORCE = 0.04;
-const PULSE_CHANCE = 0.002; // chance per frame a connection "pulses"
+const PULSE_CHANCE = 0.002; //chance per frame a connection "pulses"
 
-// ── TYPES ───────────────────────────────────────────────────────
+//── TYPES ───────────────────────────────────────────────────────
 interface Node {
   x: number;
   y: number;
@@ -26,7 +26,7 @@ interface Pulse {
   speed: number;
 }
 
-// Color palette: CMYK blue 100 60 0 20 to RGB(0,82,204) and variants
+//Color palette: CMYK blue 100 60 0 20 to RGB(0,82,204) and variants
 const COLORS = {
   student: { r: 0, g: 82, b: 204 },
   lab: { r: 40, g: 110, b: 220 },
@@ -34,7 +34,7 @@ const COLORS = {
   pulse: { r: 0, g: 100, b: 220 },
 };
 
-// ── NETWORK CANVAS ──────────────────────────────────────────────
+//── NETWORK CANVAS ──────────────────────────────────────────────
 export function NetworkBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<Node[]>([]);
@@ -97,7 +97,7 @@ export function NetworkBackground() {
     window.addEventListener("mousemove", onMouse);
     window.addEventListener("mouseleave", onMouseLeave);
 
-    // ── ANIMATION LOOP ────────────────────────────────────────
+    //── ANIMATION LOOP ────────────────────────────────────────
     const draw = () => {
       const { w, h } = sizeRef.current;
       const nodes = nodesRef.current;
@@ -106,9 +106,9 @@ export function NetworkBackground() {
 
       ctx.clearRect(0, 0, w, h);
 
-      // Update positions
+      //Update positions
       for (const node of nodes) {
-        // Mouse repulsion
+        //Mouse repulsion
         const dx = node.x - mouse.x;
         const dy = node.y - mouse.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -118,11 +118,11 @@ export function NetworkBackground() {
           node.vy += (dy / dist) * force;
         }
 
-        // Damping
+        //Damping
         node.vx *= 0.998;
         node.vy *= 0.998;
 
-        // Clamp speed
+        //Clamp speed
         const speed = Math.sqrt(node.vx * node.vx + node.vy * node.vy);
         if (speed > BASE_SPEED * 3) {
           node.vx = (node.vx / speed) * BASE_SPEED * 3;
@@ -132,14 +132,14 @@ export function NetworkBackground() {
         node.x += node.vx;
         node.y += node.vy;
 
-        // Wrap edges with padding
+        //Wrap edges with padding
         if (node.x < -40) node.x = w + 40;
         if (node.x > w + 40) node.x = -40;
         if (node.y < -40) node.y = h + 40;
         if (node.y > h + 40) node.y = -40;
       }
 
-      // Draw connections
+      //Draw connections
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const a = nodes[i];
@@ -151,7 +151,7 @@ export function NetworkBackground() {
           if (dist < CONNECTION_DISTANCE) {
             const alpha = (1 - dist / CONNECTION_DISTANCE) * 0.15;
 
-            // Color connection based on types
+            //Color connection based on types
             const isCrossType =
               (a.type === "student" && b.type === "lab") ||
               (a.type === "lab" && b.type === "student");
@@ -164,7 +164,7 @@ export function NetworkBackground() {
             ctx.lineWidth = isCrossType ? 1.2 : 0.6;
             ctx.stroke();
 
-            // Maybe spawn a pulse on student↔lab connections
+            //Maybe spawn a pulse on student↔lab connections
             if (isCrossType && Math.random() < PULSE_CHANCE) {
               pulses.push({
                 fromIdx: i,
@@ -177,7 +177,7 @@ export function NetworkBackground() {
         }
       }
 
-      // Draw pulses (data traveling along connections)
+      //Draw pulses (data traveling along connections)
       for (let p = pulses.length - 1; p >= 0; p--) {
         const pulse = pulses[p];
         pulse.progress += pulse.speed;
@@ -197,24 +197,24 @@ export function NetworkBackground() {
         ctx.fillStyle = `rgba(${COLORS.pulse.r},${COLORS.pulse.g},${COLORS.pulse.b},${pulseAlpha})`;
         ctx.fill();
 
-        // Glow
+        //Glow
         ctx.beginPath();
         ctx.arc(px, py, 6, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${COLORS.pulse.r},${COLORS.pulse.g},${COLORS.pulse.b},${pulseAlpha * 0.25})`;
         ctx.fill();
       }
 
-      // Draw nodes
+      //Draw nodes
       for (const node of nodes) {
         const col = COLORS[node.type];
 
-        // Glow
+        //Glow
         ctx.beginPath();
         ctx.arc(node.x, node.y, node.radius * 3, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${col.r},${col.g},${col.b},${node.baseAlpha * 0.08})`;
         ctx.fill();
 
-        // Core
+        //Core
         ctx.beginPath();
         ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${col.r},${col.g},${col.b},${node.baseAlpha})`;

@@ -31,7 +31,7 @@ function resumeObjectPathFromPublicUrl(resumeUrl: string): string | null {
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }, //5MB
   fileFilter: (_req, file, cb) => {
     if (file.mimetype === 'application/pdf') {
       cb(null, true);
@@ -41,9 +41,9 @@ const upload = multer({
   },
 });
 
-// ---------------------------------------------------------------------------
-// Student profile
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Student profile
+//---------------------------------------------------------------------------
 
 /**
  * GET /api/students/profile — own profile (student only)
@@ -78,7 +78,7 @@ router.get('/profile', authMiddleware, requireRole('student'), asyncHandler(asyn
   });
 }));
 
-// PUT /api/students/profile - update own profile
+//PUT /api/students/profile - update own profile
 router.put('/profile', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
   const { major, gpa, graduationYear, skills, bio, resumeUrl, yearLevel, interests, profileLinks } = req.body;
   
@@ -137,9 +137,9 @@ router.put('/profile', authMiddleware, requireRole('student'), asyncHandler(asyn
   });
 }));
 
-// ---------------------------------------------------------------------------
-// Notification preferences
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Notification preferences
+//---------------------------------------------------------------------------
 
 /**
  * GET /api/students/notification-preferences — research opportunity email prefs (student only)
@@ -157,7 +157,7 @@ router.get(
   })
 );
 
-// PUT /api/students/notification-preferences
+//PUT /api/students/notification-preferences
 router.put(
   '/notification-preferences',
   authMiddleware,
@@ -173,7 +173,7 @@ router.put(
   })
 );
 
-// GET /api/students - list with filters (PI only)
+//GET /api/students - list with filters (PI only)
 router.get('/', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const { major, minGpa, skills, yearLevel } = req.query;
   let query = `
@@ -232,7 +232,7 @@ router.get('/', authMiddleware, requireRole('pi'), asyncHandler(async (req: Requ
   );
 }));
 
-// GET /api/students/:id - single student (PI only)
+//GET /api/students/:id - single student (PI only)
 router.get('/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await pool.query(
@@ -264,7 +264,7 @@ router.get('/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req: R
   });
 }));
 
-// POST /api/students/resume - upload resume (student only)
+//POST /api/students/resume - upload resume (student only)
 router.post('/resume', authMiddleware, requireRole('student'), upload.single('resume'), asyncHandler(async (req: Request, res: Response) => {
   const file = req.file;
   if (!file) {
@@ -283,7 +283,7 @@ router.post('/resume', authMiddleware, requireRole('student'), upload.single('re
     return res.status(404).json({ error: 'Student profile not found' });
   }
 
-  // Get current resume URL to delete old file if exists
+  //Get current resume URL to delete old file if exists
   const current = await pool.query('SELECT resume_url FROM student_profiles WHERE user_id = $1', [req.userId]);
   const oldUrl = current.rows[0]?.resume_url;
 
@@ -310,7 +310,7 @@ router.post('/resume', authMiddleware, requireRole('student'), upload.single('re
   return res.json({ resumeUrl, filename: file.originalname });
 }));
 
-// DELETE /api/students/resume - remove resume (student only)
+//DELETE /api/students/resume - remove resume (student only)
 router.delete('/resume', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
   const current = await pool.query('SELECT id, resume_url FROM student_profiles WHERE user_id = $1', [req.userId]);
   const row = current.rows[0];
@@ -327,7 +327,7 @@ router.delete('/resume', authMiddleware, requireRole('student'), asyncHandler(as
   return res.status(204).send();
 }));
 
-// GET /api/students/:id/resume - get resume URL (PI or owner)
+//GET /api/students/:id/resume - get resume URL (PI or owner)
 router.get('/:id/resume', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await pool.query('SELECT id, user_id, resume_url, first_name FROM student_profiles sp JOIN users u ON u.id = sp.user_id WHERE sp.id = $1', [id]);

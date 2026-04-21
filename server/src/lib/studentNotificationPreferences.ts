@@ -123,8 +123,8 @@ export async function fetchNotificationPreferencesForUser(
   if (result.rows.length > 0) {
     return rowToNotificationPreferences(result.rows[0]);
   }
-  // First-time fetch for a user whose settings row hasn't been created yet
-  // (e.g. new signup after the backfill migration). Create defaults and return.
+  //First-time fetch for a user whose settings row hasn't been created yet
+  //(e.g. new signup after the backfill migration). Create defaults and return.
   const created = await pool.query(
     `INSERT INTO user_notification_settings (user_id) VALUES ($1)
      ON CONFLICT (user_id) DO NOTHING
@@ -135,7 +135,7 @@ export async function fetchNotificationPreferencesForUser(
   if (created.rows.length > 0) {
     return rowToNotificationPreferences(created.rows[0]);
   }
-  // Raced against a concurrent insert — re-read
+  //Raced against a concurrent insert — re-read
   const reread = await pool.query(
     `SELECT notify_new_positions, notify_new_messages,
             notification_keywords, notification_departments, notification_frequency
@@ -154,7 +154,7 @@ export async function updateNotificationPreferencesForUser(
     return { ok: false, error: v.error, status: 400 };
   }
 
-  // Make sure the row exists before the UPDATE — new users may not have one yet.
+  //Make sure the row exists before the UPDATE — new users may not have one yet.
   await pool.query(
     `INSERT INTO user_notification_settings (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING`,
     [userId]

@@ -22,9 +22,9 @@ function signToken(userId: string, role: UserRole): string {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Registration & login
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Registration & login
+//---------------------------------------------------------------------------
 
 router.post('/register', asyncHandler(async (req: Request, res: Response) => {
   const { email, password, role, firstName, lastName } = req.body;
@@ -54,7 +54,7 @@ router.post('/register', asyncHandler(async (req: Request, res: Response) => {
         [user.id]
       );
     }
-    // admin users have no separate profile table
+    //admin users have no separate profile table
     const token = signToken(user.id, role);
     sendWelcomeEmail(user.email, user.first_name).catch(() => {});
     return res.status(201).json({
@@ -76,11 +76,11 @@ router.post('/register', asyncHandler(async (req: Request, res: Response) => {
   }
 }));
 
-// ---------------------------------------------------------------------------
-// Google OAuth
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Google OAuth
+//---------------------------------------------------------------------------
 
-// POST /api/auth/google - sign in or register via Google OAuth (@ufl.edu only)
+//POST /api/auth/google - sign in or register via Google OAuth (@ufl.edu only)
 router.post('/google', asyncHandler(async (req: Request, res: Response) => {
   const { credential, role } = req.body;
   if (!credential) {
@@ -90,7 +90,7 @@ router.post('/google', asyncHandler(async (req: Request, res: Response) => {
     return res.status(503).json({ error: 'Google login is not configured on this server' });
   }
 
-  // Verify the Google ID token
+  //Verify the Google ID token
   let payload;
   try {
     const ticket = await googleClient.verifyIdToken({
@@ -114,7 +114,7 @@ router.post('/google', asyncHandler(async (req: Request, res: Response) => {
   const firstName = payload.given_name ?? email.split('@')[0];
   const lastName = payload.family_name ?? '';
 
-  // Find existing user
+  //Find existing user
   const existing = await pool.query(
     'SELECT id, email, role, first_name, last_name FROM users WHERE email = $1',
     [email]
@@ -129,7 +129,7 @@ router.post('/google', asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // New user — role is required for registration
+  //New user — role is required for registration
   const resolvedRole: UserRole = role === 'pi' ? 'pi' : role === 'admin' ? 'admin' : 'student';
   const passwordHash = await bcrypt.hash(crypto.randomUUID(), AUTH_PASSWORD_ROUNDS);
 
@@ -155,9 +155,9 @@ router.post('/google', asyncHandler(async (req: Request, res: Response) => {
   });
 }));
 
-// ---------------------------------------------------------------------------
-// Password login
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Password login
+//---------------------------------------------------------------------------
 
 router.post('/login', asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -189,11 +189,11 @@ router.post('/login', asyncHandler(async (req: Request, res: Response) => {
   });
 }));
 
-// ---------------------------------------------------------------------------
-// Demo login
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Demo login
+//---------------------------------------------------------------------------
 
-// POST /api/auth/demo - instant demo login, upserts demo accounts
+//POST /api/auth/demo - instant demo login, upserts demo accounts
 router.post('/demo', asyncHandler(async (req: Request, res: Response) => {
   const { role } = req.body;
   if (role !== 'student' && role !== 'pi') {
@@ -228,9 +228,9 @@ router.post('/demo', asyncHandler(async (req: Request, res: Response) => {
   });
 }));
 
-// ---------------------------------------------------------------------------
-// Current user
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Current user
+//---------------------------------------------------------------------------
 
 router.get('/me', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const result = await pool.query(

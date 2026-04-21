@@ -5,9 +5,9 @@ import { asyncHandler } from '../lib/asyncHandler.js';
 
 const router = Router();
 
-// ---------------------------------------------------------------------------
-// Lab roster
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Lab roster
+//---------------------------------------------------------------------------
 
 /**
  * GET /api/pis/roster — students currently in the lab (PI only)
@@ -69,7 +69,7 @@ router.get('/roster', authMiddleware, requireRole('pi'), asyncHandler(async (req
   );
 }));
 
-// GET /api/pis/labs - list all lab administrators so PIs can associate themselves
+//GET /api/pis/labs - list all lab administrators so PIs can associate themselves
 router.get('/labs', authMiddleware, asyncHandler(async (_req: Request, res: Response) => {
   const result = await pool.query(
     `SELECT u.id, u.first_name, u.last_name, u.email
@@ -88,7 +88,7 @@ router.get('/labs', authMiddleware, asyncHandler(async (_req: Request, res: Resp
   );
 }));
 
-// GET /api/pis/profile - own profile
+//GET /api/pis/profile - own profile
 router.get('/profile', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const result = await pool.query(
     `SELECT pp.*,
@@ -126,11 +126,11 @@ router.get('/profile', authMiddleware, requireRole('pi'), asyncHandler(async (re
   });
 }));
 
-// PUT /api/pis/profile - update own profile
+//PUT /api/pis/profile - update own profile
 router.put('/profile', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const { name, department, labName, researchArea, researchAreas, labWebsite, staffingNeeds, labAdminId } = req.body;
 
-  // Accept either researchAreas (array) or researchArea (string)
+  //Accept either researchAreas (array) or researchArea (string)
   let areas: string[] | null = null;
   if (researchAreas !== undefined) {
     areas = Array.isArray(researchAreas) ? researchAreas : [researchAreas];
@@ -140,7 +140,7 @@ router.put('/profile', authMiddleware, requireRole('pi'), asyncHandler(async (re
       : [];
   }
 
-  // Validate labAdminId when provided: must reference a user with role = 'admin'
+  //Validate labAdminId when provided: must reference a user with role = 'admin'
   if (labAdminId !== undefined && labAdminId !== null) {
     const check = await pool.query(
       `SELECT id FROM users WHERE id = $1 AND role = 'admin'`,
@@ -151,8 +151,8 @@ router.put('/profile', authMiddleware, requireRole('pi'), asyncHandler(async (re
     }
   }
 
-  // $7 = whether to update lab_admin_id (true = update, false = keep existing)
-  // $8 = new lab_admin_id value (uuid or null)
+  //$7 = whether to update lab_admin_id (true = update, false = keep existing)
+  //$8 = new lab_admin_id value (uuid or null)
   const updateLabAdmin = labAdminId !== undefined;
   const labAdminValue = labAdminId || null;
 

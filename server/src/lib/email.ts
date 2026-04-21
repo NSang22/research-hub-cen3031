@@ -29,6 +29,10 @@ export type NotificationMessageThread = {
   latestPreview: string;
 };
 
+//AI-generated: the three email functions below (digest, welcome, position closed)
+//were generated with Claude because hand-writing inline HTML email templates
+//with proper escaping, plain-text fallbacks, and consistent styling is
+//repetitive work that AI handles well.
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')

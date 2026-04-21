@@ -1,29 +1,29 @@
-# Dependencies
+#Dependencies
 node_modules/
 client/node_modules/
 server/node_modules/
 
-# Environment and secrets
+#Environment and secrets
 .env
 .env.local
 .env.*.local
 server/.env
 client/.env
 
-# Build outputs
+#Build outputs
 client/dist/
 server/dist/
 
-# Logs and caches
+#Logs and caches
 *.log
 npm-debug.log*
 .DS_Store
 
-# IDE / local tooling
+#IDE / local tooling
 .claude/
 .idea/
 .vscode/*
 !.vscode/extensions.json
 
-# Optional local artifacts
+#Optional local artifacts
 *.tsbuildinfo

@@ -5,9 +5,10 @@ import {
   NotificationMessageThread,
 } from './email.js';
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+//AI-generated: we used Claude to scaffold the full type definitions below
+//(PositionMeta, StudentMeta, MatchResult, MatchReason) since writing out every
+//field with proper JSDoc by hand would have been tedious and error-prone given
+//how many columns we were mapping from the DB.
 
 type PositionMeta = {
   id: string;
@@ -21,52 +22,52 @@ type PositionMeta = {
 };
 
 export type NotificationFrequency = 'immediately' | 'hourly' | 'daily' | 'weekly';
-/** How often a student wants to receive digest emails. */
+/**How often a student wants to receive digest emails.*/
 
 type StudentMeta = {
-  /** Unique student profile id (references student_profiles.id) */
+  /**Unique student profile id (references student_profiles.id)*/
   id: string;
-  /** Corresponding user id */
+  /**Corresponding user id*/
   userId: string;
-  /** Current GPA as a decimal (e.g. 3.75), or null if not set */
+  /**Current GPA as a decimal (e.g. 3.75), or null if not set */
   gpa: number | null;
-  /** List of self-reported skill tags */
+  /**List of self-reported skill tags */
   skills: string[];
-  /** List of self-reported research interest tags */
+  /**List of self-reported research interest tags */
   interests: string[];
-  /** Custom keyword filters for position matching */
+  /**Custom keyword filters for position matching */
   notification_keywords: string[];
-  /** Department filters — only positions in these depts will match */
+  /**Department filters — only positions in these depts will match */
   notification_departments: string[];
 };
 
 export type MatchReason = 'skill_overlap' | 'gpa_match' | 'keyword_filter';
-/** Why a student matched a position: skill overlap, GPA qualifies, or keyword hit. */
+/**Why a student matched a position: skill overlap, GPA qualifies, or keyword hit. */
 
 export type MatchResult = {
   studentId: string;
   reason: MatchReason;
 };
-/** A matched student paired with the match reason. */
+/**A matched student paired with the match reason. */
 
-// ---------------------------------------------------------------------------
-// Core matching logic (pure — no DB calls)
+//---------------------------------------------------------------------------
+//Core matching logic (pure — no DB calls)
 //
-// Rules:
-//   1. Department gate (exclusive): if the student has department filters, the
-//      position's department must match one of them. Empty = all departments.
-//   2. Content match (at least one must be true):
-//        a. Skill overlap  — student skills ∩ position required_skills
-//        b. GPA qualifies  — student GPA meets (or position has no) min_gpa
-//        c. Keyword match  — any custom keyword hits title/desc/research areas
-//   3. If the student has no skills, no GPA, and no keywords → no match
-//      (encourages profile completion instead of spamming every opted-in student)
-// ---------------------------------------------------------------------------
+//Rules:
+//1. Department gate (exclusive): if the student has department filters, the
+//position's department must match one of them. Empty = all departments.
+//2. Content match (at least one must be true):
+//a. Skill overlap  — student skills ∩ position required_skills
+//b. GPA qualifies  — student GPA meets (or position has no) min_gpa
+//c. Keyword match  — any custom keyword hits title/desc/research areas
+//3. If the student has no skills, no GPA, and no keywords → no match
+//(encourages profile completion instead of spamming every opted-in student)
+//---------------------------------------------------------------------------
 
 /**
- * Pure function: evaluates whether a student matches a position based on
- * department filters, skill overlap, GPA, and custom keywords.
- * Returns the primary MatchReason if a match is found, or null otherwise.
+ *Pure function: evaluates whether a student matches a position based on
+ *department filters, skill overlap, GPA, and custom keywords.
+ *Returns the primary MatchReason if a match is found, or null otherwise.
  */
 export function matchStudent(student: StudentMeta, pos: PositionMeta): MatchReason | null {
   const positionDept = pos.department.toLowerCase();
@@ -79,13 +80,13 @@ export function matchStudent(student: StudentMeta, pos: PositionMeta): MatchReas
   const deptFilters = student.notification_departments;
   const studentSkills = student.skills;
 
-  // ── 1. Department gate ───────────────────────────────────────────────────
+  //── 1. Department gate ───────────────────────────────────────────────────
   if (deptFilters.length > 0) {
     const deptPass = deptFilters.some((d) => positionDept.includes(d.toLowerCase()));
     if (!deptPass) return null;
   }
 
-  // ── 2a. Skill overlap ────────────────────────────────────────────────────
+  //── 2a. Skill overlap ────────────────────────────────────────────────────
   const skillMatch =
     studentSkills.length > 0 &&
     positionSkills.some((sk) =>
@@ -93,13 +94,13 @@ export function matchStudent(student: StudentMeta, pos: PositionMeta): MatchReas
     );
   if (skillMatch) return 'skill_overlap';
 
-  // ── 2b. GPA qualifies ────────────────────────────────────────────────────
+  //── 2b. GPA qualifies ────────────────────────────────────────────────────
   const gpaMatch =
     student.gpa !== null &&
     (pos.min_gpa === null || student.gpa >= pos.min_gpa);
   if (gpaMatch) return 'gpa_match';
 
-  // ── 2c. Keyword filter ───────────────────────────────────────────────────
+  //── 2c. Keyword filter ───────────────────────────────────────────────────
   const keywordMatch =
     keywords.length > 0 &&
     keywords.some((kw) => {
@@ -116,9 +117,9 @@ export function matchStudent(student: StudentMeta, pos: PositionMeta): MatchReas
   return null;
 }
 
-// ---------------------------------------------------------------------------
-// DB helpers
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//DB helpers
+//---------------------------------------------------------------------------
 
 async function fetchPosition(positionId: string): Promise<PositionMeta | null> {
   const result = await pool.query(
@@ -169,9 +170,9 @@ async function fetchOptedInStudents(): Promise<StudentMeta[]> {
   }));
 }
 
-// ---------------------------------------------------------------------------
-// Public API — positions
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Public API — positions
+//---------------------------------------------------------------------------
 
 /**
  * Dry-run: returns which opted-in students would be matched for a position
@@ -225,9 +226,9 @@ export async function queueNotificationsForPosition(positionId: string): Promise
   console.log(`[notifications] Queued position ${positionId} for ${toQueue.length} student(s)`);
 }
 
-// ---------------------------------------------------------------------------
-// Public API — messages
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Public API — messages
+//---------------------------------------------------------------------------
 
 /**
  * Low-level helper: inserts a single entry into the message_notification_queue
@@ -265,9 +266,9 @@ export async function queueMessageNotification(
   await queueMessageQueueEntry(recipientUserId, conversationId, messageId);
 }
 
-// ---------------------------------------------------------------------------
-// Unified digest processing
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Unified digest processing
+//---------------------------------------------------------------------------
 
 type UserDigestState = {
   email: string;
@@ -296,7 +297,7 @@ type UserDigestState = {
 export async function processNotificationQueue(bypassRateLimit = false): Promise<void> {
   const byUser = new Map<string, UserDigestState>();
 
-  // ── Positions ───────────────────────────────────────────────────────────
+  //── Positions ───────────────────────────────────────────────────────────
   const posRows = await pool.query(
     `SELECT nq.id as queue_id, nq.position_id,
             sp.user_id, sp.id as student_profile_id,
@@ -348,9 +349,9 @@ export async function processNotificationQueue(bypassRateLimit = false): Promise
     });
   }
 
-  // ── Messages ────────────────────────────────────────────────────────────
-  // Only include messages that are still unread (read_at IS NULL) — if the
-  // user already opened the conversation, no reason to email them about it.
+  //── Messages ────────────────────────────────────────────────────────────
+  //Only include messages that are still unread (read_at IS NULL) — if the
+  //user already opened the conversation, no reason to email them about it.
   const msgRows = await pool.query(
     `SELECT mnq.id as queue_id, mnq.user_id, mnq.conversation_id, mnq.message_id,
             u.email, u.first_name,
