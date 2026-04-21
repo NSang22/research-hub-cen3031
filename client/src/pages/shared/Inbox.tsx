@@ -38,7 +38,7 @@ export function Inbox() {
     api.messages
       .getConversations()
       .then((data) => {
-        // Sort by most recent message descending; conversations with no messages go last
+        //Sort by most recent message descending; conversations with no messages go last
         const sorted = [...data].sort((a, b) => {
           const ta = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
           const tb = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
@@ -50,12 +50,12 @@ export function Inbox() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Initial load
+  //Initial load
   useEffect(() => {
     fetchConversations();
   }, [fetchConversations]);
 
-  // Subscribe to Realtime inserts on the messages table to keep previews/unread counts live
+  //Subscribe to Realtime inserts on the messages table to keep previews/unread counts live
   useEffect(() => {
     const channel = supabase
       .channel('inbox:messages')
@@ -63,8 +63,8 @@ export function Inbox() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
         () => {
-          // Refetch the full conversations list so last-message previews and
-          // unread counts are always up to date without manual cache management.
+          //Refetch the full conversations list so last-message previews and
+          //unread counts are always up to date without manual cache management.
           fetchConversations();
         }
       )
@@ -82,7 +82,7 @@ export function Inbox() {
       setConversations((prev) => prev.filter((c) => c.id !== conversationId));
       setConfirmDeleteId(null);
     } catch {
-      // leave confirm state open so user can retry
+      //leave confirm state open so user can retry
     } finally {
       setDeleting(false);
     }

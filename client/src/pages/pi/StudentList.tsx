@@ -17,7 +17,7 @@ import { api } from '../../lib/api';
 import type { AcademicLevel, StudentProfile, Position } from '../../types';
 import './student-browse.css';
 
-// ─── constants ───────────────────────────────────────────────────────────────
+//─── constants ───────────────────────────────────────────────────────────────
 
 const YEAR_OPTIONS: { value: string; label: string }[] = [
   { value: '', label: 'Any level' },
@@ -39,7 +39,7 @@ const SORT_OPTIONS = [
 
 type SortKey = typeof SORT_OPTIONS[number]['value'];
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+//─── helpers ─────────────────────────────────────────────────────────────────
 
 function formatYearLabel(yl: AcademicLevel | null | undefined): string {
   if (!yl) return '';
@@ -79,7 +79,7 @@ function computeMatch(
     const min = parseFloat(minGpa);
     weight += 25;
     if (s.gpa != null && s.gpa >= min) {
-      // bonus for exceeding minimum
+      //bonus for exceeding minimum
       total += Math.min(25, 20 + Math.round(((s.gpa - min) / (4 - min + 0.001)) * 5));
     }
   }
@@ -101,13 +101,13 @@ function computeMatch(
   }
 
   if (weight === 0) {
-    // no filters — score by GPA
+    //no filters — score by GPA
     return s.gpa != null ? Math.round((s.gpa / 4) * 100) : 50;
   }
   return Math.round((total / weight) * 100);
 }
 
-// ─── Invite to Apply modal ────────────────────────────────────────────────────
+//─── Invite to Apply modal ────────────────────────────────────────────────────
 
 interface InviteModalProps {
   student: StudentProfile;
@@ -211,7 +211,7 @@ function InviteModal({ student, positions, onClose }: InviteModalProps) {
   );
 }
 
-// ─── Match score badge ────────────────────────────────────────────────────────
+//─── Match score badge ────────────────────────────────────────────────────────
 
 function MatchBadge({ score, hasFilters }: { score: number; hasFilters: boolean }) {
   if (!hasFilters) return null;
@@ -227,7 +227,7 @@ function MatchBadge({ score, hasFilters }: { score: number; hasFilters: boolean 
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+//─── Main component ───────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 20;
 
@@ -239,7 +239,7 @@ export function StudentList() {
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
 
-  // filters
+  //filters
   const [major, setMajor] = useState('');
   const [minGpa, setMinGpa] = useState('');
   const [yearLevel, setYearLevel] = useState('');
@@ -247,25 +247,25 @@ export function StudentList() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [skillMode, setSkillMode] = useState<'any' | 'all'>('any');
 
-  // sort
+  //sort
   const [sort, setSort] = useState<SortKey>('match');
 
-  // invite modal
+  //invite modal
   const [inviteStudent, setInviteStudent] = useState<StudentProfile | null>(null);
 
-  // pagination
+  //pagination
   const [page, setPage] = useState(1);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // initial load: fetch positions once
+  //initial load: fetch positions once
   useEffect(() => {
     api.positions.mine()
       .then((p) => setPositions(p as unknown as Position[]))
       .catch(() => setPositions([]));
   }, []);
 
-  // server-side search with debounce
+  //server-side search with debounce
   const runSearch = useCallback((params: {
     major: string; minGpa: string; yearLevel: string; selectedSkills: string[];
   }) => {
@@ -283,12 +283,12 @@ export function StudentList() {
       .finally(() => { setSearching(false); setLoading(false); });
   }, []);
 
-  // initial fetch
+  //initial fetch
   useEffect(() => {
     runSearch({ major: '', minGpa: '', yearLevel: '', selectedSkills: [] });
   }, [runSearch]);
 
-  // debounced re-fetch on filter change
+  //debounced re-fetch on filter change
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
@@ -297,7 +297,7 @@ export function StudentList() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [major, minGpa, yearLevel, selectedSkills, runSearch]);
 
-  // skills autocomplete
+  //skills autocomplete
   const allSkills = useMemo(
     () => [...new Set(allStudents.flatMap((s) => s.skills || []))].sort(),
     [allStudents]
@@ -320,7 +320,7 @@ export function StudentList() {
   const activeFilterCount =
     (major.trim() ? 1 : 0) + (minGpa !== '' ? 1 : 0) + (yearLevel ? 1 : 0) + selectedSkills.length;
 
-  // scoring + sort (client-side on server results)
+  //scoring + sort (client-side on server results)
   const scored = useMemo(() =>
     allStudents.map((s) => ({
       student: s,

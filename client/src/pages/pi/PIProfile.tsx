@@ -42,7 +42,7 @@ export function PIProfile() {
     setSaved(false);
     try {
       await api.pis.updateProfile({
-        // Department and Lab Name are admin-managed when associated with a lab
+        //Department and Lab Name are admin-managed when associated with a lab
         ...(isLabLocked ? {} : {
           department: form.department || null,
           labName: form.labName || null,

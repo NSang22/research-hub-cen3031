@@ -41,7 +41,7 @@ export function ChatView() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load conversation metadata from conversations list
+  //Load conversation metadata from conversations list
   useEffect(() => {
     api.messages.getConversations().then((convs) => {
       const match = convs.find((c) => c.id === conversationId);
@@ -49,7 +49,7 @@ export function ChatView() {
     }).catch(() => {});
   }, [conversationId]);
 
-  // Load messages and mark unread ones as read
+  //Load messages and mark unread ones as read
   useEffect(() => {
     if (!conversationId) return;
     setLoading(true);
@@ -57,7 +57,7 @@ export function ChatView() {
       .getConversationMessages(conversationId)
       .then((data) => {
         setMessages(data);
-        // Mark received (unread) messages as read
+        //Mark received (unread) messages as read
         data
           .filter((m) => m.senderId !== user?.id && m.readAt === null)
           .forEach((m) => {
@@ -68,9 +68,9 @@ export function ChatView() {
       .finally(() => setLoading(false));
   }, [conversationId, user?.id]);
 
-  // Subscribe to Realtime inserts on the messages table filtered to this conversation.
-  // Depends on `loading` so the subscription is set up after the initial fetch completes,
-  // avoiding duplicate messages from events that race with the initial load.
+  //Subscribe to Realtime inserts on the messages table filtered to this conversation.
+  //Depends on `loading` so the subscription is set up after the initial fetch completes,
+  //avoiding duplicate messages from events that race with the initial load.
   useEffect(() => {
     if (!conversationId || loading) return;
 
@@ -96,11 +96,11 @@ export function ChatView() {
             createdAt: row.created_at as string,
           };
           setMessages((prev) => {
-            // Deduplicate: ignore if we already have this message (e.g. from optimistic update)
+            //Deduplicate: ignore if we already have this message (e.g. from optimistic update)
             if (prev.some((m) => m.id === incoming.id)) return prev;
             return [...prev, incoming];
           });
-          // Mark as read if we didn't send it
+          //Mark as read if we didn't send it
           if (incoming.senderId !== user?.id) {
             api.messages.markAsRead(incoming.id).catch(() => {});
           }
@@ -115,7 +115,7 @@ export function ChatView() {
     };
   }, [conversationId, loading, user?.id]);
 
-  // Auto-scroll to bottom when messages load or new message sent
+  //Auto-scroll to bottom when messages load or new message sent
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);

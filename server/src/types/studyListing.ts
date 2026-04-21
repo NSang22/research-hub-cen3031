@@ -1,6 +1,6 @@
-// ---------------------------------------------------------------------------
-// StudyListing — mirrors the study_listings table in Supabase
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//StudyListing — mirrors the study_listings table in Supabase
+//---------------------------------------------------------------------------
 
 export type StudyStatus = 'recruiting' | 'closed' | 'completed';
 
@@ -18,7 +18,7 @@ export interface StudyListing {
   updated_at: string;
 }
 
-// Fields the caller may include when creating a study listing
+//Fields the caller may include when creating a study listing
 export type CreateStudyBody = {
   pi_id: string;
   title: string;
@@ -27,7 +27,7 @@ export type CreateStudyBody = {
   scheduling_options?: Record<string, unknown>;
 };
 
-// Fields the caller may include when updating a study listing
+//Fields the caller may include when updating a study listing
 export type UpdateStudyBody = Partial<
   Pick<StudyListing, 'title' | 'eligibility_criteria' | 'compensation_details' | 'scheduling_options' | 'status'>
 >;

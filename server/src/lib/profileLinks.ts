@@ -5,7 +5,7 @@ export interface ProfileLink {
 }
 
 /**
- * Returns true if the string is a valid http:// or https:// URL.
+ * Returns true if the string is a valid http://or https://URL.
  */
 export function isValidUrl(raw: string): boolean {
   try {
@@ -54,7 +54,7 @@ export function validateProfileLinks(links: unknown): string | null {
       return `Link ${i + 1} missing URL`;
     }
     if (!isValidUrl(o.url)) {
-      return `Link ${i + 1} has invalid URL (must be http:// or https://)`;
+      return `Link ${i + 1} has invalid URL (must be http://or https://)`;
     }
   }
   return null;

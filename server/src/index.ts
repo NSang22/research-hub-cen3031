@@ -31,8 +31,8 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, timestamp: new Date().toISOString() });
 });
 
-// Global error handler — catches unhandled errors from async route handlers
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+//Global error handler — catches unhandled errors from async route handlers
+//eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('[Error]', err.message);
   res.status(500).json({ error: 'Internal server error' });
@@ -43,8 +43,8 @@ app.listen(config.port, () => {
   console.log(`Environment: ${config.nodeEnv}`);
 });
 
-// Sweep unsent notification queue every hour so rate-limited students
-// receive their accumulated emails once their cooldown expires.
+//Sweep unsent notification queue every hour so rate-limited students
+//receive their accumulated emails once their cooldown expires.
 const QUEUE_SWEEP_INTERVAL_MS = 60 * 60 * 1000;
 setInterval(() => {
   processNotificationQueue().catch((err: unknown) =>

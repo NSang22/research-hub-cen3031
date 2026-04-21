@@ -71,7 +71,7 @@ router.post('/', authMiddleware, requireRole('pi'), asyncHandler(async (req: Req
   );
   const newPosition = result.rows[0];
 
-  // Trigger notifications asynchronously — do not block the response
+  //Trigger notifications asynchronously — do not block the response
   queueNotificationsForPosition(newPosition.id as string)
     .then(() => processNotificationQueue())
     .catch((err: unknown) => console.error('[notifications] Error processing queue:', err));

@@ -93,9 +93,9 @@ function sortApps(apps: AppWithStudent[], key: SortKey): AppWithStudent[] {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Notes editor (inline in modal)
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Notes editor (inline in modal)
+//---------------------------------------------------------------------------
 function NotesEditor({ appId, initial, onSaved }: { appId: string; initial: string | null; onSaved: (notes: string) => void }) {
   const [draft, setDraft] = useState(initial ?? '');
   const [saving, setSaving] = useState(false);
@@ -140,9 +140,9 @@ function NotesEditor({ appId, initial, onSaved }: { appId: string; initial: stri
   );
 }
 
-// ---------------------------------------------------------------------------
-// Main component
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Main component
+//---------------------------------------------------------------------------
 export function PositionApplications() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();

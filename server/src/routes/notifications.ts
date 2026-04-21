@@ -70,7 +70,7 @@ router.get(
     if (typeof userId === 'string' && userId) {
       targetUserId = userId;
     } else if (typeof studentId === 'string' && studentId) {
-      // Legacy link: resolve user_id from student_profile_id
+      //Legacy link: resolve user_id from student_profile_id
       const lookup = await pool.query(
         `SELECT user_id FROM student_profiles WHERE id = $1`,
         [studentId]
@@ -95,7 +95,7 @@ router.get(
       return res.status(404).send('Profile not found.');
     }
     const clientUrl = config.clientUrl.replace(/\/$/, '');
-    // Redirect to settings page with a success flash param, or show plain page
+    //Redirect to settings page with a success flash param, or show plain page
     return res.send(`
       <!DOCTYPE html>
       <html lang="en">
@@ -125,9 +125,9 @@ router.get(
   })
 );
 
-// ---------------------------------------------------------------------------
-// Dev-only endpoints (blocked in production)
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Dev-only endpoints (blocked in production)
+//---------------------------------------------------------------------------
 
 /**
  * GET /api/notifications/dev/dry-run/:positionId
@@ -151,7 +151,7 @@ router.get(
       return res.status(404).json({ error: 'Position not found or not open' });
     }
 
-    // Enrich matches with student details for readability
+    //Enrich matches with student details for readability
     const enriched = await Promise.all(
       matches.map(async ({ studentId, reason }) => {
         const r = await pool.query(
@@ -206,10 +206,10 @@ router.post(
       return res.json({ dryRun: true, position, matchCount: matches.length, matches });
     }
 
-    // Reset rate limits so we can re-trigger immediately
+    //Reset rate limits so we can re-trigger immediately
     await pool.query(`UPDATE user_notification_settings SET notification_last_sent_at = NULL`);
 
-    // Clear any existing unsent queue entries for this position so we can re-queue
+    //Clear any existing unsent queue entries for this position so we can re-queue
     await pool.query(
       `DELETE FROM notification_queue WHERE position_id = $1 AND sent_at IS NULL`,
       [positionId]

@@ -61,7 +61,7 @@ router.get('/pis', authMiddleware, requireRole('admin'), asyncHandler(async (req
 router.get('/metrics', authMiddleware, requireRole('admin'), asyncHandler(async (req: Request, res: Response) => {
   const { startDate, endDate, positionType, piId } = req.query as Record<string, string | undefined>;
 
-  // Base: only positions belonging to PIs in this lab
+  //Base: only positions belonging to PIs in this lab
   const baseFilters: string[] = ['pip.lab_admin_id = $1'];
   const params: unknown[] = [req.userId];
 
@@ -77,7 +77,7 @@ router.get('/metrics', authMiddleware, requireRole('admin'), asyncHandler(async 
 
   const where = `WHERE ${baseFilters.join(' AND ')}`;
 
-  // Position counts
+  //Position counts
   const positionStats = await pool.query(
     `SELECT
        COUNT(*)::int AS total,
@@ -90,7 +90,7 @@ router.get('/metrics', authMiddleware, requireRole('admin'), asyncHandler(async 
     params
   );
 
-  // Application counts (scoped to same position set)
+  //Application counts (scoped to same position set)
   const appWhere = `WHERE a.position_id IN (
     SELECT rp.id FROM research_positions rp
     JOIN pi_profiles pip ON pip.id = rp.pi_id
@@ -110,7 +110,7 @@ router.get('/metrics', authMiddleware, requireRole('admin'), asyncHandler(async 
     params
   );
 
-  // Average days to fill (closed/filled positions)
+  //Average days to fill (closed/filled positions)
   const timeToFill = await pool.query(
     `SELECT AVG(
        EXTRACT(EPOCH FROM (rp.updated_at - rp.created_at)) / 86400
@@ -121,7 +121,7 @@ router.get('/metrics', authMiddleware, requireRole('admin'), asyncHandler(async 
     params
   );
 
-  // Total enrolled students in this lab
+  //Total enrolled students in this lab
   const enrolled = await pool.query(
     `SELECT COUNT(DISTINCT a.student_id)::int AS total_enrolled
      FROM applications a
@@ -129,13 +129,13 @@ router.get('/metrics', authMiddleware, requireRole('admin'), asyncHandler(async 
     params
   );
 
-  // PI count in this lab
+  //PI count in this lab
   const piCount = await pool.query(
     `SELECT COUNT(*)::int AS total FROM pi_profiles WHERE lab_admin_id = $1`,
     [req.userId]
   );
 
-  // Recent 15 positions in this lab
+  //Recent 15 positions in this lab
   const recentPositions = await pool.query(
     `SELECT
        rp.id,
@@ -156,7 +156,7 @@ router.get('/metrics', authMiddleware, requireRole('admin'), asyncHandler(async 
     params
   );
 
-  // Per-PI breakdown — respects positionType / date filters but always shows all PIs in lab
+  //Per-PI breakdown — respects positionType / date filters but always shows all PIs in lab
   const piBreakdown = await pool.query(
     `SELECT
        pip.id,

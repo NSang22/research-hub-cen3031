@@ -78,11 +78,11 @@ function mapApplicationStatusRow(row: Record<string, unknown>) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Application submission
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Application submission
+//---------------------------------------------------------------------------
 
-// POST /api/applications - apply (student only)
+//POST /api/applications - apply (student only)
 router.post('/', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
   const { positionId, coverLetter, personalStatement, questionAnswers } = req.body;
   if (!positionId) {
@@ -144,11 +144,11 @@ router.post('/', authMiddleware, requireRole('student'), asyncHandler(async (req
   }
 }));
 
-// ---------------------------------------------------------------------------
-// Application listing
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//Application listing
+//---------------------------------------------------------------------------
 
-// GET /api/applications/mine - student's apps
+//GET /api/applications/mine - student's apps
 router.get('/mine', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
   const studentId = await getStudentId(req.userId);
   if (!studentId) {
@@ -168,7 +168,7 @@ router.get('/mine', authMiddleware, requireRole('student'), asyncHandler(async (
   );
 }));
 
-// GET /api/applications/position/:id - apps for position (owner PI only)
+//GET /api/applications/position/:id - apps for position (owner PI only)
 router.get('/position/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const { id: positionId } = req.params;
   const piId = await getPIId(req.userId);
@@ -191,7 +191,7 @@ router.get('/position/:id', authMiddleware, requireRole('pi'), asyncHandler(asyn
   );
 }));
 
-// PATCH /api/applications/:id/notes - save private PI notes (PI only)
+//PATCH /api/applications/:id/notes - save private PI notes (PI only)
 router.patch('/:id/notes', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const { notes } = req.body;
@@ -216,11 +216,11 @@ router.patch('/:id/notes', authMiddleware, requireRole('pi'), asyncHandler(async
   return res.json({ id: result.rows[0].id, piNotes: result.rows[0].pi_notes });
 }));
 
-// ---------------------------------------------------------------------------
-// PI notes and status management
-// ---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//PI notes and status management
+//---------------------------------------------------------------------------
 
-// PATCH /api/applications/:id/status - update status (PI only)
+//PATCH /api/applications/:id/status - update status (PI only)
 router.patch('/:id/status', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const { status } = req.body;
