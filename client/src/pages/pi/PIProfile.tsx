@@ -78,7 +78,7 @@ export function PIProfile() {
     <div className="min-h-screen">
       <Navbar />
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-foreground mb-6">Lab Profile</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-6">PI Profile</h1>
         <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
             <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm">{error}</div>

@@ -22,6 +22,7 @@ import { StudentDetail } from './pages/pi/StudentDetail';
 import { LabRoster } from './pages/pi/LabRoster';
 import { MessagesPage } from './pages/MessagesPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { AdminLabSettings } from './pages/admin/AdminLabSettings';
 
 function App() {
   return (
@@ -75,6 +76,7 @@ function App() {
             }
           >
             <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="settings" element={<AdminLabSettings />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

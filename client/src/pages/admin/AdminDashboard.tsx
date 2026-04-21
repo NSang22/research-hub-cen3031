@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Navbar } from '../../components/Navbar';
 import { api } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 import type { AdminMetrics, LabPIMember } from '../../types';
 
 interface MetricCardProps {
@@ -59,6 +60,7 @@ function statusBadge(status: string) {
 }
 
 export function AdminDashboard() {
+  const { loading: authLoading } = useAuth();
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
   const [pis, setPIs] = useState<LabPIMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,7 +96,10 @@ export function AdminDashboard() {
     }
   }, [startDate, endDate, positionType, piId]);
 
-  useEffect(() => { load(); }, [load]);
+  // Wait for auth to finish restoring the token before fetching
+  useEffect(() => {
+    if (!authLoading) { load(); }
+  }, [authLoading, load]);
 
   const tabClass = (tab: 'metrics' | 'pis') =>
     `px-4 py-2 text-sm font-medium rounded-lg transition-colors ${

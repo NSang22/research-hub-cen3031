@@ -36,6 +36,7 @@ function studentNavActive(pathname: string, url: string): boolean {
 
 function adminNavActive(pathname: string, url: string): boolean {
   if (url === '/admin/dashboard') return pathname === '/admin/dashboard';
+  if (url === '/admin/settings') return pathname === '/admin/settings';
   return false;
 }
 
@@ -189,18 +190,14 @@ export function Navbar() {
               Lab
             </div>
             <div className="px-3 space-y-0.5">
-              <Link
-                to="/admin/dashboard"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border-l-[3px]"
-                style={{
-                  borderLeftColor: adminNavActive(pathname, '/admin/dashboard') ? '#0052CC' : 'transparent',
-                  color: adminNavActive(pathname, '/admin/dashboard') ? '#0052CC' : 'rgba(0,82,204,0.55)',
-                  background: adminNavActive(pathname, '/admin/dashboard') ? 'rgba(0,82,204,0.08)' : 'transparent',
-                }}
-              >
-                <BarChart3 size={18} strokeWidth={2} />
-                <span className="flex-1 min-w-0 truncate">Lab Dashboard</span>
-              </Link>
+              {renderLink(
+                { name: 'Lab Dashboard', url: '/admin/dashboard', icon: BarChart3 },
+                adminNavActive(pathname, '/admin/dashboard')
+              )}
+              {renderLink(
+                { name: 'Lab Settings', url: '/admin/settings', icon: Settings },
+                adminNavActive(pathname, '/admin/settings')
+              )}
             </div>
             <div className={sectionLabelClass} style={sectionLabelStyle}>
               Account
