@@ -19,8 +19,17 @@ export interface NotificationPreferencesUpdateBody {
   notificationFrequency?: string;
 }
 
+/**
+ * Maximum number of custom keyword entries a student can set.
+ */
 const MAX_KEYWORDS = 25;
+/**
+ * Maximum number of department filter entries a student can set.
+ */
 const MAX_DEPARTMENTS = 15;
+/**
+ * Maximum character length for each keyword or department tag.
+ */
 const MAX_TAG_LENGTH = 80;
 
 function normalizeStringArray(

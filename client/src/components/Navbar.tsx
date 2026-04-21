@@ -10,7 +10,6 @@ import {
   Users,
   Settings,
   UsersRound,
-  MessageSquare,
   Mail,
   BarChart3,
   ShieldCheck,
@@ -30,7 +29,6 @@ function studentNavActive(pathname: string, url: string): boolean {
   if (url === '/student/dashboard') return pathname === '/student/dashboard';
   if (url === '/student/positions') return pathname.startsWith('/student/positions');
   if (url === '/student/applications') return pathname === '/student/applications';
-  if (url === '/student/inbox') return pathname.startsWith('/student/inbox');
   if (url === '/student/profile') return pathname === '/student/profile';
   if (url === '/student/settings') return pathname === '/student/settings';
   return false;
@@ -38,6 +36,7 @@ function studentNavActive(pathname: string, url: string): boolean {
 
 function adminNavActive(pathname: string, url: string): boolean {
   if (url === '/admin/dashboard') return pathname === '/admin/dashboard';
+  if (url === '/admin/settings') return pathname === '/admin/settings';
   return false;
 }
 
@@ -46,7 +45,6 @@ function piNavActive(pathname: string, url: string): boolean {
   if (url === '/pi/dashboard') return pathname === '/pi/dashboard';
   if (url === '/pi/positions/new') return pathname.startsWith('/pi/positions');
   if (url === '/pi/roster') return pathname === '/pi/roster';
-  if (url === '/pi/inbox') return pathname.startsWith('/pi/inbox');
   if (url === '/pi/students') return pathname.startsWith('/pi/students');
   if (url === '/pi/profile') return pathname === '/pi/profile';
   return false;
@@ -63,7 +61,6 @@ const studentMainItems: NavItem[] = [
   { name: 'Messages', url: '/messages', icon: Mail },
   { name: 'Browse Positions', url: '/student/positions', icon: Briefcase },
   { name: 'My Applications', url: '/student/applications', icon: FileText },
-  { name: 'Inbox', url: '/student/inbox', icon: MessageSquare },
 ];
 
 const studentAccountItems: NavItem[] = [
@@ -76,7 +73,6 @@ const piLabItems: NavItem[] = [
   { name: 'Messages', url: '/messages', icon: Mail },
   { name: 'Positions', url: '/pi/positions/new', icon: Briefcase },
   { name: 'Roster', url: '/pi/roster', icon: UsersRound },
-  { name: 'Inbox', url: '/pi/inbox', icon: MessageSquare },
 ];
 
 const piAccountItems: NavItem[] = [
@@ -194,18 +190,14 @@ export function Navbar() {
               Lab
             </div>
             <div className="px-3 space-y-0.5">
-              <Link
-                to="/admin/dashboard"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border-l-[3px]"
-                style={{
-                  borderLeftColor: adminNavActive(pathname, '/admin/dashboard') ? '#0052CC' : 'transparent',
-                  color: adminNavActive(pathname, '/admin/dashboard') ? '#0052CC' : 'rgba(0,82,204,0.55)',
-                  background: adminNavActive(pathname, '/admin/dashboard') ? 'rgba(0,82,204,0.08)' : 'transparent',
-                }}
-              >
-                <BarChart3 size={18} strokeWidth={2} />
-                <span className="flex-1 min-w-0 truncate">Lab Dashboard</span>
-              </Link>
+              {renderLink(
+                { name: 'Lab Dashboard', url: '/admin/dashboard', icon: BarChart3 },
+                adminNavActive(pathname, '/admin/dashboard')
+              )}
+              {renderLink(
+                { name: 'Lab Settings', url: '/admin/settings', icon: Settings },
+                adminNavActive(pathname, '/admin/settings')
+              )}
             </div>
             <div className={sectionLabelClass} style={sectionLabelStyle}>
               Account

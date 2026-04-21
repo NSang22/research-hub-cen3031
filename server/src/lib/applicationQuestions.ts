@@ -8,10 +8,17 @@ export interface ApplicationQuestion {
   options?: string[];
 }
 
+/**
+ * Type guard: returns true if v is a non-empty string.
+ */
 function isNonEmptyString(v: unknown): v is string {
   return typeof v === 'string' && v.trim().length > 0;
 }
 
+/**
+ * Parses a raw value into an array of ApplicationQuestion objects.
+ * Skips entries that are missing required fields or have invalid types.
+ */
 export function parseApplicationQuestions(raw: unknown): ApplicationQuestion[] {
   if (!Array.isArray(raw)) return [];
   const out: ApplicationQuestion[] = [];
@@ -37,7 +44,11 @@ export function parseApplicationQuestions(raw: unknown): ApplicationQuestion[] {
   return out;
 }
 
-/** Returns error message or null if valid */
+/**
+ * Validates that every required question has a non-empty answer and that
+ * each answer matches the question's expected type (number, choice, etc.).
+ * Returns an error message string if validation fails, or null if valid.
+ */
 export function validateQuestionAnswers(
   questions: ApplicationQuestion[],
   answers: Record<string, unknown>
@@ -72,6 +83,10 @@ export function validateQuestionAnswers(
   return null;
 }
 
+/**
+ * Normalizes raw answers into a clean object ready for JSONB storage.
+ * Strips whitespace from strings and coerces numbers from string inputs.
+ */
 export function normalizeAnswersForStore(
   questions: ApplicationQuestion[],
   answers: Record<string, unknown>

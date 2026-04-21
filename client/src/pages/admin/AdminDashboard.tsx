@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Navbar } from '../../components/Navbar';
 import { api } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 import type { AdminMetrics, LabPIMember } from '../../types';
 
 interface MetricCardProps {
@@ -59,6 +60,7 @@ function statusBadge(status: string) {
 }
 
 export function AdminDashboard() {
+  const { loading: authLoading } = useAuth();
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
   const [pis, setPIs] = useState<LabPIMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +70,7 @@ export function AdminDashboard() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [positionType, setPositionType] = useState('');
+  const [piId, setPiId] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -78,6 +81,7 @@ export function AdminDashboard() {
           startDate: startDate || undefined,
           endDate: endDate || undefined,
           positionType: positionType || undefined,
+          piId: piId || undefined,
         }),
         api.admin.getPIs(),
       ]);
@@ -90,9 +94,12 @@ export function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate, positionType]);
+  }, [startDate, endDate, positionType, piId]);
 
-  useEffect(() => { load(); }, [load]);
+  // Wait for auth to finish restoring the token before fetching
+  useEffect(() => {
+    if (!authLoading) { load(); }
+  }, [authLoading, load]);
 
   const tabClass = (tab: 'metrics' | 'pis') =>
     `px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
@@ -146,7 +153,7 @@ export function AdminDashboard() {
         {activeTab === 'metrics' && metrics && (
           <>
             {/* Filters */}
-            <div className="bg-card border border-border rounded-xl p-4 mb-6 grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="bg-card border border-border rounded-xl p-4 mb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">From</label>
                 <input
@@ -177,6 +184,21 @@ export function AdminDashboard() {
                   <option value="unpaid">Unpaid</option>
                   <option value="credit">Credit</option>
                   <option value="stipend">Stipend</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Principal Investigator</label>
+                <select
+                  value={piId}
+                  onChange={(e) => setPiId(e.target.value)}
+                  className="w-full px-3 py-1.5 text-sm border border-input bg-background text-foreground rounded-lg focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">All PIs</option>
+                  {pis.map((pi) => (
+                    <option key={pi.id} value={pi.id}>
+                      {pi.firstName} {pi.lastName}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

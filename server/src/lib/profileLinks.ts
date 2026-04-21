@@ -4,6 +4,9 @@ export interface ProfileLink {
   url: string;
 }
 
+/**
+ * Returns true if the string is a valid http:// or https:// URL.
+ */
 export function isValidUrl(raw: string): boolean {
   try {
     const u = new URL(raw);
@@ -13,6 +16,10 @@ export function isValidUrl(raw: string): boolean {
   }
 }
 
+/**
+ * Parses a raw value into a sanitized array of ProfileLinks.
+ * Validates each entry, strips whitespace, and enforces the 5-link cap.
+ */
 export function parseProfileLinks(raw: unknown): ProfileLink[] {
   if (!Array.isArray(raw)) return [];
   const out: ProfileLink[] = [];
@@ -29,6 +36,10 @@ export function parseProfileLinks(raw: unknown): ProfileLink[] {
   return out.slice(0, 5);
 }
 
+/**
+ * Validates a raw links value for use in profile update requests.
+ * Returns null if valid, or an error message string describing the problem.
+ */
 export function validateProfileLinks(links: unknown): string | null {
   if (!Array.isArray(links)) return 'Links must be an array';
   if (links.length > 5) return 'Maximum 5 links allowed';

@@ -27,16 +27,23 @@ function toQuery(params?: Record<string, string | number | boolean | undefined |
   return '?' + new URLSearchParams(entries.map(([k, v]) => [k, String(v)])).toString();
 }
 
+/** Stores the auth token for API requests. */
 let token: string | null = null;
 
+/** Sets the global auth token used on all subsequent API requests. */
 export function setAuthToken(t: string | null) {
   token = t;
 }
 
+/** Returns the current global auth token. */
 export function getAuthToken(): string | null {
   return token;
 }
 
+/**
+ * Makes an authenticated JSON fetch to the API, parses the response body,
+ * and throws an ApiError on non-2xx status codes.
+ */
 async function request<T>(
   path: string,
   options: RequestInit = {}
@@ -57,6 +64,7 @@ async function request<T>(
 }
 
 export class ApiError extends Error {
+  /** HTTP status code (e.g. 400, 401, 404) */
   constructor(
     public status: number,
     message: string
@@ -66,8 +74,11 @@ export class ApiError extends Error {
   }
 }
 
-// URLSearchParams stringifies undefined → "undefined". Strip empty values first
-// so the server doesn't receive bogus filters like `major=undefined`.
+/**
+ * Serializes a params object into a query string, omitting keys whose
+ * value is undefined, null, or an empty string.
+ * URLSearchParams stringifies undefined → "undefined" so we filter first.
+ */
 function buildQuery(params?: Record<string, unknown>): string {
   if (!params) return '';
   const sp = new URLSearchParams();
@@ -153,23 +164,18 @@ export const api = {
         readAt: string | null;
         createdAt: string;
       }>(`/messages/${messageId}/read`, { method: 'PATCH' }),
-    sendMessage: (recipientId: string, body: string) =>
-      request<Message>('/messages', { method: 'POST', body: JSON.stringify({ recipientId, body }) }),
-    findOrCreateConversation: (recipientId: string) =>
-      request<{ conversationId: string }>('/messages/conversations', { method: 'POST', body: JSON.stringify({ recipientId }) }),
-    getConversations: () =>
-      request<Conversation[]>('/messages/conversations'),
-    getConversationMessages: (conversationId: string) =>
-      request<Message[]>(`/messages/conversations/${conversationId}`),
-    markAsRead: (messageId: string) =>
-      request<Message>(`/messages/${messageId}/read`, { method: 'PATCH' }),
-    deleteConversation: (conversationId: string) =>
-      request<void>(`/messages/conversations/${conversationId}`, { method: 'DELETE' }),
+
   },
   admin: {
     getMetrics: (params?: { startDate?: string; endDate?: string; positionType?: string; piId?: string }) =>
       request<AdminMetrics>(`/admin/metrics${toQuery(params)}`),
     getPIs: () => request<LabPIMember[]>('/admin/pis'),
+    getLab: () => request<{ department: string | null; labName: string | null; labWebsite: string | null }>('/admin/lab'),
+    updateLab: (body: { department?: string; labName?: string; labWebsite?: string }) =>
+      request<{ department: string | null; labName: string | null; labWebsite: string | null }>('/admin/lab', {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      }),
   },
   applications: {
     create: (body: { positionId: string; coverLetter?: string; questionAnswers?: QuestionAnswersMap }) =>

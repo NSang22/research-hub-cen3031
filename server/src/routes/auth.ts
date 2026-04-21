@@ -12,7 +12,7 @@ import type { UserRole } from '../types/index.js';
 const googleClient = new OAuth2Client(config.googleClientId);
 
 const router = Router();
-const SALT_ROUNDS = 12;
+const AUTH_PASSWORD_ROUNDS = 12;
 
 function signToken(userId: string, role: UserRole): string {
   return jwt.sign(
@@ -22,6 +22,10 @@ function signToken(userId: string, role: UserRole): string {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Registration & login
+// ---------------------------------------------------------------------------
+
 router.post('/register', asyncHandler(async (req: Request, res: Response) => {
   const { email, password, role, firstName, lastName } = req.body;
   if (!email || !password || !role || !firstName || !lastName) {
@@ -30,7 +34,7 @@ router.post('/register', asyncHandler(async (req: Request, res: Response) => {
   if (role !== 'student' && role !== 'pi' && role !== 'admin') {
     return res.status(400).json({ error: 'Role must be student, pi, or admin' });
   }
-  const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+  const password_hash = await bcrypt.hash(password, AUTH_PASSWORD_ROUNDS);
   try {
     const result = await pool.query(
       `INSERT INTO users (email, password_hash, role, first_name, last_name)
@@ -71,6 +75,10 @@ router.post('/register', asyncHandler(async (req: Request, res: Response) => {
     throw err;
   }
 }));
+
+// ---------------------------------------------------------------------------
+// Google OAuth
+// ---------------------------------------------------------------------------
 
 // POST /api/auth/google - sign in or register via Google OAuth (@ufl.edu only)
 router.post('/google', asyncHandler(async (req: Request, res: Response) => {
@@ -123,7 +131,7 @@ router.post('/google', asyncHandler(async (req: Request, res: Response) => {
 
   // New user — role is required for registration
   const resolvedRole: UserRole = role === 'pi' ? 'pi' : role === 'admin' ? 'admin' : 'student';
-  const passwordHash = await bcrypt.hash(crypto.randomUUID(), SALT_ROUNDS);
+  const passwordHash = await bcrypt.hash(crypto.randomUUID(), AUTH_PASSWORD_ROUNDS);
 
   const result = await pool.query(
     `INSERT INTO users (email, password_hash, role, first_name, last_name)
@@ -146,6 +154,10 @@ router.post('/google', asyncHandler(async (req: Request, res: Response) => {
     user: { id: user.id, email: user.email, role: user.role, firstName: user.first_name, lastName: user.last_name },
   });
 }));
+
+// ---------------------------------------------------------------------------
+// Password login
+// ---------------------------------------------------------------------------
 
 router.post('/login', asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -177,6 +189,10 @@ router.post('/login', asyncHandler(async (req: Request, res: Response) => {
   });
 }));
 
+// ---------------------------------------------------------------------------
+// Demo login
+// ---------------------------------------------------------------------------
+
 // POST /api/auth/demo - instant demo login, upserts demo accounts
 router.post('/demo', asyncHandler(async (req: Request, res: Response) => {
   const { role } = req.body;
@@ -190,7 +206,7 @@ router.post('/demo', asyncHandler(async (req: Request, res: Response) => {
   let user = (await pool.query('SELECT id, email, role, first_name, last_name FROM users WHERE email = $1', [email])).rows[0];
 
   if (!user) {
-    const passwordHash = await bcrypt.hash('demo-password-not-for-login', SALT_ROUNDS);
+    const passwordHash = await bcrypt.hash('demo-password-not-for-login', AUTH_PASSWORD_ROUNDS);
     const result = await pool.query(
       `INSERT INTO users (email, password_hash, role, first_name, last_name)
        VALUES ($1, $2, $3, $4, $5)
@@ -211,6 +227,10 @@ router.post('/demo', asyncHandler(async (req: Request, res: Response) => {
     user: { id: user.id, email: user.email, role: user.role, firstName: user.first_name, lastName: user.last_name },
   });
 }));
+
+// ---------------------------------------------------------------------------
+// Current user
+// ---------------------------------------------------------------------------
 
 router.get('/me', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const result = await pool.query(

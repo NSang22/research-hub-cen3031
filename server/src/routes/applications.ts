@@ -10,15 +10,86 @@ import {
 
 const router = Router();
 
+/** Looks up a PI's profile id by user id. Returns null if not found. */
+async function getPIId(userId: string): Promise<string | null> {
+  const result = await pool.query('SELECT id FROM pi_profiles WHERE user_id = $1', [userId]);
+  return result.rows[0]?.id ?? null;
+}
+
+/** Looks up a student's profile id by user id. Returns null if not found. */
+async function getStudentId(userId: string): Promise<string | null> {
+  const result = await pool.query('SELECT id FROM student_profiles WHERE user_id = $1', [userId]);
+  return result.rows[0]?.id ?? null;
+}
+
+/** Maps a DB row from GET /mine to the response shape. */
+function mapApplicationSummaryRow(row: Record<string, unknown>) {
+  return {
+    id: row.id,
+    positionId: row.position_id,
+    studentId: row.student_id,
+    status: row.status,
+    coverLetter: row.personal_statement,
+    personalStatement: row.personal_statement,
+    appliedAt: row.created_at,
+    positionTitle: row.position_title,
+    labName: row.lab_name,
+    department: row.department,
+    questionAnswers: (row.question_answers as Record<string, unknown>) || {},
+  };
+}
+
+/** Maps a DB row from GET /position/:id to the response shape. */
+function mapApplicationDetailRow(row: Record<string, unknown>) {
+  return {
+    id: row.id,
+    positionId: row.position_id,
+    studentId: row.student_id,
+    studentUserId: row.student_user_id,
+    status: row.status,
+    coverLetter: row.personal_statement,
+    personalStatement: row.personal_statement,
+    appliedAt: row.created_at,
+    major: row.major,
+    gpa: row.gpa != null ? parseFloat(row.gpa as string) : null,
+    skills: (row.skills as string[]) || [],
+    bio: row.bio,
+    resumeUrl: row.resume_url,
+    yearLevel: row.academic_level,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    email: row.email,
+    questionAnswers: (row.question_answers as Record<string, unknown>) || {},
+    piNotes: (row.pi_notes as string | null) ?? null,
+  };
+}
+
+/** Maps a DB row from PATCH /:id/status to the response shape. */
+function mapApplicationStatusRow(row: Record<string, unknown>) {
+  return {
+    id: row.id,
+    positionId: row.position_id,
+    studentId: row.student_id,
+    status: row.status,
+    coverLetter: row.personal_statement,
+    personalStatement: row.personal_statement,
+    appliedAt: row.created_at,
+    questionAnswers: (row.question_answers as Record<string, unknown>) || {},
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Application submission
+// ---------------------------------------------------------------------------
+
 // POST /api/applications - apply (student only)
 router.post('/', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
   const { positionId, coverLetter, personalStatement, questionAnswers } = req.body;
   if (!positionId) {
     return res.status(400).json({ error: 'positionId is required' });
   }
-  const studentResult = await pool.query('SELECT id FROM student_profiles WHERE user_id = $1', [req.userId]);
-  const student = studentResult.rows[0];
-  if (!student) {
+  const studentId = await getStudentId(req.userId);
+  if (!studentId) {
     return res.status(404).json({ error: 'Student profile not found' });
   }
 
@@ -51,7 +122,7 @@ router.post('/', authMiddleware, requireRole('student'), asyncHandler(async (req
       `INSERT INTO applications (position_id, student_id, personal_statement, question_answers)
        VALUES ($1, $2, $3, $4::jsonb)
        RETURNING *`,
-      [positionId, student.id, statement, answersJson]
+      [positionId, studentId, statement, answersJson]
     );
     const row = result.rows[0];
     return res.status(201).json({
@@ -73,11 +144,14 @@ router.post('/', authMiddleware, requireRole('student'), asyncHandler(async (req
   }
 }));
 
+// ---------------------------------------------------------------------------
+// Application listing
+// ---------------------------------------------------------------------------
+
 // GET /api/applications/mine - student's apps
 router.get('/mine', authMiddleware, requireRole('student'), asyncHandler(async (req: Request, res: Response) => {
-  const studentResult = await pool.query('SELECT id FROM student_profiles WHERE user_id = $1', [req.userId]);
-  const student = studentResult.rows[0];
-  if (!student) {
+  const studentId = await getStudentId(req.userId);
+  if (!studentId) {
     return res.json([]);
   }
   const result = await pool.query(
@@ -87,31 +161,18 @@ router.get('/mine', authMiddleware, requireRole('student'), asyncHandler(async (
      JOIN pi_profiles pp ON pp.id = rp.pi_id
      WHERE a.student_id = $1
      ORDER BY a.created_at DESC`,
-    [student.id]
+    [studentId]
   );
   return res.json(
-    result.rows.map((row) => ({
-      id: row.id,
-      positionId: row.position_id,
-      studentId: row.student_id,
-      status: row.status,
-      coverLetter: row.personal_statement,
-      personalStatement: row.personal_statement,
-      appliedAt: row.created_at,
-      positionTitle: row.position_title,
-      labName: row.lab_name,
-      department: row.department,
-      questionAnswers: row.question_answers || {},
-    }))
+    result.rows.map(mapApplicationSummaryRow)
   );
 }));
 
 // GET /api/applications/position/:id - apps for position (owner PI only)
 router.get('/position/:id', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const { id: positionId } = req.params;
-  const piResult = await pool.query('SELECT id FROM pi_profiles WHERE user_id = $1', [req.userId]);
-  const pi = piResult.rows[0];
-  if (!pi) {
+  const piId = await getPIId(req.userId);
+  if (!piId) {
     return res.status(404).json({ error: 'PI profile not found' });
   }
   const result = await pool.query(
@@ -123,30 +184,10 @@ router.get('/position/:id', authMiddleware, requireRole('pi'), asyncHandler(asyn
      JOIN users u ON u.id = sp.user_id
      WHERE a.position_id = $1 AND rp.pi_id = $2
      ORDER BY a.created_at DESC`,
-    [positionId, pi.id]
+    [positionId, piId]
   );
   return res.json(
-    result.rows.map((row) => ({
-      id: row.id,
-      positionId: row.position_id,
-      studentId: row.student_id,
-      studentUserId: row.student_user_id,
-      status: row.status,
-      coverLetter: row.personal_statement,
-      personalStatement: row.personal_statement,
-      appliedAt: row.created_at,
-      major: row.major,
-      gpa: row.gpa ? parseFloat(row.gpa) : null,
-      skills: row.skills || [],
-      bio: row.bio,
-      resumeUrl: row.resume_url,
-      yearLevel: row.academic_level,
-      firstName: row.first_name,
-      lastName: row.last_name,
-      email: row.email,
-      questionAnswers: row.question_answers || {},
-      piNotes: row.pi_notes ?? null,
-    }))
+    result.rows.map(mapApplicationDetailRow)
   );
 }));
 
@@ -157,9 +198,8 @@ router.patch('/:id/notes', authMiddleware, requireRole('pi'), asyncHandler(async
   if (typeof notes !== 'string') {
     return res.status(400).json({ error: 'notes must be a string' });
   }
-  const piResult = await pool.query('SELECT id FROM pi_profiles WHERE user_id = $1', [req.userId]);
-  const pi = piResult.rows[0];
-  if (!pi) {
+  const piId = await getPIId(req.userId);
+  if (!piId) {
     return res.status(404).json({ error: 'PI profile not found' });
   }
   const result = await pool.query(
@@ -168,7 +208,7 @@ router.patch('/:id/notes', authMiddleware, requireRole('pi'), asyncHandler(async
      FROM research_positions rp
      WHERE a.position_id = rp.id AND rp.pi_id = $2 AND a.id = $3
      RETURNING a.id, a.pi_notes`,
-    [notes, pi.id, id]
+    [notes, piId, id]
   );
   if (result.rows.length === 0) {
     return res.status(404).json({ error: 'Application not found or access denied' });
@@ -176,17 +216,20 @@ router.patch('/:id/notes', authMiddleware, requireRole('pi'), asyncHandler(async
   return res.json({ id: result.rows[0].id, piNotes: result.rows[0].pi_notes });
 }));
 
+// ---------------------------------------------------------------------------
+// PI notes and status management
+// ---------------------------------------------------------------------------
+
 // PATCH /api/applications/:id/status - update status (PI only)
 router.patch('/:id/status', authMiddleware, requireRole('pi'), asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const { status } = req.body;
-  const validStatuses = ['pending', 'reviewing', 'accepted', 'rejected', 'withdrawn'];
-  if (!status || !validStatuses.includes(status)) {
-    return res.status(400).json({ error: `Valid status required: ${validStatuses.join(', ')}` });
+  const VALID_APPLICATION_STATUSES = ['pending', 'reviewing', 'accepted', 'rejected', 'withdrawn'];
+  if (!status || !VALID_APPLICATION_STATUSES.includes(status)) {
+    return res.status(400).json({ error: `Valid status required: ${VALID_APPLICATION_STATUSES.join(', ')}` });
   }
-  const piResult = await pool.query('SELECT id FROM pi_profiles WHERE user_id = $1', [req.userId]);
-  const pi = piResult.rows[0];
-  if (!pi) {
+  const piId = await getPIId(req.userId);
+  if (!piId) {
     return res.status(404).json({ error: 'PI profile not found' });
   }
   const result = await pool.query(
@@ -195,22 +238,13 @@ router.patch('/:id/status', authMiddleware, requireRole('pi'), asyncHandler(asyn
      FROM research_positions rp
      WHERE a.position_id = rp.id AND rp.pi_id = $2 AND a.id = $3
      RETURNING a.*`,
-    [status, pi.id, id]
+    [status, piId, id]
   );
   const row = result.rows[0];
   if (!row) {
     return res.status(404).json({ error: 'Application not found or access denied' });
   }
-  return res.json({
-    id: row.id,
-    positionId: row.position_id,
-    studentId: row.student_id,
-    status: row.status,
-    coverLetter: row.personal_statement,
-    personalStatement: row.personal_statement,
-    appliedAt: row.created_at,
-    questionAnswers: row.question_answers || {},
-  });
+  return res.json(mapApplicationStatusRow(row));
 }));
 
 export default router;
