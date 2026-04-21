@@ -153,17 +153,10 @@ export function PositionApplications() {
   const [updating, setUpdating] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [sortKey, setSortKey] = useState<SortKey>('date_desc');
-  const [messagingStudentId, setMessagingStudentId] = useState<string | null>(null);
-
-  const handleMessageStudent = async (app: AppWithStudent) => {
-    if (!app.studentUserId || messagingStudentId) return;
-    setMessagingStudentId(app.id);
-    try {
-      const { conversationId } = await api.messages.findOrCreateConversation(app.studentUserId);
-      navigate(`/pi/inbox/${conversationId}`);
-    } catch {
-      setMessagingStudentId(null);
-    }
+  const handleMessageStudent = (app: AppWithStudent) => {
+    if (!app.studentUserId) return;
+    const name = [app.firstName, app.lastName].filter(Boolean).join(' ');
+    navigate(`/messages?composeTo=${app.studentUserId}&composeName=${encodeURIComponent(name)}`);
   };
 
   useEffect(() => {
@@ -319,8 +312,7 @@ export function PositionApplications() {
                             {app.studentUserId && (
                               <button
                                 type="button"
-                                onClick={() => { void handleMessageStudent(app); }}
-                                disabled={!!messagingStudentId}
+                                onClick={() => handleMessageStudent(app)}
                                 style={{
                                   display: 'inline-flex',
                                   alignItems: 'center',
@@ -332,13 +324,12 @@ export function PositionApplications() {
                                   color: '#0052CC',
                                   fontSize: '0.78rem',
                                   fontWeight: 600,
-                                  cursor: messagingStudentId ? 'not-allowed' : 'pointer',
-                                  opacity: messagingStudentId ? 0.6 : 1,
+                                  cursor: 'pointer',
                                   whiteSpace: 'nowrap',
                                 }}
                               >
                                 <MessageSquare size={13} strokeWidth={2} />
-                                {messagingStudentId === app.id ? 'Opening…' : 'Message'}
+                                Message
                               </button>
                             )}
                             <button

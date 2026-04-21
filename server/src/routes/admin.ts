@@ -10,7 +10,7 @@ const router = Router();
  *
  * List all PIs associated with this lab administrator.
  */
-router.get('/pis', asyncHandler(async (req: Request, res: Response) => {
+router.get('/pis', authMiddleware, requireRole('admin'), asyncHandler(async (req: Request, res: Response) => {
   const result = await pool.query(
     `SELECT
        pp.id,
@@ -56,7 +56,7 @@ router.get('/pis', asyncHandler(async (req: Request, res: Response) => {
  * Lab-scoped recruitment metrics, filtered to PIs whose lab_admin_id = current user.
  * Optional query filters: startDate, endDate, positionType, piId.
  */
-router.get('/metrics', asyncHandler(async (req: Request, res: Response) => {
+router.get('/metrics', authMiddleware, requireRole('admin'), asyncHandler(async (req: Request, res: Response) => {
   const { startDate, endDate, positionType, piId } = req.query as Record<string, string | undefined>;
 
   // Base: only positions belonging to PIs in this lab
@@ -185,6 +185,64 @@ router.get('/metrics', asyncHandler(async (req: Request, res: Response) => {
     piCount: piCount.rows[0]?.total ?? 0,
     recentPositions: recentPositions.rows,
     piBreakdown: piBreakdown.rows,
+  });
+}));
+
+/**
+ * GET /api/admin/lab
+ *
+ * Returns the shared lab settings (department, lab_name, lab_website)
+ * derived from PIs associated with this administrator.
+ * Falls back to nulls if no PIs are associated yet.
+ */
+router.get('/lab', authMiddleware, requireRole('admin'), asyncHandler(async (req: Request, res: Response) => {
+  const result = await pool.query(
+    `SELECT department, lab_name, lab_website
+     FROM pi_profiles
+     WHERE lab_admin_id = $1
+     LIMIT 1`,
+    [req.userId]
+  );
+
+  const row = result.rows[0];
+  return res.json({
+    department: row?.department ?? null,
+    labName: row?.lab_name ?? null,
+    labWebsite: row?.lab_website ?? null,
+  });
+}));
+
+/**
+ * PUT /api/admin/lab
+ *
+ * Updates department, lab_name, and lab_website for every PI
+ * associated with this lab administrator.
+ */
+router.put('/lab', authMiddleware, requireRole('admin'), asyncHandler(async (req: Request, res: Response) => {
+  const { department, labName, labWebsite } = req.body as {
+    department?: string;
+    labName?: string;
+    labWebsite?: string;
+  };
+
+  await pool.query(
+    `UPDATE pi_profiles
+     SET department  = $1,
+         lab_name    = $2,
+         lab_website = $3
+     WHERE lab_admin_id = $4`,
+    [
+      department?.trim() || null,
+      labName?.trim() || null,
+      labWebsite?.trim() || null,
+      req.userId,
+    ]
+  );
+
+  return res.json({
+    department: department?.trim() || null,
+    labName: labName?.trim() || null,
+    labWebsite: labWebsite?.trim() || null,
   });
 }));
 
