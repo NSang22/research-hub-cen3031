@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import pool from '../db/pool.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
-import { logAudit } from '../lib/audit.js';
+import { logAudit } from '../lib/auditLog.js';
 import { parseProfileLinks } from '../lib/profileLinks.js';
 
 const router = Router();
