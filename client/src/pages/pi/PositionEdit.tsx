@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Navbar } from '../../components/Navbar';
 import { ApplicationQuestionsEditor } from '../../components/ApplicationQuestionsEditor';
 import { api } from '../../lib/api';
-import type { Position } from '../../types';
+import type { Position, CompensationType } from '../../types';
 import type { ApplicationQuestion } from '../../types/applicationQuestions';
 
 export function PositionEdit() {
@@ -21,7 +21,8 @@ export function PositionEdit() {
     requiredSkills: '',
     minGpa: '',
     isOpen: true,
-    isFunded: false,
+    compensationType: 'unpaid' as CompensationType,
+    timeCommitment: '',
     deadline: '',
   });
 
@@ -40,7 +41,8 @@ export function PositionEdit() {
           requiredSkills: (p.requiredSkills || []).join(', '),
           minGpa: p.minGpa?.toString() || '',
           isOpen: p.isOpen,
-          isFunded: p.isFunded,
+          compensationType: (p.compensationType ?? (p.isFunded ? 'paid' : 'unpaid')) as CompensationType,
+          timeCommitment: p.timeCommitment ?? '',
           deadline: p.deadline || '',
         });
       })
@@ -63,7 +65,8 @@ export function PositionEdit() {
           .filter(Boolean),
         minGpa: form.minGpa ? parseFloat(form.minGpa) : undefined,
         isOpen: form.isOpen,
-        isFunded: form.isFunded,
+        compensationType: form.compensationType,
+        timeCommitment: form.timeCommitment || undefined,
         deadline: form.deadline || undefined,
         applicationQuestions: applicationQuestions.filter((q) => q.label.trim()),
       });
@@ -173,6 +176,31 @@ export function PositionEdit() {
               />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-inherit mb-1">Time Commitment</label>
+              <input
+                type="text"
+                value={form.timeCommitment}
+                onChange={(e) => setForm((f) => ({ ...f, timeCommitment: e.target.value }))}
+                placeholder="e.g. 10 hours/week"
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-inherit mb-1">Compensation</label>
+              <select
+                value={form.compensationType}
+                onChange={(e) => setForm((f) => ({ ...f, compensationType: e.target.value as CompensationType }))}
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 bg-white"
+              >
+                <option value="unpaid">Unpaid (Volunteer)</option>
+                <option value="paid">Paid</option>
+                <option value="credit">Credit</option>
+                <option value="stipend">Stipend</option>
+              </select>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -183,18 +211,6 @@ export function PositionEdit() {
             />
             <label htmlFor="isOpen" className="text-sm font-medium text-inherit">
               Accepting applications
-            </label>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="isFunded"
-              checked={form.isFunded}
-              onChange={(e) => setForm((f) => ({ ...f, isFunded: e.target.checked }))}
-              className="rounded border-slate-300"
-            />
-            <label htmlFor="isFunded" className="text-sm font-medium text-inherit">
-              Funded position
             </label>
           </div>
           <ApplicationQuestionsEditor value={applicationQuestions} onChange={setApplicationQuestions} />

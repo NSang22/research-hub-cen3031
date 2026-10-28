@@ -191,4 +191,9 @@ export const api = {
     updateNotes: (id: string, notes: string) =>
       request<{ id: string; piNotes: string | null }>(`/applications/${id}/notes`, { method: 'PATCH', body: JSON.stringify({ notes }) }),
   },
+  stream: {
+    getToken: () => request<{ token: string }>('/stream/token', { method: 'POST' }),
+    upsertUser: (userId: string) =>
+      request<{ success: true }>('/stream/upsert-user', { method: 'POST', body: JSON.stringify({ userId }) }),
+  },
 };

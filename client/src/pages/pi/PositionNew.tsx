@@ -4,6 +4,7 @@ import { Navbar } from '../../components/Navbar';
 import { ApplicationQuestionsEditor } from '../../components/ApplicationQuestionsEditor';
 import { api } from '../../lib/api';
 import type { ApplicationQuestion } from '../../types/applicationQuestions';
+import type { CompensationType } from '../../types';
 
 export function PositionNew() {
   const navigate = useNavigate();
@@ -15,7 +16,8 @@ export function PositionNew() {
     description: '',
     requiredSkills: '',
     minGpa: '',
-    isFunded: false,
+    compensationType: 'unpaid' as CompensationType,
+    timeCommitment: '',
     deadline: '',
   });
 
@@ -36,7 +38,8 @@ export function PositionNew() {
           .map((s) => s.trim())
           .filter(Boolean),
         minGpa: form.minGpa ? parseFloat(form.minGpa) : undefined,
-        isFunded: form.isFunded,
+        compensationType: form.compensationType,
+        timeCommitment: form.timeCommitment || undefined,
         deadline: form.deadline || undefined,
         applicationQuestions: applicationQuestions.filter((q) => q.label.trim()),
       });
@@ -112,17 +115,30 @@ export function PositionNew() {
               />
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="isFunded"
-              checked={form.isFunded}
-              onChange={(e) => setForm((f) => ({ ...f, isFunded: e.target.checked }))}
-              className="rounded border-slate-300"
-            />
-            <label htmlFor="isFunded" className="text-sm font-medium text-inherit">
-              Funded position
-            </label>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-inherit mb-1">Time Commitment</label>
+              <input
+                type="text"
+                value={form.timeCommitment}
+                onChange={(e) => setForm((f) => ({ ...f, timeCommitment: e.target.value }))}
+                placeholder="e.g. 10 hours/week"
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-inherit mb-1">Compensation</label>
+              <select
+                value={form.compensationType}
+                onChange={(e) => setForm((f) => ({ ...f, compensationType: e.target.value as CompensationType }))}
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 bg-white"
+              >
+                <option value="unpaid">Unpaid (Volunteer)</option>
+                <option value="paid">Paid</option>
+                <option value="credit">Credit</option>
+                <option value="stipend">Stipend</option>
+              </select>
+            </div>
           </div>
           <ApplicationQuestionsEditor value={applicationQuestions} onChange={setApplicationQuestions} />
           <button

@@ -1,8 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { api } from '../lib/api';
+import streamChatClient from '../lib/streamChat';
 import { useAuth } from './AuthContext';
-
-const POLL_MS = 25_000;
 
 type Ctx = {
   totalUnread: number;
@@ -21,22 +19,31 @@ export function MessageUnreadProvider({ children }: { children: React.ReactNode 
       return;
     }
     try {
-      const list = await api.messages.listConversations();
-      setTotalUnread(list.reduce((acc, c) => acc + (c.unreadCount || 0), 0));
+      const response = await streamChatClient.getUnreadCount();
+      setTotalUnread(response.total_unread_count);
     } catch {
       /* ignore */
     }
   }, [user]);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    if (!user || (user.role !== 'student' && user.role !== 'pi')) return;
 
-  useEffect(() => {
-    if (!user) return;
-    const t = window.setInterval(() => void refresh(), POLL_MS);
-    return () => window.clearInterval(t);
-  }, [user, refresh]);
+    // Fetch initial unread count
+    streamChatClient.getUnreadCount()
+      .then(r => setTotalUnread(r.total_unread_count))
+      .catch(() => {});
+
+    // Subscribe to new message notifications
+    const handleNewMessage = () => {
+      streamChatClient.getUnreadCount()
+        .then(r => setTotalUnread(r.total_unread_count))
+        .catch(() => {});
+    };
+
+    streamChatClient.on('notification.message_new', handleNewMessage);
+    return () => streamChatClient.off('notification.message_new', handleNewMessage);
+  }, [user]);
 
   return (
     <MessageUnreadContext.Provider value={{ totalUnread, refresh }}>{children}</MessageUnreadContext.Provider>

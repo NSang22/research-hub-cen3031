@@ -45,6 +45,15 @@ function buildAnswersPayload(
   return out;
 }
 
+function compensationLabel(type: string | null | undefined): string {
+  switch (type) {
+    case 'paid': return 'Paid';
+    case 'stipend': return 'Stipend';
+    case 'credit': return 'Credit';
+    default: return 'Volunteer';
+  }
+}
+
 function statusBadgeClass(status: string): string {
   switch (status) {
     case 'pending':
@@ -187,7 +196,9 @@ export function PositionDetail() {
         <div className="pd-card">
           <div className="pd-header-row">
             <h1 className="pd-title">{position.title}</h1>
-            {position.isFunded ? <span className="pd-badge-funded">Funded</span> : null}
+            <span className={position.compensationType === 'paid' || position.compensationType === 'stipend' ? 'pd-badge-funded' : 'pd-badge-unfunded'}>
+              {compensationLabel(position.compensationType)}
+            </span>
           </div>
 
           {(position.labName || piDisplay) && (
@@ -254,6 +265,12 @@ export function PositionDetail() {
                   <span className="text-sm text-[#8b90ad]">No deadline</span>
                 )}
               </div>
+              {position.timeCommitment ? (
+                <div>
+                  <h3 className="pd-req-label">Time Commitment</h3>
+                  <div className="pd-deadline-line">{position.timeCommitment}</div>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

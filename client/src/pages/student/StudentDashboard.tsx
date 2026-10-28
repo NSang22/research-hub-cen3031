@@ -96,6 +96,7 @@ export function StudentDashboard() {
   const [recommended, setRecommended] = useState<Position[]>([]);
   const [openCount, setOpenCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -110,7 +111,9 @@ export function StudentDashboard() {
         setOpenCount((positions as Position[]).length);
         setRecommended(recs as Position[]);
       })
-      .catch(() => {})
+      .catch(() => {
+        setError('Failed to load dashboard data. Please refresh.');
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -158,6 +161,13 @@ export function StudentDashboard() {
   return (
     <div className="min-h-screen">
       <Navbar />
+      {error ? (
+        <div className="mx-auto max-w-5xl w-full px-4 pt-4">
+          <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+            {error}
+          </div>
+        </div>
+      ) : null}
       <div className="sd-page">
         <div className="sd-inner">
           <h1 className="sd-title">Dashboard</h1>

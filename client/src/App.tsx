@@ -34,7 +34,14 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/messages" element={<MessagesPage />} />
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute roles={['student', 'pi']}>
+                <MessagesPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/student"
             element={

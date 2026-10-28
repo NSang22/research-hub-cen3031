@@ -72,6 +72,7 @@ export function PIDashboard() {
   const [allApplications, setAllApplications] = useState<AppWithMeta[]>([]);
   const [recentApps, setRecentApps] = useState<AppWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [confirmCloseId, setConfirmCloseId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -100,6 +101,7 @@ export function PIDashboard() {
       } catch {
         if (!cancelled) {
           setPositions([]);
+          setError('Failed to load dashboard data. Please refresh.');
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -147,6 +149,13 @@ export function PIDashboard() {
   return (
     <div className="pi-dash-page">
       <Navbar />
+      {error ? (
+        <div className="mx-auto max-w-5xl w-full px-4 pt-4">
+          <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+            {error}
+          </div>
+        </div>
+      ) : null}
       <main className="pi-dash-main">
         {loading ? (
           <div className="animate-pulse space-y-4">
@@ -241,7 +250,7 @@ export function PIDashboard() {
                           <div className="pi-dash-pos-info">
                             <div className="pi-dash-pos-title">{p.title}</div>
                             <div className="pi-dash-pos-meta">
-                              <span>{p.isFunded ? 'Funded' : 'Volunteer'}</span>
+                              <span>{p.compensationType === 'paid' ? 'Paid' : p.compensationType === 'stipend' ? 'Stipend' : p.compensationType === 'credit' ? 'Credit' : 'Volunteer'}</span>
                               {skills ? <span>{skills}</span> : null}
                               <span>{daysUntil(p.deadline)}</span>
                             </div>

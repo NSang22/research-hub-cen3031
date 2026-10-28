@@ -17,4 +17,6 @@ export const config = {
   smtpUser: process.env.SMTP_USER ?? '',
   smtpPass: process.env.SMTP_PASS ?? '',
   fromEmail: process.env.FROM_EMAIL ?? 'noreply@researchhub.ufl.edu',
+  streamApiKey: process.env.STREAM_API_KEY ?? '',
+  streamApiSecret: process.env.STREAM_API_SECRET ?? '',
 } as const;

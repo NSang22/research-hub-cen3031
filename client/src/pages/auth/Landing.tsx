@@ -1,11 +1,23 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { NetworkBackground } from '../../components/ui/network-background';
+import { useAuth } from '../../context/AuthContext';
 
 export function Landing() {
   const navigate = useNavigate();
+  const { loginDemo } = useAuth();
+  const [demoLoading, setDemoLoading] = useState<'student' | 'pi' | null>(null);
 
-  const handleDemo = (role: 'student' | 'pi') => {
-    navigate(role === 'student' ? '/student/dashboard' : '/pi/dashboard');
+  const handleDemo = async (role: 'student' | 'pi') => {
+    setDemoLoading(role);
+    try {
+      await loginDemo(role);
+      navigate(role === 'student' ? '/student/dashboard' : '/pi/dashboard');
+    } catch {
+      // silently ignore
+    } finally {
+      setDemoLoading(null);
+    }
   };
 
   return (
@@ -48,17 +60,19 @@ export function Landing() {
           </p>
           <button
             onClick={() => handleDemo('student')}
+            disabled={demoLoading !== null}
             className="px-5 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105"
             style={{ background: 'rgba(0,82,204,0.08)', border: '1px solid rgba(0,82,204,0.35)', color: '#0052CC' }}
           >
-            Demo Student
+            {demoLoading === 'student' ? 'Loading…' : 'Demo Student'}
           </button>
           <button
             onClick={() => handleDemo('pi')}
+            disabled={demoLoading !== null}
             className="px-5 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105"
             style={{ background: 'rgba(0,82,204,0.08)', border: '1px solid rgba(0,82,204,0.35)', color: '#0052CC' }}
           >
-            Demo PI
+            {demoLoading === 'pi' ? 'Loading…' : 'Demo PI'}
           </button>
         </div>
         </div>

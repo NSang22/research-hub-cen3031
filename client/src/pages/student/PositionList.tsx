@@ -15,9 +15,20 @@ interface BrowseRow {
   description: string;
   skills: string[];
   isFunded: boolean;
+  compensationType: string | null;
+  timeCommitment: string | null;
   minGpa: number | null;
   deadline: string | null;
   postedDays: number;
+}
+
+function compensationLabel(type: string | null | undefined): string {
+  switch (type) {
+    case 'paid': return 'Paid';
+    case 'stipend': return 'Stipend';
+    case 'credit': return 'Credit';
+    default: return 'Volunteer';
+  }
 }
 
 function mapPosition(p: Position): BrowseRow {
@@ -32,6 +43,8 @@ function mapPosition(p: Position): BrowseRow {
     description: p.description ?? '',
     skills: p.requiredSkills ?? [],
     isFunded: p.isFunded,
+    compensationType: p.compensationType ?? null,
+    timeCommitment: p.timeCommitment ?? null,
     minGpa: p.minGpa,
     deadline: p.deadline,
     postedDays,
@@ -274,11 +287,9 @@ export function PositionList() {
                       <div className="bp-card-top">
                         <div className="bp-card-title">{p.title}</div>
                         <div className="bp-card-meta">
-                          {p.isFunded ? (
-                            <span className="bp-badge-funded">Funded</span>
-                          ) : (
-                            <span className="bp-badge-unfunded">Volunteer</span>
-                          )}
+                          <span className={p.isFunded ? 'bp-badge-funded' : 'bp-badge-unfunded'}>
+                            {compensationLabel(p.compensationType)}
+                          </span>
                           <span className="bp-posted">{daysLabel(p.postedDays)}</span>
                         </div>
                       </div>
@@ -308,6 +319,9 @@ export function PositionList() {
                           ))}
                         </div>
                         <div className="bp-card-right-meta">
+                          {p.timeCommitment ? (
+                            <span className="bp-time-commitment">{p.timeCommitment}</span>
+                          ) : null}
                           {deadlineShort ? (
                             <span className="bp-deadline">
                               Due <strong>{deadlineShort}</strong>

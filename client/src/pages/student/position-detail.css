@@ -61,6 +61,18 @@
   color: #2b8a3e;
 }
 
+.pd-badge-unfunded {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #f1f3f9;
+  color: #5c617a;
+}
+
 .pd-lab-row {
   display: flex;
   align-items: center;

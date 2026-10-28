@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api, setAuthToken } from '../lib/api';
+import { connectUser, disconnectUser } from '../lib/streamChat';
 import type { User, UserRole } from '../types';
 
 const TOKEN_KEY = 'rh_token';
@@ -28,6 +29,16 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+async function connectStreamUser(u: User): Promise<void> {
+  try {
+    // @ts-ignore — api.stream is added by a parallel agent
+    const { token: streamToken } = await api.stream.getToken();
+    await connectUser(u.id, streamToken, u.firstName + ' ' + u.lastName, u.role);
+  } catch {
+    // Stream connection failure must not break auth
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const u = await api.auth.me();
       setUser(u);
+      await connectStreamUser(u);
     } catch {
       clear();
     } finally {
@@ -57,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { token, user: u } = await api.auth.login({ email, password });
     persist(token, u);
     setUser(u);
+    await connectStreamUser(u);
     return u;
   };
 
@@ -70,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { token, user: u } = await api.auth.register({ email, password, role, firstName, lastName });
     persist(token, u);
     setUser(u);
+    await connectStreamUser(u);
     return u;
   };
 
@@ -77,6 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { token, user: u } = await api.auth.google({ credential, role });
     persist(token, u);
     setUser(u);
+    await connectStreamUser(u);
     return u;
   };
 
@@ -84,12 +99,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { token, user: u } = await api.auth.demo(role);
     persist(token, u);
     setUser(u);
+    await connectStreamUser(u);
     return u;
   };
 
   const logout = () => {
     clear();
     setUser(null);
+    disconnectUser(); // fire and forget
   };
 
   return (
